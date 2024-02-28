@@ -30,7 +30,7 @@ class HyperCloudServer {
     /**@type {RenderingManager} */
     #rendering;
     /**@type {RoutesManager} */
-    #routesManager;
+    #routesManager;    
 
     #_config = {
         /**@type {Docs.Protocols} */
@@ -215,6 +215,7 @@ class HyperCloudServer {
 
     constructor() {
         this.#rendering = new RenderingManager(this);
+        this.#rendering.addViews(path.resolve(path.join(__dirname, './services/pages')));
         this.#routesManager = new RoutesManager()
     }
 
@@ -263,7 +264,7 @@ class HyperCloudServer {
      */
     Router(options) {
         return new Router(this, options || {})
-    }
+    }    
 
     /**
      * Initialize the server
@@ -452,13 +453,12 @@ class HyperCloudServer {
                     res.setHeader('X-Server', 'Nasriya HyperCloud');
                     res.setHeader('X-Request-ID', request_id);
 
-                    const matchedRoutes = this.#routesManager.match(request);  
-                    console.log("matchedRoutes:", matchedRoutes)                  
+                    const matchedRoutes = this.#routesManager.match(request);
                     if (matchedRoutes.length > 0) {
                         new RequestRoutesManager(matchedRoutes, request, response);
                     } else {
                         response.status(404).pages.notFound();
-                    }                  
+                    }
                 } catch (error) {
                     console.error(error)
                     res.statusCode = 500;

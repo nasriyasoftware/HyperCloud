@@ -1,6 +1,7 @@
 const HyperCloudServer = require('../../../server')
 const Docs = require('../../../utils/docs');
 const Route = require('./route');
+const StaticRoute = require('./staticRoute');
 
 class Router {
     /**@type {HyperCloudServer} */
@@ -36,8 +37,26 @@ class Router {
 
             const route = new Route({ path, handler, method, caseSensitive, subDomain });
             this.#server._routesManager.add(route);
+        },
+        createStaticRoute: (root, options) => { 
+            const caseSensitive = options && 'caseSensitive' in options ? options.caseSensitive : this.#defaults.caseSensitive;
+            const subDomain = options && 'subDomain' in options ? options.subDomain : this.#defaults.subDomain;
+            const path = options && 'path' in options ? options.path : '/';
+            const dotfiles = options && 'dotfiles' in options ? options.dotfiles : 'ignore';
+
+            const route = new StaticRoute(root, { path, subDomain, caseSensitive, dotfiles });
+            this.#server._routesManager.add(route);
         }
     })
+
+    /**
+     * A static middleware
+     * @param {string} root The root directory to serve statically
+     * @param {Docs.StaticRouteOptions} [options] static options
+     */
+    static(root, options= {}) {
+        this.#helpers.createStaticRoute(root, options);
+    }
 
     /**
      * 

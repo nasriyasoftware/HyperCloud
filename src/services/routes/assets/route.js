@@ -11,10 +11,9 @@ class Route {
     #path = [];
     /**@type {Docs.HyperCloudRequestHandler} */
     #handler;
-    #params = {}
+    #params = {}    
 
     /**
-     * 
      * @param {Docs.RouteOptions} options 
      */
     constructor(options) {
@@ -23,7 +22,7 @@ class Route {
         this.#helpers.initialize.path(options);
         this.#helpers.initialize.handler(options)
         this.#helpers.initialize.subDomain(options);
-        this.#helpers.initialize.caseSensitive(options);
+        this.#helpers.initialize.caseSensitive(options);       
     }
 
     #helpers = Object.freeze({

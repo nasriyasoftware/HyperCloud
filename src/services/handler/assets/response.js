@@ -71,11 +71,34 @@ class HyperCloudResponse {
             }
         }
     }
-    
+
     get pages() {
         return Object.freeze({
-            notFound: () => {
-                return this.sendFile(path.resolve(path.join(__dirname, '../../pages/404.html')), { maxAge: '1y' })
+            /**
+             * 
+             * @param {object} [options] 
+             * @param {string} options.title
+             * @param {string} options.subtitle
+             * @param {string} options.homeBtn
+             * @returns 
+             */
+            notFound: (options) => {
+                const viewPath = path.resolve(path.join(__dirname, '../../pages'))
+                const eTags = JSON.parse(fs.readFileSync(path.join(viewPath, 'eTags.json')));
+
+                const renderOptions = {
+                    statusCode: 404,
+                    locals: {
+                        title: options?.title || `404 - Page Not Found`,
+                        subtitle: options?.subtitle || 'Oops. Looks like you took a wrong turn.',
+                        homeBtnLabel: options?.homeBtn || 'HOME'
+                    },
+                    maxAge: '3 days',
+                    cacheControl: true
+                }
+
+                if (eTags && eTags['hypercloud_404.ejs']) { renderOptions.eTag = eTags['hypercloud_404.ejs'] }
+                return this.render('hypercloud_404', renderOptions)
             }
         })
     }
@@ -120,10 +143,10 @@ class HyperCloudResponse {
      * @param {Docs.RenderingOptions} options 
      * @returns {HyperCloudResponse}
      */
-    render(name, options = { locals: {} }) {
+    render(name, options) {
         try {
             const renderer = new Renderer(this);
-            const html = renderer.render(name, options.locals);
+            const html = renderer.render(name, options?.locals);
             this.setHeader('Content-Type', 'text/html');
 
             if ('cacheControl' in options) {
@@ -164,6 +187,11 @@ class HyperCloudResponse {
             if ('statusCode' in options) {
                 if (typeof options.statusCode !== 'number') { throw new TypeError(`The "statusCode" option in response.render expected a number value but instead got ${typeof options.statusCode}`) }
                 this.status(options.statusCode);
+            }
+
+            if ('eTag' in options) {
+                if (typeof options.eTag !== 'string') { throw new TypeError(`The "eTag" option in response.render expected a string value but got ${typeof options.eTag}`) }
+                this.setHeader('etag', options.eTag);
             }
 
             this.write({ chunk: html, encoding: 'utf-8' });
@@ -343,7 +371,9 @@ class HyperCloudResponse {
 
             // Preparing the mime-type
             const exts = fileName.split('.').filter(i => i.length > 0);
-            const mime = extentions.find(i => i.extension.includes(`.${exts[exts.length - 1]}`)).mime;
+            const extension = `.${exts[exts.length - 1]}`;
+            const mime = extentions.find(i => i.extension.includes(extension)).mime;
+
 
             // Check if the download option is triggered or not
             if (options && 'download' in options) {

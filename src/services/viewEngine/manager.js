@@ -17,7 +17,7 @@ class RenderingManager {
     })
 
     /**@type {Docs.ViewEngine} */
-    #viewEngine;
+    #viewEngine = 'ejs';
     #views = {}
 
     /**@param {HyperCloudServer} server */
@@ -31,7 +31,7 @@ class RenderingManager {
      */
     #registerTemplates(directory) {
         try {
-            const files = fs.readdirSync(directory);
+            const files = fs.readdirSync(directory);            
             files.forEach(file => {
                 const parsed = path.parse(file);
                 if (parsed.ext === `.${this.#viewEngine}`) {
@@ -67,9 +67,9 @@ class RenderingManager {
             }
 
             const error = { path: viewsPath, type: 'invalid_path', errors: [] }
-            if (validity.errors.isString) { error.errors.push('Not a string') }
-            if (validity.errors.exist) { error.errors.push('Path doesn\'t exist') }
-            if (validity.errors.accessible) { error.errors.push('access denied: no read permissions') }
+            if (!validity.errors.isString) { error.errors.push('Not a string') }
+            if (!validity.errors.exist) { error.errors.push('Path doesn\'t exist') }
+            if (!validity.errors.accessible) { error.errors.push('access denied: no read permissions') }
             errors.push(error);
         }
 

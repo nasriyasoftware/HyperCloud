@@ -1,4 +1,8 @@
 const Route = require('./route');
+const StaticRoute = require('./staticRoute');
+
+const HyperCloudRequest = require('../../handler/assets/request');
+const HyperCloudResponse = require('../../handler/assets/response');
 /**
  * Only one instance is allowed for each request.
  * 
@@ -6,26 +10,27 @@ const Route = require('./route');
  * on the request `subDomain` and `path`.
  */
 class RequestRoutesManager {
-    /**@type {Route[]} */
+    /**@type {(Route|StaticRoute)[]} */
     #routes = [];
-    #currentIndex = 0;
+    #currentIndex = -1;
 
     /**@type {HyperCloudRequest} */
     #request;
     /**@type {HyperCloudResponse} */
     #response;
-    #next = () => {        
+    #next = () => {
         this.#currentIndex++;
         if (this.#currentIndex <= this.#routes.length) {
             this.#runNext();
         } else {
-            this.#response.pages.notFound();
+            console.log('Opening not found!')            
+            return this.#response.pages.notFound();
         }
     }
 
     /**
      * 
-     * @param {Route[]} routes 
+     * @param {(Route|StaticRoute)[]} routes 
      * @param {HyperCloudRequest} request 
      * @param {HyperCloudResponse} response 
      */
@@ -40,10 +45,13 @@ class RequestRoutesManager {
      * This method is only called by the server
      */
     #runNext() {
+        // console.log('Running next')
         const route = this.#routes[this.#currentIndex];
         if (route) {
-            this.#request.params = Object.keys(route.params).length > 0 ? route.params : {};
+            this.#request.params = route instanceof Route && Object.keys(route.params).length > 0 ? route.params : {};
             route.handler(this.#request, this.#response, this.#next);
+        } else {
+            this.#next();
         }
     }
 }

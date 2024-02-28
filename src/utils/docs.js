@@ -5,6 +5,13 @@ const HyperCloudRequest = require('../../src/services/handler/assets/request');
 const HyperCloudResponse = require('../../src/services/handler/assets/response');
 
 /**
+ * @typedef {object} StaticRouteOptions
+ * @prop {string} path The route path URL.
+ * @prop {'allow'|'ignore'|'deny'} [dotfiles] Option for serving dotfiles. Possible values are `allow`, `deny`, `ignore`. Default: `ignore`.
+ * @prop {string} [subDomain] The host's `subDomain` from {@link HyperCloudRequest.subDomain}. Default: `null`.
+ * @prop {boolean} [caseSensitive] This will match only of the `path` exactly match the {@link HyperCloudRequest.path}
+ */
+/**
  * @typedef {object} CookieOptions
  * @prop {boolean} secure Indicates that the cookie should only be sent over HTTPS connections
  * @prop {boolean} httpOnly Prevents client-side JavaScript from accessing the cookie
@@ -40,7 +47,7 @@ const HyperCloudResponse = require('../../src/services/handler/assets/response')
  * @prop {boolean} [cacheControl] Enable or disable setting `Cache-Control` response header. Default: `true`.
  * @prop {number|string} [maxAge] Sets the max-age property of the Cache-Control header in milliseconds or a string in [ms format](https://www.npmjs.com/package/ms). Default: `0`.
  * @prop {boolean} [immutable] Enable or disable the `immutable` directive in the `Cache-Control` response header. If enabled, the `maxAge` option should also be specified to enable caching. The immutable directive will prevent supported clients from making conditional requests during the life of the `maxAge` option to check if the file has changed.
- * 
+ * @prop {string} [eTag] Set an eTag on the page to let others know when the value changes
  */
 
 /**

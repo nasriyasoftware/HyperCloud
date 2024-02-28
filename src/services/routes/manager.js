@@ -1,17 +1,23 @@
 const Route = require('./assets/route');
+const StaticRoute = require('./assets/staticRoute');
 const HyperCloudRequest = require('../handler/assets/request');
 
 class RoutesManager {
-    /**@type {Route[]} */
-    #_stack = [];
+    #_stack = {
+        /**@type {Route[]} */
+        routes: [],
+        /**@type {StaticRoute[]} */
+        static: []
+    }
 
     /**
      * Add a route to the stack
-     * @param {Route} route 
+     * @param {Route|StaticRoute} route 
      */
     add(route) {
-        if (route instanceof Route) {
-            this.#_stack.push(route);
+        if (route instanceof Route || route instanceof StaticRoute) {
+            if (route instanceof Route) { this.#_stack.routes.push(route) }
+            if (route instanceof StaticRoute) { this.#_stack.static.push(route) }
         } else {
             throw new TypeError(`Unable to add route to the routes stack: The provided route is not an instance of Route.`)
         }
@@ -33,11 +39,10 @@ class RoutesManager {
                 }
             },
             /**
-             * 
              * @param {string[]} path 
              * @param {Route} route 
              */
-            path: (path, route) => {
+            routePath: (path, route) => {
                 const response = { valid: false, hasParams: false, params: {} }
 
                 if (route.path[0] === '*') { response.valid = true; return response }
@@ -75,7 +80,7 @@ class RoutesManager {
                                  */
                                 const separator = rtPath.substring(0, rtPath.indexOf(nxtParam));
                                 const sepIndex = rqPath.indexOf(separator);
-                                
+
                                 if (sepIndex > -1) {
                                     // If the separator is present in the request path, extract the value from it then remove it from the `rqPath`.
                                     const value = rqPath.substring(0, sepIndex);
@@ -88,7 +93,7 @@ class RoutesManager {
                             } else {
                                 // If no additional parameters available, assign the rest of the path as a value
                                 response.params[param] = rqPath;
-                            }                            
+                            }
                         }
                     } else {
                         if (route.caseSensitive) {
@@ -100,6 +105,26 @@ class RoutesManager {
                 }
 
                 response.valid = true; return response;
+            },
+            /**
+             * @param {string[]} path 
+             * @param {StaticRoute} route 
+             */
+            staticPath: (path, route) => {
+                // console.log({ path, rPath: route.path })
+                if (path.length === 0 || path.length < route.path.length) { return false }
+
+                if (route.path.length === 0) { return true }
+                if (route.path.length > 0) {
+                    const reqPath = path.join('/');
+                    const routePath = route.path.join('/');                    
+
+                    if (route.caseSensitive) {
+                        return reqPath.startsWith(routePath);
+                    } else {
+                        return reqPath.toLowerCase().startsWith(routePath.toLowerCase());
+                    }
+                }                
             }
         }
     })
@@ -107,24 +132,30 @@ class RoutesManager {
     /**
      * Use an incoming {@link HyperCloudRequest} to get all matching routes
      * @param {HyperCloudRequest} request 
-     * @returns {Route[]}
+     * @returns {(Route|StaticRoute)[]}
      */
-    match(request) {        
+    match(request) {
         const subDomain = request.subDomain || '*';
         const path = request.path || [];
 
-        return this.#_stack.filter(route => {
+        return [...this.#_stack.static, ...this.#_stack.routes].filter(route => {
             if (route.method !== 'USE' && route.method !== request.method) { return false }
 
             if (!this.#helpers.match.subDomain(subDomain, route)) {
                 return false;
             }
 
-            const pathRes = this.#helpers.match.path(path, route);
-            if (pathRes.valid) {
-                if (pathRes.hasParams) { route.params = pathRes.params }
-            } else {
-                return false;
+            if (route instanceof Route) {
+                const pathRes = this.#helpers.match.Path(path, route);
+                if (pathRes.valid) {
+                    if (pathRes.hasParams) { route.params = pathRes.params }
+                } else {
+                    return false;
+                }
+            }
+
+            if (route instanceof StaticRoute) {
+                if (!this.#helpers.match.staticPath(path, route)) { return false }
             }
 
             return true;

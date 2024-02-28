@@ -1,6 +1,33 @@
 const fs = require('fs');
+const crypto = require('crypto');
 
 class Helpers {
+    /**
+     * Calculate the hash value if a file
+     * @param {string} filePath The file path
+     * @returns {Promise<string>} The hashed value
+     */
+    calculateHash(filePath) {
+        return new Promise((resolve, reject) => {
+            const hash = crypto.createHash('sha256'); // You can use other hash algorithms like 'md5', 'sha1', etc.
+
+            const stream = fs.createReadStream(filePath);
+
+            stream.on('data', data => {
+                hash.update(data);
+            });
+
+            stream.on('end', () => {
+                const fileHash = hash.digest('hex');
+                resolve(fileHash);
+            });
+
+            stream.on('error', err => {
+                reject(err);
+            });
+        });
+    }
+
     /**
      * Print something on the debug level
      * @param {string|any} message
