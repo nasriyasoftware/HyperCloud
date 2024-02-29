@@ -23,7 +23,6 @@ class RequestRoutesManager {
         if (this.#currentIndex <= this.#routes.length) {
             this.#runNext();
         } else {
-            console.log('Opening not found!')            
             return this.#response.pages.notFound();
         }
     }

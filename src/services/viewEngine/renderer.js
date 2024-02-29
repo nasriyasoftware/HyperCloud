@@ -33,7 +33,7 @@ class Renderer {
      * @param {object} locals A `key:value` pairs object for variables
      * @returns {string} The rendered `HTML` page
      */
-    render(fileName, locals = {}) {
+    render(fileName, locals) {
         try {
             // Make sure the view name exist
             if (!(fileName in this.#response.server.rendering.views)) { throw `${fileName} view is not defined in the views object` }
@@ -54,8 +54,11 @@ class Renderer {
                 throw `${viewEngine} engine is chosen but is not installed.`
             }
 
-            // Attempt to render
-            engine
+            const lang = locals?.lang ? locals.lang : 'en';
+            locals.lang = lang;
+            locals.dir = locals.lang === 'ar' || locals.lang === 'he' ? ' dir=rtl' : '';
+
+            // Attempt to render            
             return engine.render(
                 this.#response.server.rendering.views[fileName],
                 { ...this.#response.server.locals, ...locals }

@@ -63,11 +63,10 @@ class HyperCloudRequest {
             domain: this.domain,
             subDomain: this.subDomain,
             baseUrl: this.baseUrl,
-            path: `/${this.path.join('/')}`,
-            query: `${Object.keys(this.query).length > 0 ? '?' : ''}${Object.keys(this.query).map(prop => {
-                return `${prop}=${this.query[prop]}`;
-            }).join('&')}`,
-            href: this.href
+            path: this.path,
+            query: this.query,
+            href: this.href,
+            bodyType: this.bodyType
         }, null, 4)
     }
 

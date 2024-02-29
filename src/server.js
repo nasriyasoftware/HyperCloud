@@ -16,6 +16,7 @@ const RenderingManager = require('./services/viewEngine/manager');
 const RoutesManager = require('./services/routes/manager');
 const RequestRoutesManager = require('./services/routes/assets/routesInitiator');
 const Router = require('./services/routes/assets/router');
+const HyperCloudRequest = require('./services/handler/assets/request');
 
 /**HyperCloud HTTP2 server */
 class HyperCloudServer {
@@ -30,7 +31,7 @@ class HyperCloudServer {
     /**@type {RenderingManager} */
     #rendering;
     /**@type {RoutesManager} */
-    #routesManager;    
+    #routesManager;
 
     #_config = {
         /**@type {Docs.Protocols} */
@@ -52,8 +53,8 @@ class HyperCloudServer {
         /**@type {string[]} */
         trusted_proxies: null,
         locals: {},
-        cronJobs: {}
-
+        cronJobs: {},
+        handlers: {}
     }
 
     #_helpers = Object.freeze({
@@ -264,7 +265,7 @@ class HyperCloudServer {
      */
     Router(options) {
         return new Router(this, options || {})
-    }    
+    }
 
     /**
      * Initialize the server
@@ -441,12 +442,14 @@ class HyperCloudServer {
             const server = this.#_config.secure ? this.#_system.httpsServer : this.#_system.httpServer;
 
             server.on('request', async (req, res) => {
+                let resTemp; // A copy of the response to throw an error;
                 try {
                     this.#recievedReqNum++;
                     const request_id = `ns${btoa(`request-num:${this.#recievedReqNum};date:${new Date().toISOString()}`)}`;
                     req.id = request_id;
                     const request = await initializer.createRequest(this, req, { trusted_proxies: this.#_config.trusted_proxies });
                     const response = initializer.createResponse(this, request, res);
+                    resTemp = response;
 
                     // Set the custom server headers
                     res.setHeader('X-Frame-Options', 'DENY');
@@ -460,9 +463,13 @@ class HyperCloudServer {
                         response.status(404).pages.notFound();
                     }
                 } catch (error) {
-                    console.error(error)
-                    res.statusCode = 500;
-                    res.end();
+                    if (resTemp instanceof HyperCloudResponse) {
+                        resTemp.pages.serverError({ error });
+                    } else {
+                        console.error(error)
+                        res.statusCode = 500;
+                        res.end();
+                    }
                 }
             })
 
@@ -476,7 +483,28 @@ class HyperCloudServer {
         }
     }
 
+    /**@private */
     get _routesManager() { return this.#routesManager }
+    /**@private */
+    get _handlers() { return this.#_config.handlers }
+
+    /**
+     * Define handlers for various scenarios
+     * @param {'notFound'|'serverError'|'unauthorized'|'forbidden'|string} name The name of the handler
+     * @param {(request: HyperCloudRequest, response: HyperCloudResponse, next: Function) => void} handler A function to handle responses called by the system
+     * @throws {TypeError} If the `name` isn't a `string`.
+     * @throws {SyntaxError} If the `name` is an empty `string` or doesn't start with a letter.
+     * @throws {TypeError} If the `handler` isn't a `function`.
+     */
+    setHandler(name, handler) {
+        if (typeof name !== 'string') { throw new TypeError(`The handler name must be a string but got ${typeof name}`) }
+        if (name.length === 0) { throw new SyntaxError(`The handler name cannot be empty`) }
+        const letterRegex = /^[a-zA-Z]/;
+        if (!letterRegex.test(name)) { throw new SyntaxError(`The handler name can only starts with an (a-z/A-Z) letter.`) }
+        if (typeof handler !== 'function') { throw new TypeError(`The provided handler isn't a function but a type of ${typeof handler}`) }
+
+        this.#_config.handlers[name] = handler;
+    }
 }
 
 module.exports = HyperCloudServer

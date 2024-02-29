@@ -75,30 +75,255 @@ class HyperCloudResponse {
     get pages() {
         return Object.freeze({
             /**
+             * Return a not found `404` response.
              * 
-             * @param {object} [options] 
-             * @param {string} options.title
-             * @param {string} options.subtitle
-             * @param {string} options.homeBtn
-             * @returns 
+             * By default, **HyperCloud** returns its own `404` page. To return your
+             * own page use the {@link HyperCloudServer.setHandler} method.
+             * @example
+             * // Use the default 404 page
+             * response.pages.notFound({
+             *      lang: 'en',
+             *      title: '404 - Not Found',
+             *      subtitle: 'This page cannot be found',
+             *      home: 'Home'
+             * });
+             * 
+             * // All options are "optional" and can be omitted
+             * response.pages.notFound(); // Renders the default 404 page
+             * @example
+             * // Setting your own handler
+             * server.setHandler('notFound', (request, response, next) => {
+             *      // Decide what to do here
+             * })
+             * @param {Docs.NotFoundResponseOptions} [options] Rendering options
+             * @returns {this}
              */
             notFound: (options) => {
-                const viewPath = path.resolve(path.join(__dirname, '../../pages'))
-                const eTags = JSON.parse(fs.readFileSync(path.join(viewPath, 'eTags.json')));
+                if (typeof this.#server._handlers.notFound === 'function') {
+                    try {
+                        // Run the user defined handler for not-found resources
+                        this.#server._handlers.notFound();
+                    } catch (error) {
+                        this.pages.serverError({ error });
+                    }
+                } else {
+                    const viewName = 'hypercloud_404';
 
-                const renderOptions = {
-                    statusCode: 404,
-                    locals: {
-                        title: options?.title || `404 - Page Not Found`,
-                        subtitle: options?.subtitle || 'Oops. Looks like you took a wrong turn.',
-                        homeBtnLabel: options?.homeBtn || 'HOME'
-                    },
-                    maxAge: '3 days',
-                    cacheControl: true
+                    /**@type {Docs.RenderingOptions} */
+                    const renderOptions = {
+                        cacheControl: false,
+                        statusCode: 404,
+                        locals: {
+                            lang: options?.lang,
+                            title: options?.locals?.title || `404 - Page Not Found`,
+                            subtitle: options?.locals?.subtitle || 'Oops. Looks like you took a wrong turn.',
+                            homeBtnLabel: options?.locals?.home || 'HOME'
+                        }
+                    }
+
+                    return this.render(viewName, renderOptions)
+                }
+            },
+            /**
+             * Return an unauthorized `401` response.
+             * 
+             * By default, **HyperCloud** returns its own `401` page. To return your
+             * own page use the {@link HyperCloudServer.setHandler} method.
+             * @example
+             * // Use the default 401 page
+             * response.pages.unauthorized({
+             *      lang: 'en',
+             *      title: '401 - Unauthorized',
+             *      commands: {*
+             *          code: 'ERROR CODE',
+             *          description: 'ERROR DESCRIPTION',
+             *          cause: 'ERROR POSSIBLY CAUSED BY',
+             *          allowed: 'SOME PAGES ON THIS SERVER THAT YOU DO HAVE PERMISSION TO ACCESS',
+             *          regards: 'HAVE A NICE DAY :-)'
+             *        },
+             *        content: {
+             *          code: 'HTTP 401 Unauthorized',
+             *          description: 'Access Denied. You Do Not Have The Permission To Access This Page',
+             *          cause: 'execute access unauthorized, read access unauthorized, write access unauthorized',
+             *          allowed: [{ label: 'Home', link: '/' }, { label: 'About Us', link: '/about' }, { label: 'Contact Us', link: '/support/contact' }],
+             *        }
+             * });
+             * 
+             * // All options are "optional" and can be omitted
+             * response.pages.unauthorized(); // Renders the default 401 page
+             * @example
+             * // Setting your own handler
+             * server.setHandler('unauthorized', (request, response, next) => {
+             *      // Decide what to do here
+             * })
+             * @param {Docs.ForbiddenAndUnauthorizedOptions} options 
+             * @returns {this}
+             */
+            unauthorized: (options) => {
+                if (typeof this.#server._handlers.unauthorized === 'function') {
+                    try {
+                        // Run the user defined handler for not-found resources
+                        this.#server._handlers.unauthorized();
+                    } catch (error) {
+                        this.pages.serverError({ error });
+                    }
+                } else {
+                    const viewName = 'hypercloud_401_403';
+
+                    /**@type {Docs.RenderingOptions} */
+                    const renderOptions = {
+                        cacheControl: false,
+                        statusCode: 401,
+                        locals: {
+                            lang: options?.lang,
+                            title: options?.locals?.title || 'Unauthorized',
+                            code: 401,
+                            commands: {
+                                code: options?.locals?.commands?.code || 'ERROR CODE',
+                                description: options?.locals?.commands?.description || 'ERROR DESCRIPTION',
+                                cause: options?.locals?.commands?.cause || 'ERROR POSSIBLY CAUSED BY',
+                                allowed: options?.locals?.commands?.allowed || 'SOME PAGES ON THIS SERVER THAT YOU DO HAVE PERMISSION TO ACCESS',
+                                regards: options?.locals?.commands?.regards || 'HAVE A NICE DAY :-)'
+                            },
+                            content: {
+                                code: options?.locals?.content?.code || 'HTTP 401 Unauthorized',
+                                description: options?.locals?.content?.description || 'Access Denied. You Do Not Have The Permission To Access This Page On This Server',
+                                cause: options?.locals?.content?.cause || 'execute access unauthorized, read access unauthorized, write access unauthorized, ssl required, ssl 128 required, ip address rejected, client certificate required, site access denied, too many users, invalid configuration, password change, mapper denied access, client certificate revoked, directory listing denied, client access licenses exceeded, client certificate is untrusted or invalid, client certificate has expired or is not yet valid, passport logon failed, source access denied, infinite depth is denied, too many requests from the same client ip',
+                                allowed: options?.locals?.content?.allowed || [{ label: 'Home', link: '/' }, { label: 'About Us', link: '/about' }, { label: 'Contact Us', link: '/support/contact' }],
+                            }
+                        }
+                    }
+
+                    return this.render(viewName, renderOptions)
+                }
+            },
+            /**
+             * Return a forbidden `403` response.
+             * 
+             * By default, **HyperCloud** returns its own `403` page. To return your
+             * own page use the {@link HyperCloudServer.setHandler} method.
+             * @example
+             * // Use the default 403 page
+             * response.pages.forbidden({
+             *      lang: 'en',
+             *      title: '403 - Forbidden',
+             *      commands: {*
+             *          code: 'ERROR CODE',
+             *          description: 'ERROR DESCRIPTION',
+             *          cause: 'ERROR POSSIBLY CAUSED BY',
+             *          allowed: 'SOME PAGES ON THIS SERVER THAT YOU DO HAVE PERMISSION TO ACCESS',
+             *          regards: 'HAVE A NICE DAY :-)'
+             *        },
+             *        content: {
+             *          code: 'HTTP 403 Forbidden',
+             *          description: 'Access Denied. You Do Not Have The Permission To Access This Page',
+             *          cause: 'execute access forbidden, read access forbidden, write access forbidden',
+             *          allowed: [{ label: 'Home', link: '/' }, { label: 'About Us', link: '/about' }, { label: 'Contact Us', link: '/support/contact' }],
+             *        }
+             * });
+             * 
+             * // All options are "optional" and can be omitted
+             * response.pages.forbidden(); // Renders the default 403 page
+             * @example
+             * // Setting your own handler
+             * server.setHandler('forbidden', (request, response, next) => {
+             *      // Decide what to do here
+             * })
+             * @param {Docs.ForbiddenAndUnauthorizedOptions} options 
+             * @returns {this}
+             */
+            forbidden: (options) => {
+                if (typeof this.#server._handlers.forbidden === 'function') {
+                    try {
+                        // Run the user defined handler for not-found resources
+                        this.#server._handlers.forbidden();
+                    } catch (error) {
+                        this.pages.serverError({ error });
+                    }
+                } else {
+                    const viewName = 'hypercloud_401_403';
+
+                    /**@type {Docs.RenderingOptions} */
+                    const renderOptions = {
+                        cacheControl: false,
+                        statusCode: 403,
+                        locals: {
+                            lang: options?.lang,
+                            title: options?.locals?.title || 'Forbidden',
+                            code: 403,
+                            commands: {
+                                code: options?.locals?.commands?.code || 'ERROR CODE',
+                                description: options?.locals?.commands?.description || 'ERROR DESCRIPTION',
+                                cause: options?.locals?.commands?.cause || 'ERROR POSSIBLY CAUSED BY',
+                                allowed: options?.locals?.commands?.allowed || 'SOME PAGES ON THIS SERVER THAT YOU DO HAVE PERMISSION TO ACCESS',
+                                regards: options?.locals?.commands?.regards || 'HAVE A NICE DAY :-)'
+                            },
+                            content: {
+                                code: options?.locals?.content?.code || 'HTTP 403 Forbidden',
+                                description: options?.locals?.content?.description || 'Access Denied. You Do Not Have The Permission To Access This Page On This Server',
+                                cause: options?.locals?.content?.cause || 'execute access forbidden, read access forbidden, write access forbidden, ssl required, ssl 128 required, ip address rejected, client certificate required, site access denied, too many users, invalid configuration, password change, mapper denied access, client certificate revoked, directory listing denied, client access licenses exceeded, client certificate is untrusted or invalid, client certificate has expired or is not yet valid, passport logon failed, source access denied, infinite depth is denied, too many requests from the same client ip',
+                                allowed: options?.locals?.content?.allowed || [{ label: 'Home', link: '/' }, { label: 'About Us', link: '/about' }, { label: 'Contact Us', link: '/support/contact' }],
+                            }
+                        }
+                    }
+
+                    return this.render(viewName, renderOptions);
+                }
+            },
+            /**
+             * Return a server error `500` response.
+             * 
+             * By default, **HyperCloud** returns its own `500` page. To return your
+             * own page use the {@link HyperCloudServer.setHandler} method.
+             * @example
+             * // Use the default 500 page
+             * response.pages.serverError({
+             *      lang: 'en',
+             *      title: '500 - Server Error',
+             *      subtitle: 'Internal <code>Server error<span>!</span></code>',
+             *      message: '<p> We\'re sorry, but something went wrong on our end. </p>'
+             * });
+             * 
+             * // All options are "optional" and can be omitted
+             * response.pages.serverError(); // Renders the default 500 page
+             * @example
+             * // Setting your own handler
+             * server.setHandler('serverError', (request, response, next) => {
+             *      // Decide what to do here
+             * })
+             * @param {Docs.ServerErrorOptions} options 
+             * @returns {this}
+             */
+            serverError: (options) => {
+                if ('error' in options) {
+                    console.error(`${new Date().toUTCString()} - Page Load Error - Request ID: ${this.#req.id}`);
+                    console.error(`Request:\n${this.#req.toString()}`)
                 }
 
-                if (eTags && eTags['hypercloud_404.ejs']) { renderOptions.eTag = eTags['hypercloud_404.ejs'] }
-                return this.render('hypercloud_404', renderOptions)
+                if (typeof this.#server._handlers.serverError === 'function' && options?.bypassHandler !== true) {
+                    try {
+                        // Run the user defined handler for not-found resources
+                        this.#server._handlers.serverError();
+                    } catch (error) {
+                        this.pages.serverError({ bypassHandler: true });
+                    }
+                } else {
+                    const viewName = 'hypercloud_500';
+
+                    /**@type {Docs.RenderingOptions} */
+                    const renderOptions = {
+                        cacheControl: false,
+                        statusCode: 500,
+                        locals: {
+                            lang: options?.lang,
+                            title: options?.locals?.title || 'Server Error',
+                            subtitle: options?.locals?.subtitle || 'Internal <code>Server error<span>!</span></code>',
+                            message: options?.locals?.message || `<p> We're sorry, but something went wrong on our end. Our team has been notified, and we're working to fix the issue as soon as possible. </p>\n<p>In the meantime, you can try refreshing the page or coming back later. If the problem persists, feel free to <a href="/contact-us">contact us</a> for further assistance.</p>\n<p>Thank you for your understanding.</p>`,
+                        }
+                    }
+
+                    return this.render(viewName, renderOptions);
+                }
             }
         })
     }
@@ -181,7 +406,11 @@ class HyperCloudResponse {
                     const expiryDate = new Date(Date.now() + maxAge).toUTCString();
                     this.setHeader('Cache-Control', `public, max-age=${maxAge}${immutable ? ', immutable' : ''}`);
                     this.setHeader('Expires', expiryDate);
+                } else {
+                    this.setHeader('Cache-Control', 'no-cache');
                 }
+            } else {
+                this.setHeader('Cache-Control', 'no-cache');
             }
 
             if ('statusCode' in options) {
@@ -189,7 +418,7 @@ class HyperCloudResponse {
                 this.status(options.statusCode);
             }
 
-            if ('eTag' in options) {
+            if ('eTag' in options && options.eTag) {
                 if (typeof options.eTag !== 'string') { throw new TypeError(`The "eTag" option in response.render expected a string value but got ${typeof options.eTag}`) }
                 this.setHeader('etag', options.eTag);
             }
@@ -367,6 +596,11 @@ class HyperCloudResponse {
                         }
                     }
                 }
+            }
+
+            if ('eTag' in options && options.eTag) {
+                if (typeof options.eTag !== 'string') { throw new TypeError(`The "eTag" option in response.sendFile expected a string value but got ${typeof options.eTag}`) }
+                this.setHeader('etag', options.eTag);
             }
 
             // Preparing the mime-type

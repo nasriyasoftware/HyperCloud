@@ -2,6 +2,10 @@ const HyperCloudServer = require('../../../server')
 const Docs = require('../../../utils/docs');
 const Route = require('./route');
 const StaticRoute = require('./staticRoute');
+const helpers = require('../../../utils/helpers');
+
+const fs = require('fs');
+const path = require('path');
 
 class Router {
     /**@type {HyperCloudServer} */
@@ -38,7 +42,7 @@ class Router {
             const route = new Route({ path, handler, method, caseSensitive, subDomain });
             this.#server._routesManager.add(route);
         },
-        createStaticRoute: (root, options) => { 
+        createStaticRoute: (root, options) => {
             const caseSensitive = options && 'caseSensitive' in options ? options.caseSensitive : this.#defaults.caseSensitive;
             const subDomain = options && 'subDomain' in options ? options.subDomain : this.#defaults.subDomain;
             const path = options && 'path' in options ? options.path : '/';
@@ -50,11 +54,48 @@ class Router {
     })
 
     /**
+     * Set your site's **favicon** by providing a path to a `favicon.ico` file.
+     * 
+     * The route will be mounted on the root path: `/favicon.ico`. You can also
+     * provide a `png` image as the favicon, for example: `favicon.png`, but the
+     * favicon will still be accessible by `/favicon.ico`.
+     * @param {string} faviconPath 
+     */
+    favicon(faviconPath, eTag) {
+        if (typeof faviconPath !== 'string') { throw new TypeError(`The favicon path that you provided cannot be of type ${typeof faviconPath}, only pass a string as a value`) }
+        const validity = helpers.checkPathAccessibility(faviconPath);
+        if (!validity.valid) { throw `The favicon path you provided (${faviconPath}) is not valid. Make sure it's accessible and does exist` }
+
+        const stats = fs.statSync(faviconPath);
+        if (!stats.isDirectory()) { throw `The favicon path you provided (${faviconPath}) is not a directory` }
+
+        const content = fs.readdirSync(faviconPath, { withFileTypes: true });
+        const file = content.find(i => i.isFile() && i.name.startsWith('favicon'));
+        if (!file) { throw `The favicon path you provided (${faviconPath}) does not contain a favicon file` }
+
+        const route = new Route({
+            path: '/favicon.ico',
+            caseSensitive: true,
+            method: 'GET',
+            handler: (_, response) => {
+                response.status(200).sendFile(path.join(faviconPath, file.name), {
+                    lastModified: true,
+                    cacheControl: true,
+                    maxAge: '3 days',
+                    eTag: eTag,
+                })
+            }
+        })
+
+        this.#server._routesManager.add(route);
+    }
+
+    /**
      * A static middleware
      * @param {string} root The root directory to serve statically
      * @param {Docs.StaticRouteOptions} [options] static options
      */
-    static(root, options= {}) {
+    static(root, options = {}) {
         this.#helpers.createStaticRoute(root, options);
     }
 

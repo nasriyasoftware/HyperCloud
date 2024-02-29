@@ -5,6 +5,41 @@ const HyperCloudRequest = require('../../src/services/handler/assets/request');
 const HyperCloudResponse = require('../../src/services/handler/assets/response');
 
 /**
+ * @typedef {object} ServerErrorOptions
+ * @prop {string} lang
+ * @prop {object} locals
+ * @prop {string} [locals.title]
+ * @prop {string} [locals.subtitle] The subtitle can be an HTML string
+ * @prop {string} [locals.message] The message can be an HTML string
+ */
+
+/**
+ * @typedef {object} ForbiddenAndUnauthorizedOptions
+ * @prop {string} lang
+ * @prop {object} locals
+ * @prop {object} [locals.commands]
+ * @prop {string} [locals.commands.code]
+ * @prop {string} [locals.commands.description]
+ * @prop {string} [locals.commands.cause]
+ * @prop {string} [locals.commands.allowed]
+ * @prop {string} [locals.commands.regards]
+ * @prop {object} [locals.content]
+ * @prop {string} [locals.content.code]
+ * @prop {string} [locals.content.description]
+ * @prop {string} [locals.content.cause]
+ * @prop {({label: string, link: string})[]} [locals.content.allowed]
+ */
+
+/**
+ * @typedef {object} NotFoundResponseOptions
+ * @prop {Object} [locals] Locals to be used for the page renderer
+ * @prop {string} [locals.title] The page title
+ * @prop {string} [locals.subtitle] The page subtitle
+ * @prop {string} [locals.home] The label of the home button
+ * @prop {string} [lang] The page language
+ */
+
+/**
  * @typedef {object} StaticRouteOptions
  * @prop {string} path The route path URL.
  * @prop {'allow'|'ignore'|'deny'} [dotfiles] Option for serving dotfiles. Possible values are `allow`, `deny`, `ignore`. Default: `ignore`.

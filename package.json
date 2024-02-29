@@ -7,7 +7,7 @@
     "start": "nodemon main.js"
   },
   "keywords": [],
-  "author": "",
+  "author": "Nasriya Software, LLC.",
   "license": "ISC",
   "devDependencies": {
     "nodemon": "^3.0.3"

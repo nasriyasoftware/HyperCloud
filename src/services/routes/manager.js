@@ -7,7 +7,9 @@ class RoutesManager {
         /**@type {Route[]} */
         routes: [],
         /**@type {StaticRoute[]} */
-        static: []
+        static: [],
+        /**@type {(Route|StaticRoute)[]} */
+        all: []
     }
 
     /**
@@ -18,6 +20,7 @@ class RoutesManager {
         if (route instanceof Route || route instanceof StaticRoute) {
             if (route instanceof Route) { this.#_stack.routes.push(route) }
             if (route instanceof StaticRoute) { this.#_stack.static.push(route) }
+            this.#_stack.all.push(route);
         } else {
             throw new TypeError(`Unable to add route to the routes stack: The provided route is not an instance of Route.`)
         }
@@ -117,14 +120,14 @@ class RoutesManager {
                 if (route.path.length === 0) { return true }
                 if (route.path.length > 0) {
                     const reqPath = path.join('/');
-                    const routePath = route.path.join('/');                    
+                    const routePath = route.path.join('/');
 
                     if (route.caseSensitive) {
                         return reqPath.startsWith(routePath);
                     } else {
                         return reqPath.toLowerCase().startsWith(routePath.toLowerCase());
                     }
-                }                
+                }
             }
         }
     })
@@ -138,7 +141,7 @@ class RoutesManager {
         const subDomain = request.subDomain || '*';
         const path = request.path || [];
 
-        return [...this.#_stack.static, ...this.#_stack.routes].filter(route => {
+        return this.#_stack.all.filter(route => {
             if (route.method !== 'USE' && route.method !== request.method) { return false }
 
             if (!this.#helpers.match.subDomain(subDomain, route)) {
@@ -146,7 +149,7 @@ class RoutesManager {
             }
 
             if (route instanceof Route) {
-                const pathRes = this.#helpers.match.Path(path, route);
+                const pathRes = this.#helpers.match.routePath(path, route);
                 if (pathRes.valid) {
                     if (pathRes.hasParams) { route.params = pathRes.params }
                 } else {
