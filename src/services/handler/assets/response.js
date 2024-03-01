@@ -317,7 +317,7 @@ class HyperCloudResponse {
                         locals: {
                             lang: options?.lang,
                             title: options?.locals?.title || 'Server Error',
-                            subtitle: options?.locals?.subtitle || 'Internal <code>Server error<span>!</span></code>',
+                            subtitle: options?.locals?.subtitle || 'Internal <code>Server&nbsp;error<span>!</span></code>',
                             message: options?.locals?.message || `<p> We're sorry, but something went wrong on our end. Our team has been notified, and we're working to fix the issue as soon as possible. </p>\n<p>In the meantime, you can try refreshing the page or coming back later. If the problem persists, feel free to <a href="/contact-us">contact us</a> for further assistance.</p>\n<p>Thank you for your understanding.</p>`,
                         }
                     }

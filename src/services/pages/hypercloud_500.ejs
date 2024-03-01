@@ -8,6 +8,8 @@
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Poiret+One&display=swap');
 
+
+
     *,
     *::after,
     *::before {
@@ -43,6 +45,7 @@
     #title {
       font-family: monospace;
       font-size: 1.4rem;
+      text-align: center;
     }
 
     #container {
@@ -215,7 +218,6 @@
       margin-block: 0.2rem;
       font-family: monospace;
       font-size: 0.3em;
-      min-width: 400px;
       max-width: 70%;
       text-align: center;
 
@@ -229,6 +231,25 @@
       color: #f0c674;
       font-weight: bold;
     }
+
+    @media only screen and (max-width: 600px) {
+      p {
+        max-width: 90%;
+      }
+      .zero > .OLetter{
+        border-width: .25rem !important; 
+        width: 70px !important;
+      }
+      h1{
+        font-size: 85px;
+      }
+
+      #title {
+        font-size: 1rem;
+        line-height: 1.5;
+      }
+    }
+ 
   </style>
 </head>
 
