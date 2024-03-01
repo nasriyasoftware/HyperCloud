@@ -2,7 +2,7 @@ const HyperCloudServer = require('./src/server');
 const { ProtocolsOptions, SSLCredentials, SSLOptions } = require('./src/utils/classes');
 const Docs = require('./src/utils/docs');
 const helpers = require('./src/utils/helpers');
-const dnsManager = require('./src/services/dns/manager');
+const dnsManager = require('nasriya-dns');
 const nasriyaCron = require('nasriya-cron');
 
 const fs = require('fs');
