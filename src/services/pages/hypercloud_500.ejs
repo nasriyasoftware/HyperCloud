@@ -22,7 +22,7 @@
     body {
       background: linear-gradient(to bottom, #292256 0%, #8446cf 70%, #a871d6 100%);
       font: 2rem "Poiret One", Arial;
-      height: 100vh;
+      height: 100svh;
       display: flex;
       justify-content: center;
     }
@@ -211,6 +211,7 @@
     #message {
       padding: 0.3rem;
       border-radius: 4px;
+      max-width: 70%;
     }
 
     p {
@@ -218,7 +219,6 @@
       margin-block: 0.2rem;
       font-family: monospace;
       font-size: 0.3em;
-      max-width: 70%;
       text-align: center;
 
       &>span {
@@ -234,13 +234,15 @@
 
     @media only screen and (max-width: 600px) {
       p {
-        max-width: 90%;
+        font-size: .5rem;
       }
-      .zero > .OLetter{
-        border-width: .25rem !important; 
+
+      .zero>.OLetter {
+        border-width: .25rem !important;
         width: 70px !important;
       }
-      h1{
+
+      h1 {
         font-size: 85px;
       }
 
@@ -248,8 +250,19 @@
         font-size: 1rem;
         line-height: 1.5;
       }
+
+      #message {
+        max-width: 90%;
+      }
+
+      .box span::after {
+        padding: 5px;
+      }
+
+      #container {
+        gap: 3.5vh;
+      }
     }
- 
   </style>
 </head>
 
