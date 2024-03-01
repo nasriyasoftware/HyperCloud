@@ -66,7 +66,8 @@ class HyperCloudRequest {
             path: this.path,
             query: this.query,
             href: this.href,
-            bodyType: this.bodyType
+            bodyType: this.bodyType,
+            params: this.params
         }, null, 4)
     }
 
