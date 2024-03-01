@@ -432,7 +432,6 @@ class HyperCloudResponse {
         }
     }
 
-
     /**
      * Download a file using the `response.sendFile` method.
      * @param {string} filePath The file path (relative/absolute). When providing a relative path, you must specify the `root` in the `options` argument
