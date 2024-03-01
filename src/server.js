@@ -430,57 +430,61 @@ class HyperCloudServer {
     get rendering() { return this.#rendering }
 
     /**
-     * 
+     * Start listening
+     * @returns {Promise<void>}
      */
     listen() {
-        try {
-            if (!this.#_config.initialized) { throw 'Please initialize the server first.' }
-            this.#_config.initialized = true;
+        return new Promise((resolve, reject) => {
+            try {
+                if (!this.#_config.initialized) { throw 'Please initialize the server first.' }
+                this.#_config.initialized = true;
 
-            const protocol = this.#_config.protocols[this.#_config.secure ? 'https' : 'http'];
-            /**@type {http2.Http2Server | http.Server} */
-            const server = this.#_config.secure ? this.#_system.httpsServer : this.#_system.httpServer;
+                const protocol = this.#_config.protocols[this.#_config.secure ? 'https' : 'http'];
+                /**@type {http2.Http2Server | http.Server} */
+                const server = this.#_config.secure ? this.#_system.httpsServer : this.#_system.httpServer;
 
-            server.on('request', async (req, res) => {
-                let resTemp; // A copy of the response to throw an error;
-                try {
-                    this.#recievedReqNum++;
-                    const request_id = `ns${btoa(`request-num:${this.#recievedReqNum};date:${new Date().toISOString()}`)}`;
-                    req.id = request_id;
-                    const request = await initializer.createRequest(this, req, { trusted_proxies: this.#_config.trusted_proxies });
-                    const response = initializer.createResponse(this, request, res);
-                    resTemp = response;
+                server.on('request', async (req, res) => {
+                    let resTemp; // A copy of the response to throw an error;
+                    try {
+                        this.#recievedReqNum++;
+                        const request_id = `ns${btoa(`request-num:${this.#recievedReqNum};date:${new Date().toISOString()}`)}`;
+                        req.id = request_id;
+                        const request = await initializer.createRequest(this, req, { trusted_proxies: this.#_config.trusted_proxies });
+                        const response = initializer.createResponse(this, request, res);
+                        resTemp = response;
 
-                    // Set the custom server headers
-                    res.setHeader('X-Frame-Options', 'DENY');
-                    res.setHeader('X-Server', 'Nasriya HyperCloud');
-                    res.setHeader('X-Request-ID', request_id);
+                        // Set the custom server headers
+                        res.setHeader('X-Frame-Options', 'DENY');
+                        res.setHeader('X-Server', 'Nasriya HyperCloud');
+                        res.setHeader('X-Request-ID', request_id);
 
-                    const matchedRoutes = this.#routesManager.match(request);
-                    if (matchedRoutes.length > 0) {
-                        new RequestRoutesManager(matchedRoutes, request, response);
-                    } else {
-                        response.status(404).pages.notFound();
+                        const matchedRoutes = this.#routesManager.match(request);
+                        if (matchedRoutes.length > 0) {
+                            new RequestRoutesManager(matchedRoutes, request, response);
+                        } else {
+                            response.status(404).pages.notFound();
+                        }
+                    } catch (error) {
+                        if (resTemp instanceof HyperCloudResponse) {
+                            resTemp.pages.serverError({ error });
+                        } else {
+                            console.error(error)
+                            res.statusCode = 500;
+                            res.end();
+                        }
                     }
-                } catch (error) {
-                    if (resTemp instanceof HyperCloudResponse) {
-                        resTemp.pages.serverError({ error });
-                    } else {
-                        console.error(error)
-                        res.statusCode = 500;
-                        res.end();
-                    }
-                }
-            })
+                })
 
-            server.listen(protocol.port, () => {
-                console.info(`HyperCloud Server is listening ${this.#_config.secure ? 'securely ' : ''}on port #${protocol.port}`);
-                protocol.callback?.();
-            })
-        } catch (error) {
-            if (typeof error === 'string') { error = `Unable to start listening: ${error}` }
-            return Promise.reject(error)
-        }
+                server.listen(protocol.port, () => {
+                    console.info(`HyperCloud Server is listening ${this.#_config.secure ? 'securely ' : ''}on port #${protocol.port}`);
+                    protocol.callback?.();
+                    resolve();
+                })
+            } catch (error) {
+                if (typeof error === 'string') { error = `Unable to start listening: ${error}` }
+                reject(error);
+            }
+        })
     }
 
     /**@private */
