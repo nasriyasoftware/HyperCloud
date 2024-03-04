@@ -47,6 +47,10 @@ class HyperCloudResponse {
         "hex"
     ]);
 
+    #status = Object.seal({
+        closed: false
+    })
+
     /**
      * @param {HyperCloudServer} server
      * @param {HyperCloudRequest} req
@@ -296,8 +300,15 @@ class HyperCloudResponse {
              */
             serverError: (options) => {
                 if ('error' in options) {
-                    console.error(`${new Date().toUTCString()} - Page Load Error - Request ID: ${this.#req.id}`);
-                    console.error(`Request:\n${this.#req.toString()}`)
+                    const dashLine = '#'.repeat(50);
+                    const diver = `${dashLine}\n${dashLine}`;
+
+                    helpers.printConsole(diver);
+                    console.error(`A server error has occurred`);
+                    helpers.printConsole(`${new Date().toUTCString()} - Page Load Error - Request ID: ${this.#req.id}`);
+                    helpers.printConsole(`Request:\n${this.#req._toString()}`);
+                    helpers.printConsole(options.error);
+                    helpers.printConsole(diver);
                 }
 
                 if (typeof this.#server._handlers.serverError === 'function' && options?.bypassHandler !== true) {
@@ -350,7 +361,7 @@ class HyperCloudResponse {
                     throw new RangeError(`Invalid redirect code: ${code}. Learn more about redirections at: https://developer.mozilla.org/en-US/docs/Web/HTTP/Redirections`)
                 }
 
-                this.writeHead(code, { 'Location': url });
+                this.status(code).setHeader('Location', url);
                 return this.end();
             } else {
                 throw new TypeError(`The redirect code should be a number, instead got ${typeof code}`);
@@ -1586,6 +1597,22 @@ class HyperCloudResponse {
      * A module that allows you to create or get a list of cookies
      */
     get cookies() { return this.#cookies }
+
+    /**Check whether the `response` has been closed or not */
+    get closed() { return this.#status.closed }   
+
+    /**
+     * Change the response's `closed` value
+     * @param {true} value
+     * @private
+     */
+    set _closed(value) {
+        if (value === true) {
+            this.#status.closed = true;
+        } else {
+            throw `The response's "_sent" value can only be set to true`;
+        }
+    }
 }
 
 module.exports = HyperCloudResponse;

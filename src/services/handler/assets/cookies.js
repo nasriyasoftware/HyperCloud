@@ -113,6 +113,17 @@ class Cookies {
     }
 
     /**
+     * Instruct the browser to delete a cookie
+     * @param {string} name The name of the cookie to delete
+     * @returns {HyperCloudResponse}
+     */
+    delete(name) {
+        if (typeof name !== 'string' || name?.length === 0) { throw `(${name}) is not a valid cookie name` }
+        this.#response.setHeader('Set-Cookie', `${name}=deleted; Expires=Thu, 01 Jan 1970 00:00:00 GMT; Path=/`);
+        return this.#response;
+    }
+
+    /**
      * Get a list of all the created cookies
      */
     get list() { return this.#response.getHeaders()['set-cookie'] }

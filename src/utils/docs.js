@@ -3,6 +3,26 @@ const http = require('http');
 const SSLManager = require('../services/ssl/manager.js');
 const HyperCloudRequest = require('../../src/services/handler/assets/request');
 const HyperCloudResponse = require('../../src/services/handler/assets/response');
+const HyperCloudServer = require('../server.js');
+
+/**@typedef {{ loggedIn?: boolean, role:? UserRole, id?: string, preferences?: UserPreferencesOptions }} HyperCloudUserOptions */
+/**@typedef {{ language?: string, locale?: string, currency?: Currency, colorScheme?: ColorScheme }} UserPreferencesOptions */
+/**@typedef {'Dark'|'Light'|'Default'} ColorScheme */
+/**@typedef {'Admin'|'Member'|'Visitor'} UserRole*/
+
+/**
+ * Currency code.
+ * @typedef {'AED'|'AFN'|'ALL'|'AMD'|'ANG'|'AOA'|'ARS'|'AUD'|'AWG'|'AZN'|'BAM'|'BBD'|'BDT'|'BGN'|'BHD'|'BIF'|'BMD'
+ * |'BND'|'BOB'|'BRL'|'BSD'|'BTN'|'BWP'|'BYN'|'BZD'|'CAD'|'CDF'|'CHF'|'CLP'|'CNY'|'COP'|'CRC'|'CUP'|'CVE'|'CZK'
+ * |'DJF'|'DKK'|'DOP'|'DZD'|'EGP'|'ERN'|'ETB'|'EUR'|'FJD'|'FKP'|'FOK'|'GBP'|'GEL'|'GGP'|'GHS'|'GIP'|'GMD'|'GNF'
+ * |'GTQ'|'GYD'|'HKD'|'HNL'|'HRK'|'HTG'|'HUF'|'IDR'|'ILS'|'IMP'|'INR'|'IQD'|'IRR'|'ISK'|'JEP'|'JMD'|'JOD'|'JPY'
+ * |'KES'|'KGS'|'KHR'|'KID'|'KMF'|'KRW'|'KWD'|'KYD'|'KZT'|'LAK'|'LBP'|'LKR'|'LRD'|'LSL'|'LYD'|'MAD'|'MDL'|'MGA'
+ * |'MKD'|'MMK'|'MNT'|'MOP'|'MRU'|'MUR'|'MVR'|'MWK'|'MXN'|'MYR'|'MZN'|'NAD'|'NGN'|'NIO'|'NOK'|'NPR'|'NZD'|'OMR'
+ * |'PAB'|'PEN'|'PGK'|'PHP'|'PKR'|'PLN'|'PYG'|'QAR'|'RON'|'RSD'|'RUB'|'RWF'|'SAR'|'SBD'|'SCR'|'SDG'|'SEK'|'SGD'
+ * |'SHP'|'SLL'|'SOS'|'SPL'|'SRD'|'STN'|'SYP'|'SZL'|'THB'|'TJS'|'TMT'|'TND'|'TOP'|'TRY'|'TTD'|'TVD'|'TWD'|'TZS'
+ * |'UAH'|'UGX'|'USD'|'UYU'|'UZS'|'VES'|'VND'|'VUV'|'WST'|'XAF'|'XCD'|'XOF'|'XPF'|'YER'|'ZAR'|'ZMW'|'ZWD'} Currency
+ */
+
 
 /**
  * @typedef {object} ServerErrorOptions
@@ -174,6 +194,8 @@ const HyperCloudResponse = require('../../src/services/handler/assets/response')
  * @prop {RequestBodyType} bodyType The type of the recieved data
  * @prop {string|object| Buffer} body The recieved data
  * @prop {object} cookies The request cookies
+ * @prop {object} params The parameters of dynamic requests
+ * @prop {HyperCloudServer} server A reference to the original server
  */
 
 /**

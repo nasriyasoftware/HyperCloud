@@ -1,5 +1,6 @@
 const fs = require('fs');
 const crypto = require('crypto');
+const currencies = require('../data/currencies.json');
 
 class Helpers {
     /**
@@ -40,6 +41,28 @@ class Helpers {
     }
 
     validate = Object.freeze({
+        /**
+         * Valdiate a currency (regardless of letter case)
+         * @param {string} currency A currency to validate
+         * @returns {boolean}
+         */
+        currency: (currency) => {
+            if (typeof currency === 'string') {
+                currency = currency.toUpperCase();
+                return currencies.includes(currency);
+            } else {
+                return false;
+            }
+        },
+        /**
+         * Validate a locale
+         * @param {string} locale A locale to validate
+         * @returns {boolean}
+         */
+        locale: (locale) => {
+            const languageTagPattern = /^[a-zA-Z]{2,3}(?:-[a-zA-Z]{3})?(?:-[a-zA-Z]{4})?(?:-[a-zA-Z]{2})?(?:-[a-zA-Z]{2})?$/;
+            return languageTagPattern.test(locale);
+        },
         /**
          * Validate an IPv4 or IPv6 address
          * @example
@@ -218,21 +241,45 @@ class Helpers {
 
     /**
      * Get the local IP address of the server
-     * @returns {string|'Unknown'}
+     * @returns {string[]} An array of local IPs
      */
-    getLocalIP() {
+    getLocalIPs() {
         const os = require('os');
-        const interfaces = os.networkInterfaces();
-        for (const interfaceName in interfaces) {
-            const interfaceInfo = interfaces[interfaceName];
-            for (const iface of interfaceInfo) {
-                // Filter only non-internal (non-loopback) IPv4 addresses
-                if (iface.family === 'IPv4' && !iface.internal) {
-                    return iface.address.includes('::ffff:') ? iface.address.replace('::ffff:', '') : iface.address;
+        const nets = os.networkInterfaces();
+        const interfaces = {}
+
+        for (const name of Object.keys(nets)) {
+            for (const net of nets[name]) {
+                // Skip over non-IPv4 and internal (i.e. 127.0.0.1) addresses
+                // 'IPv4' is in Node <= 17, from 18 it's a number 4 or 6
+                const familyV4Value = typeof net.family === 'string' ? 'IPv4' : 4
+                if (net.family === familyV4Value && !net.internal) {
+                    if (!interfaces[name]) {
+                        interfaces[name] = [];
+                    }
+                    interfaces[name].push(net.address);
                 }
             }
         }
-        return 'Unknown';
+
+        const interfacesArr = Object.entries(interfaces).map(entry => {
+            return { name: entry[0], ips: entry[1] }
+        })
+
+        interfacesArr.sort((int1, int2) => {
+            if (int1.name === 'Ethernet' && int2.name === 'Ethernet') { return 0; }
+            if (int1.name === 'Ethernet') { return -1; }
+            if (int2.name === 'Ethernet') { return 1; }
+
+            if (int1.name === 'vEthernet' && int2.name === 'vEthernet') { return 0; }
+            if (int1.name === 'vEthernet') { return -1; }
+            if (int2.name === 'vEthernet') { return 1; }
+
+            return 0;
+        })
+
+        const local_ips = interfacesArr.map(i => i.ips).flat(3);
+        return [...new Set(local_ips)];
     }
 
     /**

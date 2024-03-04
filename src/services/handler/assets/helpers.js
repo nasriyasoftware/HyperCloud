@@ -1,4 +1,20 @@
-const Docs = require('../../../utils/docs.js');
+const Docs = require('../../../utils/docs');
+const helpers = require('../../../utils/helpers');
+
+/**
+ * Convert the query back to string
+ * @param {string} q The query object
+ * @returns 
+ */
+function buildQuery(q) {
+    let query = '';
+    for (const [key, value] of Object.entries(q)) {
+        if (query.length > 0) { query = `${query}&` }
+        query = `${query}${key}=${value}`
+    }
+
+    return Object.keys(query) > 0 ? `?${query}` : '';
+}
 
 function cookieParser(rawCookieHeader) {
     // Parse the raw cookie header into an object
@@ -157,22 +173,24 @@ function bodyParser(body, contentType) {
  * @param {string[]} [trusted_proxies] The trusted proxy IPs
 */
 function getClientIP(req, trusted_proxies) {
+    const local_ips = helpers.getLocalIPs();
+    trusted_proxies = [...new Set([...trusted_proxies, ...local_ips])];
+    trusted_proxies.sort();
+    
     if (req.headers['X-Real-IP']) {
-        const real = req.headers['X-Real-IP'];
         if (helpers.validate.ipAddress(real)) {
-            return real === '::1' ? helpers.getLocalIP() : real;
+            return real === '::1' ? local_ips[0] : real;
         } else {
             helpers.printConsole(`The value of the 'X-Real-IP' header is invalid. Expected a valid IP address but got ${real}`);
         }
     }
 
-    const remoteAddress = req.socket.remoteAddress === '::1' ? helpers.getLocalIP() : req.socket.remoteAddress.includes('::ffff:') ? req.socket.remoteAddress.replace('::ffff:', '') : req.socket.remoteAddress;
-
-    if (trusted_proxies && Array.isArray(trusted_proxies) && trusted_proxies.includes(remoteAddress)) {
+    const remoteAddress = req.socket.remoteAddress === '::1' ? local_ips[0] : req.socket.remoteAddress.includes('::ffff:') ? req.socket.remoteAddress.replace('::ffff:', '') : req.socket.remoteAddress;
+    
+    if (Array.isArray(trusted_proxies) && trusted_proxies.includes(remoteAddress)) {
         // Check if the request has the X-Forwarded-For header
         const forwardedFor = req.headers['x-forwarded-for'];
         if (forwardedFor) {
-            //console.log("forwardedFor", forwardedFor)
             // The header may contain multiple IP addresses separated by commas
             // The client's IP address is usually the first one in the list
             const ipAddresses = forwardedFor.split(',');
@@ -182,7 +200,7 @@ function getClientIP(req, trusted_proxies) {
 
 
     // If the X-Forwarded-For header is not present, fallback to the remote address
-    return req.socket.remoteAddress === '::1' ? helpers.getLocalIP() : req.socket.remoteAddress.includes('::ffff:') ? req.socket.remoteAddress.replace('::ffff:', '') : req.socket.remoteAddress;
+    return remoteAddress;
 }
 
 /**
@@ -191,4 +209,4 @@ function getClientIP(req, trusted_proxies) {
  * @prop {Docs.RequestBodyType} bodyType
  */
 
-module.exports = { bodyParser, getClientIP, cookieParser }
+module.exports = { bodyParser, getClientIP, cookieParser, buildQuery }

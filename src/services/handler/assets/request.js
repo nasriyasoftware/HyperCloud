@@ -1,22 +1,41 @@
 const http2 = require('http2');
-const { InitializedRequest } = require('./docs');
+const Docs = require('../../../utils/docs');
 const helpers = require('../../../utils/helpers');
+const HyperCloudUser = require('./user');
 
 /**This class is used internallly, not by the user */
 class HyperCloudRequest {
-    /**@type {InitializedRequest} */
+    /**@type {Docs.InitializedRequest} */
     #request;
     /**@type {http2.Http2ServerRequest} */
     #req;
-    #params = {}
+    #params = {};
+    /**
+     * The locale of the client. Example: `en-PS`;
+     * @type {string}
+     */
+    #locale;
+    /**@type {string} */
+    #lang;
+
+    #user = Object.seal({
+        /**@type {HyperCloudUser} */
+        instance: null,
+        initialized: false
+    });
+
+    /**@type {Docs.ColorScheme} */
+    #colorScheme = 'Default';
 
     /**
-     * @param {InitializedRequest} request 
+     * @param {Docs.InitializedRequest} request 
      * @param {http2.Http2ServerRequest} req 
      */
     constructor(request, req) {
         this.#request = request;
         this.#req = req;
+        /**@type {Docs.HyperCloudUserOptions} */
+        this.#user.instance = new HyperCloudUser(this)
     }
 
     get id() { return this.#request.id }
@@ -53,9 +72,16 @@ class HyperCloudRequest {
      * @returns {HttpMethod}
      */
     get method() { return this.#req.method }
+    get server() { return this.#request.server }
 
-    toString() {
-        return JSON.stringify({
+    /**@private */
+    _toString() {
+        return JSON.stringify(this._toJSON(), null, 4)
+    }
+
+    /**@private */
+    _toJSON() {
+        return {
             id: this.id,
             ip: this.ip,
             protocol: this.protocol,
@@ -67,8 +93,12 @@ class HyperCloudRequest {
             query: this.query,
             href: this.href,
             bodyType: this.bodyType,
-            params: this.params
-        }, null, 4)
+            params: this.params,
+            cookies: this.cookies,
+            locale: this.locale,
+            language: this.language || null,
+            user: this.user._toJSON(),
+        }
     }
 
     /**
@@ -82,6 +112,73 @@ class HyperCloudRequest {
             this.#params = value;
         } else {
             throw `The request.params has been set with an invalid value. Expected an object but got ${typeof value}`
+        }
+    }
+
+    /**The locale of the client. Example: `en-PS`; */
+    get locale() { return this.#locale }
+    /**
+     * Set the request locale
+     * @param {string} value
+     * @private
+     */
+    set _locale(value) {
+        if (typeof value === 'string') {
+            if (helpers.validate.locale(value)) {
+                this.#locale = value;
+            } else {
+                throw `(${value}) is not a valid locale`;
+            }
+        } else {
+            throw new TypeError(`The request's locale that has been used is not a valid string, but a type of ${typeof value}`)
+        }
+    }
+
+    /**Get request language */
+    get language() { return this.#lang }
+
+    /**
+     * Set the request language
+     * @param {string} lang The new language
+     * @private
+     */
+    set _language(lang) {
+        if (typeof lang === 'string') {
+            lang = lang.toLowerCase();
+            if (!this.server.supportedLanguages.includes(lang)) { throw `The language you provided (${lang}) is not a supported language. Supported languages are: ${this.server.supportedLanguages.split(', ')}.` }
+            this.#lang = lang;
+        } else {
+            throw new TypeError(`The request's language that has been used is not a valid string, but a type of ${typeof lang}`)
+        }
+    }
+
+    /**@returns {HyperCloudUser} */
+    get user() { return this.#user.instance }
+    /**
+     * Setup the user details of this request.
+     * 
+     * **Note:** Once set, you cannot change the user details
+     * @param {Docs.HyperCloudUserOptions} options
+     */
+    set user(options) {
+        if (this.#user.initialized) { throw `Unable to set HyperCloud user: User is already defined` }
+        this.#user.initialized = true;
+        this.#user.instance = new HyperCloudUser(this, options);
+    }
+
+    /**Get the site's `colorScheme` */
+    get colorScheme() { return this.#colorScheme }
+
+    /**
+     * Set the `colorScheme` of the request
+     * @param {Docs.ColorScheme} scheme The request's `colorScheme`
+     * @private
+     */
+    set _colorScheme(scheme) {
+        if (['Default', 'Light', 'Dark'].includes(scheme)) {
+            this.#colorScheme = scheme;
+        } else {
+            throw `The provided request's "scheme" (${scheme}) is not a valid color scheme`
         }
     }
 }

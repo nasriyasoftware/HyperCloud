@@ -17,6 +17,7 @@ const RoutesManager = require('./services/routes/manager');
 const RequestRoutesManager = require('./services/routes/assets/routesInitiator');
 const Router = require('./services/routes/assets/router');
 const HyperCloudRequest = require('./services/handler/assets/request');
+const HyperCloudUser = require('./services/handler/assets/user');
 
 /**HyperCloud HTTP2 server */
 class HyperCloudServer {
@@ -54,7 +55,11 @@ class HyperCloudServer {
         trusted_proxies: null,
         locals: {},
         cronJobs: {},
-        handlers: {}
+        handlers: {},
+        languages: {
+            default: 'en',
+            supported: ['en']
+        }
     }
 
     #_helpers = Object.freeze({
@@ -220,6 +225,58 @@ class HyperCloudServer {
         this.#routesManager = new RoutesManager()
     }
 
+    get defaultLanguage() { return this.#_config.languages.default }
+    /**
+     * Set or get the default language of the server
+     * @param {string} lang The default language
+     */
+    set defaultLanguage(lang) {
+        if (this.#_config.languages.supported.includes(lang)) {
+            this.#_config.languages.default = lang;
+        } else {
+            throw `Cannot set default language: ${lang} is not supported`;
+        }
+    }
+
+    /**@returns {string[]} */
+    get supportedLanguages() { return this.#_config.languages.supported }
+    /**
+     * Set or get the server's supported languages
+     * @param {string|string[]} langs A list of supported languages
+     */
+    set supportedLanguages(langs) {
+        if (!(typeof langs === 'string' || Array.isArray(langs))) {
+            throw new TypeError(`The server's "supportedLanguages" accepts a string or a list of strings, but instead got ${typeof langs}`)
+        }
+
+        if (typeof langs === 'string') {
+            if (lang.length === 0) { throw `The server's "supportedLanguages" cannot be an empty string` }
+            this.#_config.languages.supported = [langs.toLowerCase()];
+        } else {
+            langs = [...new Set(langs)];
+
+            if (langs.length === 0) {
+                throw `The server's "supportedLanguages" recieved an empty array`;
+            }
+
+            const supported = [];
+            for (const lang of langs) {
+                if (typeof lang === 'string' && lang.length > 0) {
+                    supported.push(lang.toLowerCase());
+                } else {
+                    throw new TypeError(`The server's "supportedLanguages" accepts a list of strings, but one or more of its items are invalid`);
+                }
+            }
+
+            this.#_config.languages.supported = supported;
+        }
+
+        if (!this.#_config.languages.supported.includes(this.#_config.languages.default)) {
+            helpers.printConsole(`The server recieved a new list of supported languages, but the default language (${this.defaultLanguage}) is not part of the new list.`);
+            helpers.printConsole(`Setting the new default language to: ${this.supportedLanguages[0] || 'en'}`);
+            this.defaultLanguage = this.supportedLanguages[0] || 'en';
+        }
+    }
     /**
      * Increase productivity by spreading routes into multiple files. All
      * you need to do is to `export` the created server into the file that
@@ -363,13 +420,13 @@ class HyperCloudServer {
 
                         if (helpers.validate.ipAddress(proxy)) {
                             if (!validProxies.includes(proxy)) { validProxies.push(proxy) }
-                            validTrustedProxies++;
                         } else {
                             if (!invalidProxies.includes(proxy)) { invalidProxies.push(proxy) }
                         }
                     }
 
-                    if (invalidProxies.length >= 0) {
+                    if (invalidProxies.length > 0) {
+                        helpers.printConsole(invalidProxies)
                         throw `The server expected an array of trusted proxies, but some of them were invalid: ${invalidProxies.join(', ')}`;
                     }
                 }
@@ -444,14 +501,21 @@ class HyperCloudServer {
                 const server = this.#_config.secure ? this.#_system.httpsServer : this.#_system.httpServer;
 
                 server.on('request', async (req, res) => {
-                    let resTemp; // A copy of the response to throw an error;
+                    /**
+                     * A copy of the response to throw an error
+                     * @type {HyperCloudResponse} */
+                    let resTemp;
                     try {
+                        res.on('close', () => {
+                            if (resTemp) { resTemp._closed = true }
+                        });
+
                         this.#recievedReqNum++;
                         const request_id = `ns${btoa(`request-num:${this.#recievedReqNum};date:${new Date().toISOString()}`)}`;
                         req.id = request_id;
                         const request = await initializer.createRequest(this, req, { trusted_proxies: this.#_config.trusted_proxies });
                         const response = initializer.createResponse(this, request, res);
-                        resTemp = response;
+                        resTemp = response;                       
 
                         // Set the custom server headers
                         res.setHeader('X-Frame-Options', 'DENY');
@@ -494,7 +558,7 @@ class HyperCloudServer {
 
     /**
      * Define handlers for various scenarios
-     * @param {'notFound'|'serverError'|'unauthorized'|'forbidden'|string} name The name of the handler
+     * @param {'notFound'|'serverError'|'unauthorized'|'forbidden'|'userSessions'} name The name of the handler from the options or any other name
      * @param {(request: HyperCloudRequest, response: HyperCloudResponse, next: Function) => void} handler A function to handle responses called by the system
      * @throws {TypeError} If the `name` isn't a `string`.
      * @throws {SyntaxError} If the `name` is an empty `string` or doesn't start with a letter.
@@ -506,9 +570,11 @@ class HyperCloudServer {
         const letterRegex = /^[a-zA-Z]/;
         if (!letterRegex.test(name)) { throw new SyntaxError(`The handler name can only starts with an (a-z/A-Z) letter.`) }
         if (typeof handler !== 'function') { throw new TypeError(`The provided handler isn't a function but a type of ${typeof handler}`) }
+        const paramsNum = handler.length;
+        if (paramsNum !== 3) { throw new RangeError(`The provided handler has ${paramsNum}. The expected number of parameters is 3`) }
 
         this.#_config.handlers[name] = handler;
     }
 }
 
-module.exports = HyperCloudServer
+module.exports = HyperCloudServer;

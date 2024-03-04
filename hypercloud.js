@@ -130,3 +130,4 @@ module.exports = new HyperCloud();
 /**@typedef {Docs.Protocols} Protocols */
 /**@typedef {SSLCredentials} SSLCredentials */
 /**@typedef {SSLOptions} SSLOptions */
+/**@typedef {Docs.HyperCloudUserOptions} UserOptions */

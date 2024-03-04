@@ -1,8 +1,21 @@
-# Nasriya HyperCloud!
+[![N|Solid](https://static.wixstatic.com/media/72ffe6_da8d2142d49c42b29c96ba80c8a91a6c~mv2.png)](https://nasriya.net)
+# Nasriya Software - HyperCloud.
+#### Visit us at [www.nasriya.net](https://nasriya.net).
+![License](https://img.shields.io/github/license/nasriyasoftware/HyperCloud.svg) ![Repository Size](https://img.shields.io/github/repo-size/nasriyasoftware/HyperCloud.svg) ![Last Commit](https://img.shields.io/github/last-commit/nasriyasoftware/HyperCloud.svg) [![Status](https://img.shields.io/badge/Status-Alpha-orange.svg)](link-to-your-status-page)
+
 Nasriya HyperCloud is a lightwight Node.js HTTP2 framework.
 ___
+## Features
+- [HTTP2](https://en.wikipedia.org/wiki/HTTP/2) Freamework.
+- Secure Server with **FREE** [SSL certificates](#generate-ssl-certificates).
+- Works well with proxies.
+- Supports [Multilingual](#languages) Sites.
+- Built-In & Custom [Error Pages](#error-pages).
+- Built-In [Job Scheduler](#task-scheduling).
+- Built-In [DNS Manager](#dns-management).
+___
 ## Quick Start Quide
-Quickly run a `HyperCloud` server.
+Quickly run a `HyperCloud` server in **5** easy steps.
 
 #### 1. Installation
 ```shellscript
@@ -170,12 +183,249 @@ const options = {
 // Initialize the server
 await server.initialize(options);
 ```
+
+#### Languages
+Some sites are multilingual, which means they somehow keep track of users' selected language, luckely, **HyperCloud** provides a built-in method to achieve exactly that.
+
+###### Supported Languages
+You can set a list of languages that your server supports to properly handle *language-related* requests, like checking users' preferred language to serve them content in their language.
+
+Here's how to set a list of supported languages on your server:
+```js
+const hypercloud = require('nasriya-hypercloud');
+const server = hypercloud.Server();
+
+server.supportedLanguages = ['en', 'ar', 'de'];
+```
+
+###### Default Language
+If a user doesn't have a preferred language, the browser's language is selected then checked against the server's [supported languages](#supported-languages), if the browser's language isn't supported, the server's `defaultLanguage` is used to [render pages]() or serve other language-related content.
+
+To set a default language:
+```js
+const hypercloud = require('nasriya-hypercloud');
+const server = hypercloud.Server();
+
+server.defaultLanguage = 'ar';
+```
+
+**Note:** The `defaultLanguage` must be one of the [supported languages](#supported-languages) or an error will be thrown.
+
+#### HyperCloud Built-In User
+HyperCloud provides a built-in `user` on each `request` and allows you to populate it using a [custom handler](#user-handler), you can then access the `user` object from any route via the `request` object.
+
+The built-in `user` object looks like this:
+```js
+// request.user
+{
+    id: string,
+    loggedIn: boolean,
+    role: 'Admin'|'Member'|'Visitor',
+    preferences: {
+        language: string,
+        locale: string,
+        currency: string,
+        colorScheme: 'Default'|'Dark'|'Light'
+    }
+}
+```
+##### Logged-in User
+| Property                  | Value                               | Description                                                                            |
+| ------------------------- | ----------------------------------- | -------------------------------------------------------------------------------------- |
+| `id`                      | `string`                            | The `id` of the user in the database                                                   |
+| `loggedIn`                | `true`                              | Whether the user is loggedIn or not                                                    |
+| `role`                    | `"Admin"` or `"Member"`             | Specified in the [handler](#user-handler)                                              |
+| `preferences`             | `object`                            | An object with user prefereces from the database                                       |
+| `preferences.language`    | `string`                            | The user's preferred language from the database  or `null` if no language is preferred |
+| `preferences.locale`      | `string`                            | The user's preferred locale from the database or `null` if no locale is preferred      |
+| `preferences.currency`    | `string`                            | The user's preferred currency in the database or `null` if no currency is preferred    |
+| `preferences.colorScheme` | `"Default"`, `"Dark"`, or `"Light"` | The user's preferred color scheme in the database or `null` if not specified           |
+
+##### Logged-out User
+| Property                  | Value       | Description                                      |
+| ------------------------- | ----------- | ------------------------------------------------ |
+| `id`                      | `null`      | The `id` of the user in the database             |
+| `loggedIn`                | `false`     | Whether the user is loggedIn or not              |
+| `role`                    | `"Visitor"` | Specified in the [handler](#user-handler)        |
+| `preferences`             | `object`    | An object with user prefereces from the database |
+| `preferences.language`    | `null`      | No value                                         |
+| `preferences.locale`      | `null`      | No value                                         |
+| `preferences.currency`    | `null`      | No value                                         |
+| `preferences.colorScheme` | `null`      | No value                                         |
+
+##### User Handler
+To populate the `user` object, you need to implement a **handler** to check user session, verify it, make a database call, fetch the data, and then populate the `user` object accordingly.
+
+To set the handler, we use the reserved handler name `userSessions` as the handler name on the server's [setHandler]() method:
+
+```js
+const hypercloud = require('nasriya-hypercloud');
+const server = hypercloud.Server();
+
+server.setHandler('userSessions', (request, response, next) => {
+    const sessionToken = request.cookies.session;
+
+    // Verify the session's validity using our own JWT library
+    const veriRes = encryptions.JWT.verify(sessionToken);
+
+    // Check the validity
+    if (veriRes.valid) {
+        const payload = veriRes.payload;
+
+        /**
+         * Get the user ID from the JWT's payload.
+         * The user ID extraction depends on YOUR own implementation
+         * of session handling when authenticating users.
+         * 
+         * Our implementation:
+         * The token payload has a "user" object, which has an "id" property
+        */
+        const user_id = payload.user.id;
+
+        /**
+         * Get the user data and preferences from the database
+         * 
+         * The database call can impact your site's performance
+         * since it runs on each and every request, you can instead
+         * store the preferences in the JSON token (JWT) or in
+         * a cookie, whichever you see fit.
+        */
+        const user = payload.user; // Or a database call
+
+        // Populate the user object
+        request.user = {
+            id: user.id,
+            loggedIn: true,
+            role: 'role' in user && user.role === 'Admin' ? 'Admin' : 'Member',
+            preferences: {
+                // All user preferences are optional
+                language: user.preferences.language
+            }
+        }
+    } else {
+        // Remove the invalid cookie
+        response.cookies.delete('session');
+
+        // Assign an empty object to the user object
+        request.user = {}
+    }
+
+    // Call next as usual to move to the next handler
+    next();
+})
+```
+
+**Note:** This handler runs before all your defined routes regardless whether they've been defined before or after you defined the `userSessions` handler.
+
+#### Error Pages
+**HyperCloud** provides three built-in error pages out of the box, `401`, `403`, `404`, and `500`. You can render these pages from your code and customize them with your own text, or you can set custom handlers to run whenever you cann the error pages.
+
+###### Default Error Pages
+You can customize what the pages say with your own words, the `401` and `403` uses the same page, thus the same rendering options, so we'll only cover one of them.
+
+Prepare the environment:
+```js
+const hypercloud = require('nasriya-hypercloud');
+const server = hypercloud.Server();
+const router = server.Router();
+```
+
+- Calling the `500` **server error** page:
+```js
+router.use('*', (request, response, next) => {
+    // This renders the default 500 pages as is, without any changes
+    response.pages.serverError();
+
+    // Customize the page text
+    response.pages.serverError({
+        lang: 'ar', // The page language
+        locals: {
+            title: 'خطاً في الخادم',                        // The page title in browsers,
+            subtitle: 'عذراً! حدث خطأ في الخادم',          // The page title to render for visitors
+            message: 'نحن آسفون، ولكن حدث خطأ ما من جانبنا. لقد تم إخطار فريقنا، ونحن نعمل على حل المشكلة في أقرب وقت ممكن.',
+        }
+    });
+})
+```
+
+- Calling the `404` **not-fonud** page:
+```js
+router.use('*', (request, response, next) => {
+    // This renders the default 404 pages as is, without any changes
+    response.pages.notFound();
+
+    // Customize the page text
+    response.pages.notFound({
+        lang: 'ar', // The page language
+        locals: {
+            title: 'غير موجود - 404',                       // The page title in browsers,
+            subtitle: 'لم يتم العثور على هذه الصفحة',      // The page title to render for visitors
+            home: 'الرئيسية',                               // The home button label
+        }
+    });
+})
+```
+- Calling the `403` **forbidden** page:
+```js
+router.use('*', (request, response, next) => {
+    // This renders the default 403 pages as is, without any changes
+    response.pages.forbidden();
+
+    // Customize the page text
+    response.pages.forbidden({
+        lang: 'ar',
+        locals: {
+            title: 'غير مسموح',
+            commands: {
+                code: 'رمز الخطاً',
+                description: 'وصف الخطً',
+                cause: 'الخطأ من المحتمل أن يكون سببه',
+                allowed: 'بعض الصفحات على الخادم التي لديك تصريح بزيارتها',
+                regards: 'إستمتع بيومك :-)'
+            },
+            content: {
+                code: '403 غير مسموح',
+                description: 'الوصول مرفوض. ليس لديك إذن للوصول الى هذه الصفحة على هذا الخادم',
+                cause: 'تنفيذ الوصول ممنوع، الوصول للقراءة، الوصول ممنوع، SSL مطلوب، SSL 128 مطلوب، عنوان IP مرفوض، شهادة العميل مطلوبة، تم رفض الوصول إلى الموقع،  عدد كبير جدًا من المستخدمين، تكوين غير صالح، تغيير كلمة المرور، تم رفض الوصول إلى مصمم الخرائط، تم إبطال شهادة العميل، الدليل تم رفض القائمة، تجاوز تراخيص وصول العميل، شهادة العميل غير موثوقة أو غير صالحة، انتهت صلاحية شهادة العميل أو ليست صالحة بعد، فشل تسجيل الدخول بجواز السفر، تم رفض الوصول إلى المصدر، تم رفض العمق اللانهائي، طلبات كثيرة جدًا من نفس عنوان IP للعميل',
+                allowed: [{ label: 'الرئيسية', link: '/' }, { label: 'عنا', link: '/about' }, { label: 'إتصل بنا', link: '/support/contact' }],
+            }
+        }
+    });
+})
+```
+
+- Calling the `401` **unauthorized** page:
+Calling the `401` page works exactly the same as the `403` page, just the error code is different.
+
+###### Custom Error Pages
+The [default error pages](#default-error-pages) are not meant for production, yes, we know, they're not well designed and might not match with your brand theme, so you can define your own handlers for each and every one of those error pages.
+
+To define custom handlers, we use the server's `setHandler` method as usual, however, each error page has its own reserved handler name. Here is a list of the names.
+
+| Resource           | Handler Name   | Description                 |
+| ------------------ | -------------- | --------------------------- |
+| Not Found `404`    | `notFound`     | Used for custom `404` pages |
+| Unauthorized `401` | `unauthorized` | Used for custom `401` pages |
+| Forbidden `403`    | `forbidden`    | Used for custom `403` pages |
+| Server Error `500` | `serverError`  | Used for custom `500` pages |
+
+```js
+// 1) Define a custom 404 handler
+server.setHandler('notFound', (request, response, next) => {
+    response.render('notFoundView', { statusCode: 404 });
+})
+
+// 2) Render the custom page
+router.use('*', (request, response, next) => {
+    response.pages.notFound(); // This will now render the custom page
+})
+```
 ___
 ## Features
-HyperCloud is equiped with common featues out of the box. Here are some:
+HyperCloud is equiped with common features out of the box. Here are some.
 
 #### Generating eTags
-[ETags](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/ETag) can signifucantly improve server performance. To generate `eTags` for your resources use the following syntax:
+[ETags](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/ETag) can signifucantly improve server performance. To generate `eTags` for your resources, use the following syntax:
 
 ```js
 const path = require('path');

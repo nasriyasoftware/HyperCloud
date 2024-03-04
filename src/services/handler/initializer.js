@@ -1,10 +1,11 @@
 const http2 = require('http2');
-const { bodyParser, getClientIP, cookieParser } = require('./assets/helpers.js');
+const { bodyParser, getClientIP, cookieParser, buildQuery } = require('./assets/helpers.js');
 const HyperCloudServer = require('../../server.js');
 const HyperCloudRequest = require('./assets/request.js');
 const HyperCloudResponse = require('./assets/response.js');
 const Docs = require('../../utils/docs.js')
 const tldts = require('tldts');
+const url = require('url');
 
 class Initializer {
     /**
@@ -18,6 +19,7 @@ class Initializer {
     async createRequest(server, req, options) {
         /**@type {Docs.InitializedRequest} */
         const request = Object.seal({
+            server,
             id: null,
             ip: getClientIP(req, options?.trusted_proxies),
             protocol: null,
@@ -34,17 +36,18 @@ class Initializer {
             params: {}
         })
 
-        request.id = req.id;
+        request.id = req.id;        
         request.protocol = req.socket.encrypted ? 'https' : 'http'
-        request.host = req.headers.host;
-        request.baseUrl = `https://${req.headers.host}`;
+        request.host = req.headers[':authority'] || req.headers.host;
+        request.baseUrl = `${request.protocol}://${request.host}`;
         request.href = `${request.baseUrl}${req.url}`;
 
         const parsed = new URL(request.href)
         request.query = Object.fromEntries(parsed.searchParams)
         request.path = parsed.pathname.split('/').filter(i => i.length > 0);
-        const parsedTldts = tldts.parse(request.href)
-        request.domain = parsedTldts.domain
+        const parsedTldts = tldts.parse(request.href);
+        request.domain = typeof parsedTldts.domain === 'string' ? parsedTldts.domain : request.ip; 
+        // console.log(parsedTldts.domain, request.domain)
         request.subDomain = parsedTldts.subdomain
 
         const bodyMethods = ['POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS', 'TRACE', 'CONNECT']
@@ -87,8 +90,8 @@ class Initializer {
 
                 await requestEnd.then();
             }
-        }        
-        
+        }       
+
         return Promise.resolve(new HyperCloudRequest(request, req));
     }
 
