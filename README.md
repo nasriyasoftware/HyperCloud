@@ -1,11 +1,12 @@
 [![N|Solid](https://static.wixstatic.com/media/72ffe6_da8d2142d49c42b29c96ba80c8a91a6c~mv2.png)](https://nasriya.net)
-# Nasriya Software - HyperCloud.
-#### Visit us at [www.nasriya.net](https://nasriya.net).
-![License](https://img.shields.io/github/license/nasriyasoftware/HyperCloud.svg) ![Repository Size](https://img.shields.io/github/repo-size/nasriyasoftware/HyperCloud.svg) ![Last Commit](https://img.shields.io/github/last-commit/nasriyasoftware/HyperCloud.svg) [![Status](https://img.shields.io/badge/Status-Alpha-orange.svg)](link-to-your-status-page)
+# HyperCloud.
+[![Static Badge](https://img.shields.io/badge/license-personal_use-blue?labelColor=%23585858&color=%234ec920)](https://github.com/nasriyasoftware/HyperCloud?tab=License-1-ov-file) ![Repository Size](https://img.shields.io/github/repo-size/nasriyasoftware/HyperCloud.svg) ![Last Commit](https://img.shields.io/github/last-commit/nasriyasoftware/HyperCloud.svg) [![Status](https://img.shields.io/badge/Status-Alpha-orange.svg)](link-to-your-status-page)
+##### Visit us at [www.nasriya.net](https://nasriya.net).
 
 Nasriya HyperCloud is a lightwight Node.js HTTP2 framework.
+Made with ❤️ in **Palestine** 🇵🇸
 ___
-## Features
+## Key Features
 - [HTTP2](https://en.wikipedia.org/wiki/HTTP/2) Freamework.
 - Secure Server with **FREE** [SSL certificates](#generate-ssl-certificates).
 - Works well with proxies.
@@ -13,6 +14,9 @@ ___
 - Built-In & Custom [Error Pages](#error-pages).
 - Built-In [Job Scheduler](#task-scheduling).
 - Built-In [DNS Manager](#dns-management).
+
+## Status
+We're still running in **alpha**, so issues are expected, if you encounter one, please [open an issue](https://github.com/nasriyasoftware/HyperCloud/issues).
 ___
 ## Quick Start Quide
 Quickly run a `HyperCloud` server in **5** easy steps.
@@ -199,7 +203,7 @@ server.supportedLanguages = ['en', 'ar', 'de'];
 ```
 
 ###### Default Language
-If a user doesn't have a preferred language, the browser's language is selected then checked against the server's [supported languages](#supported-languages), if the browser's language isn't supported, the server's `defaultLanguage` is used to [render pages]() or serve other language-related content.
+If a user doesn't have a preferred language, the browser's language is selected then checked against the server's [supported languages](#supported-languages), if the browser's language isn't supported, the server's `defaultLanguage` is used to render pages or serve other language-related content.
 
 To set a default language:
 ```js
@@ -256,7 +260,7 @@ The built-in `user` object looks like this:
 ##### User Handler
 To populate the `user` object, you need to implement a **handler** to check user session, verify it, make a database call, fetch the data, and then populate the `user` object accordingly.
 
-To set the handler, we use the reserved handler name `userSessions` as the handler name on the server's [setHandler]() method:
+To set the handler, we use the reserved handler name `userSessions` as the handler name on the server's `setHandler` method:
 
 ```js
 const hypercloud = require('nasriya-hypercloud');
@@ -578,3 +582,6 @@ await Promise.allSettled(promises).then(res => {
     }
 })
 ```
+___
+## License
+Please read the license from [here](https://github.com/nasriyasoftware/HyperCloud?tab=License-1-ov-file).
