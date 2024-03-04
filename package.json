@@ -8,7 +8,7 @@
   },
   "keywords": [],
   "author": "Nasriya Software, LLC.",
-  "license": "ISC",
+  "license": "Nasriya License",
   "devDependencies": {
     "nodemon": "^3.0.3"
   },
@@ -20,5 +20,9 @@
     "node-cron": "^3.0.3",
     "openssl-self-signed-certificate": "^1.1.6",
     "tldts": "^6.1.11"
-  }
+  },
+  "bugs": {
+    "url": "https://github.com/nasriyasoftware/HyperCloud/issues"
+  },
+  "homepage": "https://github.com/nasriyasoftware/HyperCloud"
 }
