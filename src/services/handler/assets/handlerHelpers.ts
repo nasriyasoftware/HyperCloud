@@ -1,32 +1,33 @@
-const Docs = require('../../../utils/docs');
-const helpers = require('../../../utils/helpers');
+import { RequestBodyType } from '../../../docs/docs';
+import helpers from '../../../utils/helpers';
+import http2 from 'http2';
 
 /**
  * Convert the query back to string
  * @param {string} q The query object
- * @returns 
  */
-function buildQuery(q) {
+export function buildQuery(q: string) {
     let query = '';
     for (const [key, value] of Object.entries(q)) {
         if (query.length > 0) { query = `${query}&` }
         query = `${query}${key}=${value}`
     }
 
-    return Object.keys(query) > 0 ? `?${query}` : '';
+    return Object.keys(query).length > 0 ? `?${query}` : '';
 }
 
-function cookieParser(rawCookieHeader) {
+export function cookieParser(rawCookieHeader: any): Record<string, any> {
     // Parse the raw cookie header into an object
     const cookies = {};
     if (rawCookieHeader && typeof rawCookieHeader === 'string') {
         rawCookieHeader.split(';').forEach(cookie => {
             const parts = cookie.split('=');
-            const name = parts.shift().trim();
+            const name = (parts.shift() as string).trim();
             const value = decodeURIComponent(parts.join('=')).trim();
             cookies[name] = value;
         });
     }
+
     return cookies;
 }
 
@@ -36,9 +37,9 @@ function cookieParser(rawCookieHeader) {
  * @param {string} contentType
  * @returns {BodyParserResult}
  */
-function bodyParser(body, contentType) {
+export function bodyParser(body: any, contentType: string): BodyParserResult {
     /**@type {BodyParserResult} */
-    const request = { body, bodyType: null }
+    const request: BodyParserResult = { body, bodyType: null as unknown as RequestBodyType }
     // Handle different types of bodies
     if (contentType.includes('text/plain') || contentType.includes('text/html') || contentType.includes('application/xml')) {
         request.bodyType = 'text';
@@ -58,7 +59,7 @@ function bodyParser(body, contentType) {
             return request;
         } catch (error) {
             console.error('Error parsing JSON:', error);
-            return reject('Error parsing JSON:', error)
+            throw error;
         }
     }
 
@@ -99,7 +100,7 @@ function bodyParser(body, contentType) {
 
         while (processingIndex < lines.length - 2) {
             let processed = 0;
-            const item = { type: '', key: '', value: '', filename: undefined }
+            const item = { type: '', key: '', value: '', filename: undefined as unknown as string }
 
             if (lines[processingIndex].startsWith('----------------------------')) {
                 // Ignore the dashes line: lines[processingIndex] and increase the number of processed lines
@@ -142,7 +143,7 @@ function bodyParser(body, contentType) {
                     item.value = next;
                 }
 
-                const assign = { type: item.type, value: item.value.trim() }
+                const assign = { type: item.type, value: item.value.trim(), name: undefined as string | undefined }
                 if (item.filename) { assign.name = item.filename }
                 body[item.key] = assign;
                 processed++;
@@ -168,45 +169,59 @@ function bodyParser(body, contentType) {
 }
 
 /**
- * Extract the IP address from the request. If priority of chosing the IP is: 1) ```X-Real-IP```, 2) ```x-forwarded-for```, and 3) The actual remote address
+ * Extract the IP address from the request. If priority of chosing the IP is: 1) `X-Real-IP`, 2) `x-forwarded-for`, and 3) The actual remote address
  * @param {http2.Http2ServerRequest} req The HTTP2 request
  * @param {string[]} [trusted_proxies] The trusted proxy IPs
+ * @returns {string}
 */
-function getClientIP(req, trusted_proxies) {
+export function getClientIP(req: http2.Http2ServerRequest, trusted_proxies: string[]): string {
     const local_ips = helpers.getLocalIPs();
     trusted_proxies = [...new Set([...trusted_proxies, ...local_ips])];
     trusted_proxies.sort();
-    
-    if (req.headers['X-Real-IP']) {
-        if (helpers.validate.ipAddress(real)) {
-            return real === '::1' ? local_ips[0] : real;
-        } else {
-            helpers.printConsole(`The value of the 'X-Real-IP' header is invalid. Expected a valid IP address but got ${real}`);
-        }
-    }
 
-    const remoteAddress = req.socket.remoteAddress === '::1' ? local_ips[0] : req.socket.remoteAddress.includes('::ffff:') ? req.socket.remoteAddress.replace('::ffff:', '') : req.socket.remoteAddress;
-    
+    /**The `X-Real-IP` (if present) */
+    const realIP = (() => {
+        if (req.headers['X-Real-IP']) {
+            const xReal = req.headers['X-Real-IP'];
+            const real = Array.isArray(xReal) ? xReal[0] : xReal;
+            if (helpers.validate.ipAddress(real)) {
+                return real === '::1' ? local_ips[0] : real;
+            } else {
+                helpers.printConsole(`The value of the 'X-Real-IP' header is invalid. Expected a valid IP address but got ${real}`);
+            }
+        }
+
+        return null;
+    })();
+
+    // If real IP found, return it.
+    if (realIP) { return realIP }
+
+    /**The `remoteAddress` IP */
+    const remoteAddress = (() => {
+        if (req.socket.remoteAddress === '::1') { return local_ips[0] }
+        if (req.socket.remoteAddress?.includes('::ffff:')) { return req.socket.remoteAddress.replace('::ffff:', '') }
+        return req.socket.remoteAddress || 'UnknownIP';
+    })()
+
     if (Array.isArray(trusted_proxies) && trusted_proxies.includes(remoteAddress)) {
         // Check if the request has the X-Forwarded-For header
         const forwardedFor = req.headers['x-forwarded-for'];
-        if (forwardedFor) {
+        if (typeof forwardedFor === 'string' && helpers.is.validString(forwardedFor)) {
             // The header may contain multiple IP addresses separated by commas
             // The client's IP address is usually the first one in the list
             const ipAddresses = forwardedFor.split(',');
             return ipAddresses[0].trim();
+        } else if (Array.isArray(forwardedFor)) {
+            return forwardedFor[0];
         }
     }
-
 
     // If the X-Forwarded-For header is not present, fallback to the remote address
     return remoteAddress;
 }
 
-/**
- * @typedef {object} BodyParserResult
- * @prop {*} body
- * @prop {Docs.RequestBodyType} bodyType
- */
-
-module.exports = { bodyParser, getClientIP, cookieParser, buildQuery }
+interface BodyParserResult {
+    body: any;
+    bodyType: RequestBodyType
+}

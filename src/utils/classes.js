@@ -1,4 +1,4 @@
-const { Protocol } = require('./docs');
+const { Protocol } = require('../docs/docs');
 const helpers = require('./helpers');
 
 class SSLCredentials {

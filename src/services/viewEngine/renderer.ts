@@ -1,31 +1,28 @@
-const HyperCloudResponse = require('../handler/assets/response');
-const helpers = require('../../utils/helpers');
+import HyperCloudResponse from '../handler/assets/response';
+import helpers from '../../utils/helpers';
 
 class Renderer {
-    /**@type {HyperCloudResponse} */
-    #response;
+    private readonly _response: HyperCloudResponse;
 
-    #data = {
+    private _data = {
         locals: {},
-        /**@type {string} */
-        filePath: null
+        filePath: null as unknown as string
     }
 
-    /**@param {HyperCloudResponse} res */
-    constructor(res) {
-        this.#response = res;
+    constructor(res: HyperCloudResponse) {
+        this._response = res;
     }
 
     set locals(value) {
-        if (helpers.isRealObject(value)) {
-            this.#data.locals = value;
+        if (helpers.is.realObject(value)) {
+            this._data.locals = value;
         } else {
             throw new TypeError(`The ViewEngine.locals expected an object of key:value pairs but instead got ${typeof value}`)
         }
     }
 
-    get locals() { return this.#data.locals }
-    get viewEngine() { return this.#response.server.rendering.viewEngine }
+    get locals() { return this._data.locals }
+    get viewEngine() { return this._response.server.rendering.viewEngine }
 
     /**
      * 
@@ -33,12 +30,12 @@ class Renderer {
      * @param {object} locals A `key:value` pairs object for variables
      * @returns {string} The rendered `HTML` page
      */
-    render(fileName, locals) {
+    render(fileName: string, locals: Record<string, any>): string {
         try {
             // Make sure the view name exist
-            if (!(fileName in this.#response.server.rendering.views)) { throw `${fileName} view is not defined in the views object` }
+            if (!(fileName in this._response.server.rendering.views)) { throw `${fileName} view is not defined in the views object` }
             // If provided, make sure the locals is a real object
-            if (!helpers.isRealObject(locals)) { throw `The locals should be an object of key:value pairs, but instead got ${typeof locals}` }
+            if (!helpers.is.realObject(locals)) { throw `The locals should be an object of key:value pairs, but instead got ${typeof locals}` }
 
             // Determine the engine
             const viewEngine = this.viewEngine;
@@ -60,8 +57,8 @@ class Renderer {
 
             // Attempt to render            
             return engine.render(
-                this.#response.server.rendering.views[fileName],
-                { ...this.#response.server.locals, ...locals }
+                this._response.server.rendering.views[fileName],
+                { ...this._response.server.locals, ...locals }
             );
         } catch (error) {
             if (typeof error === 'string') { error = `Failed to render ${fileName}: ${error}` }
@@ -71,4 +68,4 @@ class Renderer {
     }
 }
 
-module.exports = Renderer;
+export default Renderer;

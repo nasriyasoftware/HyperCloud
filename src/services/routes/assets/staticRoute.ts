@@ -1,32 +1,21 @@
-const Docs = require('../../../utils/docs');
-const helpers = require('../../../utils/helpers');
+import { StaticRouteOptions, RouteOptions, HyperCloudRequestHandler } from '../../../docs/docs';
+import helpers from '../../../utils/helpers';
 
-const fs = require('fs');
-const path = require('path');
+import fs from 'fs';
+import path from 'path';
 
 class StaticRoute {
-    /**@type {string} */
-    #root;
-    #configs = {
+    private readonly _root: string;
+    private _configs = {
         caseSensitive: false,
-        /**@type {'*'|string} */
-        subDomain: '*',
-        /**@type {'GET'} */
+        subDomain: '*' as '*' | string,
         method: 'GET',
-        /**@type {Docs.HyperCloudRequestHandler} */
-        handler: null,
-        /**@type {'allow'|'ignore'|'deny'} */
-        dotfiles: 'ignore',
-        /**@type {string[]} */
-        path: []
+        handler: null as unknown as HyperCloudRequestHandler,
+        dotfiles: 'ignore' as 'allow' | 'ignore' | 'deny',
+        path: [] as string[]
     }
 
-
-    /**
-     * @param {string} root
-     * @param {Docs.StaticRouteOptions} options 
-     */
-    constructor(root, options) {
+    constructor(root: string, options: StaticRouteOptions) {
         const validity = helpers.checkPathAccessibility(root);
         if (!validity.valid) {
             const errors = validity.errors;
@@ -35,24 +24,24 @@ class StaticRoute {
             if (!errors.accessible) { throw `Unable to access (${root}): read permission denied.` }
         }
 
-        this.#root = root;
-        this.#helpers.initialize.dotfiles(options);
-        this.#helpers.initialize.path(options);
-        this.#helpers.initialize.subDomain(options);
-        this.#helpers.initialize.caseSensitive(options);
+        this._root = root;
+        this._utils.initialize.dotfiles(options);
+        this._utils.initialize.path(options);
+        this._utils.initialize.subDomain(options);
+        this._utils.initialize.caseSensitive(options);
 
-        this.#configs.handler = (request, response, next) => {
+        this._configs.handler = (request, response, next) => {
             try {
-                if (request.path.length < this.#configs.path) { return response.status(500).end({ data: `Internal server error (500).\n\nIf you're a visitor please wait a few minutes.` }) }
+                if (request.path.length < this._configs.path.length) { return response.status(500).end({ data: `Internal server error (500).\n\nIf you're a visitor please wait a few minutes.` }) }
                 // Remove the initial path (the virtual path) and keep the root path
                 const reqPath = request.path;
                 for (let i = 0; i < reqPath.length; i++) {
                     const pathSegment = reqPath[i];
-                    const isLast = i + 1 >= reqPath.length;                    
+                    const isLast = i + 1 >= reqPath.length;
 
                     if (pathSegment.startsWith('.')) {
-                        if (this.#configs.dotfiles === 'ignore') { return next() }
-                        if (this.#configs.dotfiles === 'deny') { return response.pages.unAuthorized() }
+                        if (this._configs.dotfiles === 'ignore') { return next() }
+                        if (this._configs.dotfiles === 'deny') { return response.pages.unauthorized() }
                     }
 
                     if (isLast) {
@@ -60,9 +49,9 @@ class StaticRoute {
                         copy.pop(); // Removes the last item (resource name) from the copy array    
 
                         // Resolve the folder path from the root directory and the request path
-                        const folder = path.resolve(path.join(this.#root, ...copy));                                         
+                        const folder = path.resolve(path.join(this._root, ...copy));
                         // Check folder path validity                       
-                        const validity = helpers.checkPathAccessibility(folder);   
+                        const validity = helpers.checkPathAccessibility(folder);
                         if (!validity.valid) { return next() }
                         // Check if the path is an actual directory
                         const folderStats = fs.statSync(folder);
@@ -71,9 +60,9 @@ class StaticRoute {
                         const filename = pathSegment;
                         // Read the content of the folder
                         const content = fs.readdirSync(folder, { withFileTypes: true });
-                        
+
                         const file = content.find(i => {
-                            if (this.#configs.caseSensitive) {
+                            if (this._configs.caseSensitive) {
                                 if (i.name === filename) { return true }
                             } else {
                                 if (i.name.toLowerCase() === filename.toLowerCase()) { return true }
@@ -88,8 +77,8 @@ class StaticRoute {
                         const eTagsPath = path.join(folder, 'eTags.json');
                         const eTagValidity = helpers.checkPathAccessibility(eTagsPath);
                         if (eTagValidity.valid) {
-                            const eTags = JSON.parse(fs.readFileSync(eTagsPath))
-                            if (helpers.isRealObject(eTags)) {
+                            const eTags = JSON.parse(fs.readFileSync(eTagsPath, { encoding: 'utf-8' }))
+                            if (helpers.is.realObject(eTags)) {
                                 console.log(`eTag found: ${eTags[file.name]}`)
                                 if (file.name in eTags) { response.setHeader('etag', eTags[file.name]) }
                             }
@@ -97,12 +86,12 @@ class StaticRoute {
 
                         const filePath = path.join(folder, file.name);
                         return response.sendFile(filePath, {
-                            root: this.#root,
+                            root: this._root,
                             lastModified: true,
                             acceptRanges: true,
                             cacheControl: true,
                             maxAge: '3 days'
-                        })                        
+                        })
                     } else {
                         continue;
                     }
@@ -117,10 +106,9 @@ class StaticRoute {
         }
     }
 
-    #helpers = Object.freeze({
+    private readonly _utils = Object.freeze({
         initialize: {
-            /**@param {Docs.RouteOptions} options */
-            dotfiles: (options) => {
+            dotfiles: (options: StaticRouteOptions) => {
                 if ('dotfiles' in options) {
                     if (typeof options.dotfiles !== 'string') { throw new TypeError(`The route's dotfiles options is expecting a string value, but instead got ${typeof options.dotfiles}`) }
                     const values = ['allow', 'ignore', 'deny'];
@@ -128,36 +116,33 @@ class StaticRoute {
 
                 }
             },
-            path: (options) => {
+            path: (options: StaticRouteOptions) => {
                 if ('path' in options) {
                     if (typeof options.path !== 'string') { throw new TypeError(`The route's path only accepts a string value, but instead got ${typeof options.path}`) }
                     if (options.path.length === 0) { throw new SyntaxError(`The rout's path cannot be an empty string`) }
-                    this.#configs.path = options.path.split('/').filter(i => i.length > 0);
+                    this._configs.path = options.path.split('/').filter(i => i.length > 0);
                 }
             },
-            /**@param {Docs.RouteOptions} options */
-            subDomain: (options) => {
+            subDomain: (options: StaticRouteOptions) => {
                 if ('subDomain' in options) {
                     if (typeof options.subDomain !== 'string') { throw new TypeError(`The route's subDomain option is expecting a string value, but instead got ${typeof options.subDomain}`) }
-                    this.#configs.subDomain = options.subDomain;
+                    this._configs.subDomain = options.subDomain;
                 }
             },
-            /**@param {Docs.RouteOptions} options */
-            caseSensitive: (options) => {
+            caseSensitive: (options: StaticRouteOptions) => {
                 if ('caseSensitive' in options) {
                     if (typeof options.caseSensitive !== 'boolean') { throw new TypeError(`The Route's caseSensitive option is expecting a boolean value, but instead got ${typeof options.caseSensitive}`) }
-                    this.#configs.caseSensitive = options.caseSensitive;
+                    this._configs.caseSensitive = options.caseSensitive;
                 }
             }
         }
     })
 
-    /**@returns {'*'|string} */
-    get subDomain() { return this.#configs.subDomain }
-    get caseSensitive() { return this.#configs.caseSensitive }
-    get method() { return this.#configs.method }
-    get path() { return this.#configs.path }
-    get handler() { return this.#configs.handler }
+    get subDomain(): '*' | string { return this._configs.subDomain }
+    get caseSensitive() { return this._configs.caseSensitive }
+    get method() { return this._configs.method }
+    get path() { return this._configs.path }
+    get handler() { return this._configs.handler }
 }
 
-module.exports = StaticRoute;
+export default StaticRoute;

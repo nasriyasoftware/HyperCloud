@@ -1,40 +1,37 @@
-const helpers = require('../../utils/helpers');
-const Docs = require('../../utils/docs');
+import helpers from '../../utils/helpers';
+import { ViewEngine } from '../../docs/docs';
 
-const path = require('path');
-const fs = require('fs');
-const HyperCloudServer = require('../../server')
+import path from 'path';
+import fs from 'fs';
+import HyperCloudServer from '../../server';
 
 /**
  * This class is used inside a {@link HyperCloudServer} as
  * `{@link HyperCloudServer.rendering}`
  */
 class RenderingManager {
-    /**@type {HyperCloudServer} */
-    #server;
-    #_constants = Object.freeze({
+    private readonly _server: HyperCloudServer;
+    private readonly _constants = Object.freeze({
         viewEngines: ['nhc', 'ejs']
     })
 
-    /**@type {Docs.ViewEngine} */
-    #viewEngine = 'ejs';
-    #views = {}
+    private _viewEngine: ViewEngine = 'ejs';
+    private _views = {}
 
-    /**@param {HyperCloudServer} server */
-    constructor(server) {
-        this.#server = server;
+    constructor(server: HyperCloudServer) {
+        this._server = server;
     }
 
     /**
      * Register a directory as views folder
      * @param {string} directory 
      */
-    #registerTemplates(directory) {
+    private _registerTemplates(directory: string): void {
         try {
-            const files = fs.readdirSync(directory);            
+            const files = fs.readdirSync(directory);
             files.forEach(file => {
                 const parsed = path.parse(file);
-                if (parsed.ext === `.${this.#viewEngine}`) {
+                if (parsed.ext === `.${this._viewEngine}`) {
                     const filePath = path.join(directory, file);
                     const viewName = parsed.name;
                     const template = fs.readFileSync(filePath, 'utf8');
@@ -51,9 +48,9 @@ class RenderingManager {
      * Add `views` folder(s) to the server
      * @param {string|string[]} paths A path to a views directory or an array of views' paths.
      */
-    addViews(paths) {
+    addViews(paths: string | string[]): void {
         if (!(Array.isArray(path) || typeof paths === 'string')) { throw new TypeError(`The server.renderer.addViews method accepts a string or an array of of valid views folders, but instead got ${typeof paths}`) }
-        const errors = [];
+        const errors: any[] = [];
 
         // If the argument is a single path, put it inside an array
         if (typeof paths === 'string') { paths = [paths] }
@@ -62,11 +59,11 @@ class RenderingManager {
         for (const viewsPath of paths) {
             const validity = helpers.checkPathAccessibility(viewsPath);
             if (validity.valid) {
-                this.#registerTemplates(viewsPath);
+                this._registerTemplates(viewsPath);
                 continue;
             }
 
-            const error = { path: viewsPath, type: 'invalid_path', errors: [] }
+            const error = { path: viewsPath, type: 'invalid_path', errors: [] as string[] }
             if (!validity.errors.isString) { error.errors.push('Not a string') }
             if (!validity.errors.exist) { error.errors.push('Path doesn\'t exist') }
             if (!validity.errors.accessible) { error.errors.push('access denied: no read permissions') }
@@ -78,23 +75,23 @@ class RenderingManager {
 
     /**
      * Get an object of the registered templates
-     * @returns {Object}
+     * @returns {Record<string, string>}
      */
-    get views() { return this.#views }
+    get views(): Record<string, string> { return this._views }
 
     /**
      * Get or set the view engine of the server
-     * @returns {Docs.ViewEngine}
+     * @returns {ViewEngine}
      */
-    get viewEngine() { return this.#viewEngine }
-    /**@param {Docs.ViewEngine} engine The view engine you want to choose */
-    set viewEngine(engine) {
-        if (this.#_constants.viewEngines.includes(engine)) {
-            this.#viewEngine = engine;
+    get viewEngine(): ViewEngine { return this._viewEngine }
+    /**@param {ViewEngine} engine The view engine you want to choose */
+    set viewEngine(engine: ViewEngine) {
+        if (this._constants.viewEngines.includes(engine)) {
+            this._viewEngine = engine;
         } else {
-            throw new RangeError(`${engine} is not a supportd view engine. You can only use ${this.#_constants.viewEngines.join(', ')}`)
+            throw new RangeError(`${engine} is not a supportd view engine. You can only use ${this._constants.viewEngines.join(', ')}`)
         }
     }
 }
 
-module.exports = RenderingManager;
+export default RenderingManager;

@@ -1,8 +1,9 @@
-const Route = require('./route');
-const StaticRoute = require('./staticRoute');
+import Route from './route';
+import StaticRoute from './staticRoute';
 
-const HyperCloudRequest = require('../../handler/assets/request');
-const HyperCloudResponse = require('../../handler/assets/response');
+import HyperCloudRequest from '../../handler/assets/request';
+import HyperCloudResponse from '../../handler/assets/response';
+
 /**
  * Only one instance is allowed for each request.
  * 
@@ -10,40 +11,31 @@ const HyperCloudResponse = require('../../handler/assets/response');
  * on the request `subDomain` and `path`.
  */
 class RequestRoutesManager {
-    /**@type {(Route|StaticRoute)[]} */
-    #routes = [];
-    #currentIndex = -1;
+    private _currentIndex = -1;
+    private readonly _routes: (Route | StaticRoute)[] = [];
 
-    /**@type {HyperCloudRequest} */
-    #request;
-    /**@type {HyperCloudResponse} */
-    #response;
-    #next = () => {
-        this.#currentIndex++;
-        if (this.#currentIndex <= this.#routes.length) {
-            this.#runNext();
+    private readonly _request: HyperCloudRequest;
+    private readonly _response: HyperCloudResponse;
+    private readonly _next = () => {
+        this._currentIndex++;
+        if (this._currentIndex <= this._routes.length) {
+            this._runNext();
         } else {
-            return this.#response.pages.notFound();
+            return this._response.pages.notFound();
         }
     }
 
-    /**
-     * 
-     * @param {(Route|StaticRoute)[]} routes 
-     * @param {HyperCloudRequest} request 
-     * @param {HyperCloudResponse} response 
-     */
-    constructor(routes, request, response) {
-        this.#routes = routes;
-        this.#request = request;
-        this.#response = response;
+    constructor(routes: (Route | StaticRoute)[], request: HyperCloudRequest, response: HyperCloudResponse) {
+        this._routes = routes;
+        this._request = request;
+        this._response = response;
 
-        const newRouts = []
+        const newRouts: (Route | StaticRoute)[] = []
         // Check if the user has a `userSessions` handler configured
         newRouts.push(new Route({
             path: '*', method: 'USE', handler: (request, response, next) => {
-                if (typeof request.server._handlers.userSessions === 'function') {
-                    return request.server._handlers.userSessions(request, response, next);
+                if (typeof request.server.__handlers.userSessions === 'function') {
+                    return request.server.__handlers.userSessions(request, response, next);
                 }
 
                 next();
@@ -53,8 +45,8 @@ class RequestRoutesManager {
         // Prepare the language
         newRouts.push(new Route({
             path: '*', method: 'USE', handler: (request, response, next) => {
-                const supportedLanguages = this.#response.server.supportedLanguages;
-                const defaultLanguage = this.#response.server.defaultLanguage || 'en';
+                const supportedLanguages = this._response.server.supportedLanguages;
+                const defaultLanguage = this._response.server.defaultLanguage || 'en';
 
                 /**
                  * Check if the user has a preferred language and if it's supported.
@@ -63,7 +55,7 @@ class RequestRoutesManager {
                 if (request.user.loggedIn) {
                     const prefLang = request.user.preferences.language;
                     if (supportedLanguages.includes(prefLang)) {
-                        request._language = prefLang;
+                        request.__language = prefLang;
                         return next();
                     }
                 }
@@ -84,9 +76,9 @@ class RequestRoutesManager {
                  * 3) Redirect to the new URL
                  */
                 if (typeof queryLang === 'string') {
-                    if (supportedLanguages.includes(queryLang)) {                        
-                        request._language = queryLang;
-                        if (queryLang !== cookieLang) {                            
+                    if (supportedLanguages.includes(queryLang)) {
+                        request.__language = queryLang;
+                        if (queryLang !== cookieLang) {
                             response.cookies.create('language', request.language, { priority: 'Medium' })
                         }
 
@@ -94,7 +86,7 @@ class RequestRoutesManager {
                         const _query = { ...request.query }
                         delete _query.lang;
                         const strQuery = `${Object.entries(_query).map(entry => `${entry[0]}=${entry[1]}`).join('?')}`;
-                        const newUrl = request.href.split('?')[0];                        
+                        const newUrl = request.href.split('?')[0];
                         return response.redirect(`${newUrl}${strQuery ? `?${strQuery}` : ''}`)
                     }
 
@@ -106,7 +98,7 @@ class RequestRoutesManager {
                  */
                 if (typeof cookieLang === 'string') {
                     if (supportedLanguages.includes(cookieLang)) {
-                        request._language = cookieLang;
+                        request.__language = cookieLang;
                         return next();
                     }
                 }
@@ -135,23 +127,21 @@ class RequestRoutesManager {
             }
         }))
 
-        this.#routes.unshift(...newRouts);
-        this.#runNext();
+        this._routes.unshift(...newRouts);
+        this._runNext();
     }
 
-    /**
-     * This method is only called by the server
-     */
-    #runNext() {
+    /**This method is only called by the server */
+    private _runNext() {
         // console.log('Running next')
-        const route = this.#routes[this.#currentIndex];
+        const route = this._routes[this._currentIndex];
         if (route) {
-            this.#request.params = route instanceof Route && Object.keys(route.params).length > 0 ? route.params : {};
-            route.handler(this.#request, this.#response, this.#next);
+            this._request.params = route instanceof Route && Object.keys(route.params).length > 0 ? route.params : {};
+            route.handler(this._request, this._response, this._next);
         } else {
-            this.#next();
+            this._next();
         }
     }
 }
 
-module.exports = RequestRoutesManager;
+export default RequestRoutesManager;

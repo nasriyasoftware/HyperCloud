@@ -1,13 +1,12 @@
-const HyperCloudResponse = require('./response');
-const Docs = require('../../../utils/docs');
-const ms = require('ms');
+import HyperCloudResponse from './response';
+import { CookieOptions } from '../../../docs/docs';
+import ms from 'ms';
 
 class Cookies {
-    /**@type {HyperCloudResponse} */
-    #response;
+    private readonly _response: HyperCloudResponse;
 
-    constructor(res) {
-        this.#response = res;
+    constructor(res: HyperCloudResponse) {
+        this._response = res;
     }
 
     /**
@@ -27,11 +26,11 @@ class Cookies {
      * ```
      * @param {string} name The name of the cookie
      * @param {string} value The value of the cookie
-     * @param {Docs.CookieOptions} [options] Customize the cookie with options
+     * @param {CookieOptions} [options] Customize the cookie with options
      * @returns {HyperCloudResponse}
      */
-    create(name, value, options) {
-        const cookie = [];
+    create(name: string, value: string, options: CookieOptions): HyperCloudResponse {
+        const cookie: string[] = [];
         const ONEYEAR = 31_536_000_000; // in ms
 
         try {
@@ -54,9 +53,9 @@ class Cookies {
 
             if (options && 'maxAge' in options) {
                 if (!(typeof options.maxAge === 'number' || typeof options.maxAge === 'string')) { throw new TypeError(`The "maxAge" value should either be a number of milliseconds or a string.`) }
-                
+
                 if (typeof options.maxAge === 'string') {
-                    if (options.maxAge.length === 0) { throw new SyntaxError(`The maxAge string value cannot be empty`) }
+                    if ((options.maxAge as string).length === 0) { throw new SyntaxError(`The maxAge string value cannot be empty`) }
                     const value = ms(options.maxAge);
                     if (typeof value !== 'number') { throw new SyntaxError(`${options.maxAge} is not a valid maxAge value`) }
                     options.maxAge = value;
@@ -80,7 +79,7 @@ class Cookies {
 
             if (options && 'expires' in options) {
                 if (!(options.expires instanceof Date)) { throw new TypeError(`The "expires" option is expecting a Date instance, but instead got ${typeof options.expires}`) }
-                const now = Date.now();
+                const now = new Date();
                 if (now > options.expires) { throw `The "Expires" value cannot be in the past` }
                 cookie.push(`Expires=${options.expires.toUTCString()}`);
             }
@@ -103,8 +102,8 @@ class Cookies {
                 cookie.push(`Priority=${options.priority}`)
             }
 
-            this.#response.setHeader('Set-Cookie', cookie.join('; '));
-            return this.#response;
+            this._response.setHeader('Set-Cookie', cookie.join('; '));
+            return this._response;
         } catch (error) {
             if (typeof error === 'string') { error = `Unable to create cookie: ${error}` }
             if (typeof error?.messasge === 'string') { error.message = `Unable to create cookie: ${error.message}` }
@@ -117,16 +116,16 @@ class Cookies {
      * @param {string} name The name of the cookie to delete
      * @returns {HyperCloudResponse}
      */
-    delete(name) {
+    delete(name: string): HyperCloudResponse {
         if (typeof name !== 'string' || name?.length === 0) { throw `(${name}) is not a valid cookie name` }
-        this.#response.setHeader('Set-Cookie', `${name}=deleted; Expires=Thu, 01 Jan 1970 00:00:00 GMT; Path=/`);
-        return this.#response;
+        this._response.setHeader('Set-Cookie', `${name}=deleted; Expires=Thu, 01 Jan 1970 00:00:00 GMT; Path=/`);
+        return this._response;
     }
 
     /**
      * Get a list of all the created cookies
      */
-    get list() { return this.#response.getHeaders()['set-cookie'] }
+    get list() { return this._response.getHeaders()['set-cookie'] }
 }
 
-module.exports = Cookies;
+export default Cookies;

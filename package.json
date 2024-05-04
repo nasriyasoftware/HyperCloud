@@ -2,7 +2,7 @@
   "name": "nasriya-hypercloud",
   "version": "1.0.0",
   "description": "Nasriya HyperCloud is a lightwight Node.js HTTP2 framework.",
-  "main": "hypercloud.js",
+  "main": "src/hypercloud.ts",
   "scripts": {
     "start": "nodemon main.js"
   },
@@ -10,6 +10,7 @@
   "author": "Nasriya Software, LLC.",
   "license": "Nasriya License",
   "devDependencies": {
+    "@types/node": "^20.12.8",
     "nodemon": "^3.0.3"
   },
   "dependencies": {

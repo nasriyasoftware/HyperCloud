@@ -1,11 +1,12 @@
-const http2 = require('http2');
-const { bodyParser, getClientIP, cookieParser, buildQuery } = require('./assets/helpers.js');
-const HyperCloudServer = require('../../server.js');
-const HyperCloudRequest = require('./assets/request.js');
-const HyperCloudResponse = require('./assets/response.js');
-const Docs = require('../../utils/docs.js')
-const tldts = require('tldts');
-const url = require('url');
+import http2 from 'http2';
+import { bodyParser, getClientIP, cookieParser } from './assets/handlerHelpers';
+import HyperCloudServer from '../../server';
+import HyperCloudRequest from './assets/request';
+import HyperCloudResponse from './assets/response';
+import tldts from 'tldts';
+import { InitializedRequest, RequestBodyType } from '../../docs/docs';
+import { TLSSocket } from 'tls';
+import helpers from '../../utils/helpers'
 
 class Initializer {
     /**
@@ -16,29 +17,41 @@ class Initializer {
      * @param {string[]} [options.trusted_proxies] The IP address of the trusted proxy. This is needed in order to get the correct IP address of the client
      * @returns {Promise<HyperCloudRequest>}
      */
-    async createRequest(server, req, options) {
-        /**@type {Docs.InitializedRequest} */
-        const request = Object.seal({
+    async createRequest(server: HyperCloudServer, req: http2.Http2ServerRequest, options: { trusted_proxies?: string[]; }): Promise<HyperCloudRequest> {
+        /**@type {InitializedRequest} */
+        const request: InitializedRequest = Object.seal({
             server,
-            id: null,
-            ip: getClientIP(req, options?.trusted_proxies),
-            protocol: null,
-            host: null,
-            subDomain: null,
-            domain: null,
-            baseUrl: null,
-            path: [],
-            query: {},
-            href: null,
-            bodyType: null,
-            body: null,
+            id: null as unknown as string,
+            ip: getClientIP(req, options?.trusted_proxies || []),
+            protocol: null as unknown as 'http' | 'https',
+            host: null as unknown as string,
+            subDomain: null as unknown as string,
+            domain: null as unknown as string,
+            baseUrl: null as unknown as string,
+            path: [] as string[],
+            query: {} as Record<string, string>,
+            href: null as unknown as string,
+            bodyType: null as unknown as RequestBodyType,
+            body: null as unknown as string | Record<string, any> | Buffer,
             cookies: cookieParser(req.headers['cookie']),
-            params: {}
+            params: {} as Record<string, string>
         })
 
-        request.id = req.id;        
-        request.protocol = req.socket.encrypted ? 'https' : 'http'
-        request.host = req.headers[':authority'] || req.headers.host;
+        // @ts-ignore
+        request.id = req.id;
+        request.protocol = (() => {
+            if (req.socket instanceof TLSSocket) {
+                return req.socket.encrypted ? 'https' : 'http'
+            } else { return 'http' }
+        })();
+
+        request.host = (() => {
+            const authority = req.headers[':authority'];
+            if (helpers.is.validString(authority)) { return authority }
+            if (helpers.is.validString(req.headers.host)) { return req.headers.host }
+            return 'UnknownHost'
+        })() as string;
+
         request.baseUrl = `${request.protocol}://${request.host}`;
         request.href = `${request.baseUrl}${req.url}`;
 
@@ -46,12 +59,25 @@ class Initializer {
         request.query = Object.fromEntries(parsed.searchParams)
         request.path = parsed.pathname.split('/').filter(i => i.length > 0);
         const parsedTldts = tldts.parse(request.href);
-        request.domain = typeof parsedTldts.domain === 'string' ? parsedTldts.domain : request.ip; 
+        request.domain = typeof parsedTldts.domain === 'string' ? parsedTldts.domain : request.ip;
         // console.log(parsedTldts.domain, request.domain)
-        request.subDomain = parsedTldts.subdomain
+        request.subDomain = parsedTldts.subdomain || undefined;
+
+        const contentLength = (() => {
+            const contentLengthHeader = req.headers['content-length'] || '';
+
+            if (helpers.is.validString(contentLengthHeader)) {
+                const contentLength = parseInt(contentLengthHeader, 10);
+                if (!isNaN(contentLength)) {
+                    return contentLength;
+                }
+            }
+
+            return 0;
+        })();
 
         const bodyMethods = ['POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS', 'TRACE', 'CONNECT']
-        if (bodyMethods.includes(req.method) && req.headers['content-length'] > 0) {
+        if (bodyMethods.includes(req.method) && contentLength > 0) {
             // Get the Content-Type header from the request
             const contentType = req.headers['content-type'];
 
@@ -81,7 +107,7 @@ class Initializer {
                             const { body, bodyType } = bodyParser(request.body, contentType);
                             request.bodyType = bodyType;
                             if (body) { request.body = body }
-                            resolve();
+                            resolve(undefined);
                         });
                     } catch (error) {
                         reject(error);
@@ -90,7 +116,7 @@ class Initializer {
 
                 await requestEnd.then();
             }
-        }       
+        }
 
         return Promise.resolve(new HyperCloudRequest(request, req));
     }
@@ -102,9 +128,9 @@ class Initializer {
      * @param {http2.Http2ServerResponse} res 
      * @returns {HyperCloudResponse}
      */
-    createResponse(server, req, res) {
+    createResponse(server: HyperCloudServer, req: HyperCloudRequest, res: http2.Http2ServerResponse): HyperCloudResponse {
         return new HyperCloudResponse(server, req, res);
     }
 }
 
-module.exports = new Initializer();
+export default new Initializer();

@@ -1,38 +1,36 @@
-const mimes = require('../../../data/mimes.json');
-const extentions = require('../../../data/extensions.json');
-const helpers = require('../../../utils/helpers');
-const HyperCloudRequest = require('./request');
-const HyperCloudServer = require('../../../server');
-const Renderer = require('../../viewEngine/renderer');
-const Cookies = require('./cookies')
+import mimes from '../../../data/mimes.json';
+import _extensions from '../../../data/extensions.json';
+import helpers from '../../../utils/helpers';
+import HyperCloudRequest from './request';
+import HyperCloudServer from '../../../server';
+import Renderer from '../../viewEngine/renderer';
+import Cookies from './cookies';
 
-const fs = require('fs');
-const path = require('path');
-const ms = require('ms');
+import fs from 'fs';
+import path from 'path';
+import ms from 'ms';
 
 // Type declarations
-const http2 = require('http2');
-const stream = require('stream');
-const net = require('net');
-const tls = require('tls');
-const Docs = require('../../../utils/docs');
+import http2 from 'http2';
+import stream from 'stream';
+import net from 'net';
+import tls from 'tls';
+import { NotFoundResponseOptions, RenderingOptions, ForbiddenAndUnauthorizedOptions, ServerErrorOptions, RedirectCode, DownloadFileOptions, SendFileOptions, MimeType, ExtensionData } from '../../../docs/docs';
+
+const extensions = !helpers.is.undefined(_extensions) ? _extensions : [] as unknown as ExtensionData[];
 /**
  * TODO: Change all the server examples to use my own server class
  */
 
 /**This class is used internallly, not by the user */
 class HyperCloudResponse {
-    /**@type {HyperCloudServer} */
-    #server;
-    /**@type {HyperCloudRequest} */
-    #req;
-    /**@type {http2.Http2ServerResponse} */
-    #res;
-    /**@type {Cookies} */
-    #cookies;
+    private readonly _server: HyperCloudServer;
+    private readonly _req: HyperCloudRequest;
+    private readonly _res: http2.Http2ServerResponse;
+    private readonly _cookies: Cookies;
 
-    #preservedHeaders = ['x-server', 'x-request-id']
-    #encodings = Object.freeze([
+    private readonly _preservedHeaders = ['x-server', 'x-request-id']
+    private readonly _encodings = Object.freeze([
         "ascii",
         "utf8",
         "utf-8",
@@ -47,31 +45,26 @@ class HyperCloudResponse {
         "hex"
     ]);
 
-    #status = Object.seal({
+    private _status = Object.seal({
         closed: false
     })
 
-    /**
-     * @param {HyperCloudServer} server
-     * @param {HyperCloudRequest} req
-     * @param {http2.Http2ServerResponse} res
-    */
-    constructor(server, req, res) {
-        this.#server = server;
-        this.#req = req;
-        this.#res = res;
-        this.#cookies = new Cookies(this);
+    constructor(server: HyperCloudServer, req: HyperCloudRequest, res: http2.Http2ServerResponse) {
+        this._server = server;
+        this._req = req;
+        this._res = res;
+        this._cookies = new Cookies(this);
 
         // Context Binding: Ensure that the ```this``` context is properly bound on methods
-        for (const prop in this.#res) {
-            if (typeof this.#res[prop] === 'function') {
-                this.#res[prop] = this.#res[prop].bind(this.#res)
+        for (const prop in this._res) {
+            if (typeof this._res[prop] === 'function') {
+                this._res[prop] = this._res[prop].bind(this._res)
             }
         }
 
-        for (const prop in this.#req) {
-            if (typeof this.#req[prop] === 'function') {
-                this.#req[prop] = this.#req[prop].bind(this.#res)
+        for (const prop in this._req) {
+            if (typeof this._req[prop] === 'function') {
+                this._req[prop] = this._req[prop].bind(this._res)
             }
         }
     }
@@ -99,26 +92,24 @@ class HyperCloudResponse {
              * server.setHandler('notFound', (request, response, next) => {
              *      // Decide what to do here
              * })
-             * @param {Docs.NotFoundResponseOptions} [options] Rendering options
-             * @returns {this}
+             * @param {NotFoundResponseOptions} [options] Rendering options
              */
-            notFound: (options) => {
-                if (typeof this.#server._handlers.notFound === 'function') {
+            notFound: (options?: NotFoundResponseOptions) => {
+                if (typeof this._server.__handlers.notFound === 'function') {
                     try {
                         // Run the user defined handler for not-found resources
-                        this.#server._handlers.notFound();
+                        this._server.__handlers.notFound();
                     } catch (error) {
                         this.pages.serverError({ error });
                     }
                 } else {
                     const viewName = 'hypercloud_404';
 
-                    /**@type {Docs.RenderingOptions} */
-                    const renderOptions = {
+                    const renderOptions: RenderingOptions = {
                         cacheControl: false,
                         statusCode: 404,
                         locals: {
-                            lang: options?.lang,
+                            lang: options?.lang || this._req.language,
                             title: options?.locals?.title || `404 - Page Not Found`,
                             subtitle: options?.locals?.subtitle || 'Oops. Looks like you took a wrong turn.',
                             homeBtnLabel: options?.locals?.home || 'HOME'
@@ -160,26 +151,25 @@ class HyperCloudResponse {
              * server.setHandler('unauthorized', (request, response, next) => {
              *      // Decide what to do here
              * })
-             * @param {Docs.ForbiddenAndUnauthorizedOptions} options 
-             * @returns {this}
+             * @param {ForbiddenAndUnauthorizedOptions} [options] 
              */
-            unauthorized: (options) => {
-                if (typeof this.#server._handlers.unauthorized === 'function') {
+            unauthorized: (options: ForbiddenAndUnauthorizedOptions) => {
+                if (typeof this._server.__handlers.unauthorized === 'function') {
                     try {
                         // Run the user defined handler for not-found resources
-                        this.#server._handlers.unauthorized();
+                        this._server.__handlers.unauthorized();
                     } catch (error) {
                         this.pages.serverError({ error });
                     }
                 } else {
                     const viewName = 'hypercloud_401_403';
 
-                    /**@type {Docs.RenderingOptions} */
-                    const renderOptions = {
+                    /**@type {RenderingOptions} */
+                    const renderOptions: RenderingOptions = {
                         cacheControl: false,
                         statusCode: 401,
                         locals: {
-                            lang: options?.lang,
+                            lang: options?.lang || this._req.language,
                             title: options?.locals?.title || 'Unauthorized',
                             code: 401,
                             commands: {
@@ -233,26 +223,25 @@ class HyperCloudResponse {
              * server.setHandler('forbidden', (request, response, next) => {
              *      // Decide what to do here
              * })
-             * @param {Docs.ForbiddenAndUnauthorizedOptions} options 
-             * @returns {this}
+             * @param {ForbiddenAndUnauthorizedOptions} options 
              */
-            forbidden: (options) => {
-                if (typeof this.#server._handlers.forbidden === 'function') {
+            forbidden: (options: ForbiddenAndUnauthorizedOptions) => {
+                if (typeof this._server.__handlers.forbidden === 'function') {
                     try {
                         // Run the user defined handler for not-found resources
-                        this.#server._handlers.forbidden();
+                        this._server.__handlers.forbidden();
                     } catch (error) {
                         this.pages.serverError({ error });
                     }
                 } else {
                     const viewName = 'hypercloud_401_403';
 
-                    /**@type {Docs.RenderingOptions} */
-                    const renderOptions = {
+                    /**@type {RenderingOptions} */
+                    const renderOptions: RenderingOptions = {
                         cacheControl: false,
                         statusCode: 403,
                         locals: {
-                            lang: options?.lang,
+                            lang: options?.lang || this._req.language,
                             title: options?.locals?.title || 'Forbidden',
                             code: 403,
                             commands: {
@@ -295,38 +284,37 @@ class HyperCloudResponse {
              * server.setHandler('serverError', (request, response, next) => {
              *      // Decide what to do here
              * })
-             * @param {Docs.ServerErrorOptions} options 
-             * @returns {this}
+             * @param {ServerErrorOptions} options 
              */
-            serverError: (options) => {
+            serverError: (options: ServerErrorOptions) => {
                 if ('error' in options) {
                     const dashLine = '#'.repeat(50);
                     const diver = `${dashLine}\n${dashLine}`;
 
                     helpers.printConsole(diver);
                     console.error(`A server error has occurred`);
-                    helpers.printConsole(`${new Date().toUTCString()} - Page Load Error - Request ID: ${this.#req.id}`);
-                    helpers.printConsole(`Request:\n${this.#req._toString()}`);
+                    helpers.printConsole(`${new Date().toUTCString()} - Page Load Error - Request ID: ${this._req.id}`);
+                    helpers.printConsole(`Request:\n${this._req.__toString()}`);
                     helpers.printConsole(options.error);
                     helpers.printConsole(diver);
                 }
 
-                if (typeof this.#server._handlers.serverError === 'function' && options?.bypassHandler !== true) {
+                if (typeof this._server.__handlers.serverError === 'function' && options?.bypassHandler !== true) {
                     try {
                         // Run the user defined handler for not-found resources
-                        this.#server._handlers.serverError();
+                        this._server.__handlers.serverError();
                     } catch (error) {
                         this.pages.serverError({ bypassHandler: true });
                     }
                 } else {
                     const viewName = 'hypercloud_500';
 
-                    /**@type {Docs.RenderingOptions} */
-                    const renderOptions = {
+                    /**@type {RenderingOptions} */
+                    const renderOptions: RenderingOptions = {
                         cacheControl: false,
                         statusCode: 500,
                         locals: {
-                            lang: options?.lang,
+                            lang: options?.lang || this._req.language,
                             title: options?.locals?.title || 'Server Error',
                             subtitle: options?.locals?.subtitle || 'Internal <code>Server&nbsp;error<span>!</span></code>',
                             message: options?.locals?.message || `<p> We're sorry, but something went wrong on our end. Our team has been notified, and we're working to fix the issue as soon as possible. </p>\n<p>In the meantime, you can try refreshing the page or coming back later. If the problem persists, feel free to <a href="/contact-us">contact us</a> for further assistance.</p>\n<p>Thank you for your understanding.</p>`,
@@ -342,15 +330,15 @@ class HyperCloudResponse {
     /**
      * Redirect the client to a new location
      * @param {string} url A relative or full path URL.
-     * @param {Docs.RedirectCode} [code] A redirect code. Default `307`. Learn more about [redirections in HTTP](https://developer.mozilla.org/en-US/docs/Web/HTTP/Redirections).
+     * @param {RedirectCode} [code] A redirect code. Default `307`. Learn more about [redirections in HTTP](https://developer.mozilla.org/en-US/docs/Web/HTTP/Redirections).
      */
-    redirect(url, code = 307) {
+    redirect(url: string, code: RedirectCode = 307) {
         try {
             if (typeof url !== 'string') { throw new TypeError(`The redirect URL should be a string, but instead got ${typeof url}`) }
             if (typeof code === 'number' || typeof code === 'string') {
                 if (typeof code === 'string') {
                     try {
-                        code = Number.parseInt(code);
+                        code = Number.parseInt(code) as RedirectCode;
                     } catch (error) {
                         throw new TypeError(`The redirect code should be a number, instead got ${typeof code}`);
                     }
@@ -376,13 +364,13 @@ class HyperCloudResponse {
     /**
      * Render an `ejs` template with the provided options.
      * @param {string} name A view name (without a file extension) or an absolute path. If only a name is provided, the 
-     * @param {Docs.RenderingOptions} options 
+     * @param {RenderingOptions} options 
      * @returns {HyperCloudResponse}
      */
-    render(name, options) {
+    render(name: string, options: RenderingOptions): HyperCloudResponse {
         try {
             const renderer = new Renderer(this);
-            const html = renderer.render(name, options?.locals);
+            const html = renderer.render(name, options?.locals || {});
             this.setHeader('Content-Type', 'text/html');
 
             if ('cacheControl' in options) {
@@ -406,8 +394,8 @@ class HyperCloudResponse {
                         maxAge = value;
                     }
 
-                    if (options.maxAge < 0) { throw new RangeError(`The maxAge cannot be a negative value`) }
-                    if (options.maxAge > ONEYEAR) { throw new RangeError(`The maxAge value should not be more than one year`) }
+                    if ((options.maxAge as number) < 0) { throw new RangeError(`The maxAge cannot be a negative value`) }
+                    if ((options.maxAge) as number > ONEYEAR) { throw new RangeError(`The maxAge value should not be more than one year`) }
 
                     if ('immutable' in options) {
                         if (typeof options.immutable !== 'boolean') { throw new TypeError(`The immutable property only accepts boolean values, but instead got ${typeof options.immutable}`) }
@@ -446,21 +434,21 @@ class HyperCloudResponse {
     /**
      * Download a file using the `response.sendFile` method.
      * @param {string} filePath The file path (relative/absolute). When providing a relative path, you must specify the `root` in the `options` argument
-     * @param {Docs.DownloadFileOptions} options Options for sending the file
+     * @param {DownloadFileOptions} options Options for sending the file
      * @returns {http2.Http2ServerResponse|undefined}
      */
-    downloadFile(filePath, options) {
-        if (helpers.isRealObject(options)) { options.download = true } else { options = { download: true } }
-        return this.sendFile(filePath, options);
+    downloadFile(filePath: string, options: DownloadFileOptions): http2.Http2ServerResponse | undefined {
+        const sendOptions: SendFileOptions = helpers.is.realObject(options) ? { ...options, download: true } : { download: true }
+        return this.sendFile(filePath, sendOptions);
     }
 
     /**
      * Send a file back to the client
      * @param {string} filePath The file path (relative/absolute). When providing a relative path, you must specify the `root` in the `options` argument
-     * @param {Docs.SendFileOptions} [options] Options for sending the file
+     * @param {SendFileOptions} [options] Options for sending the file
      * @returns {http2.Http2ServerResponse|undefined}
      */
-    sendFile(filePath, options) {
+    sendFile(filePath: string, options: SendFileOptions): http2.Http2ServerResponse | undefined {
         const root = process.cwd();
 
         try {
@@ -497,12 +485,12 @@ class HyperCloudResponse {
             if (fileName.startsWith('.')) {
                 if (options && 'dotfiles' in options) {
                     const allowed = ['allow', 'deny', 'ignore']
-                    if (!allowed.includes(options.dotfiles)) { throw new TypeError(`The dotfiles property was provided with an unsupported value. Only "allow", "deny", and "ignore" are supported`) }
+                    if (!allowed.includes(options.dotfiles || '')) { throw new TypeError(`The dotfiles property was provided with an unsupported value. Only "allow", "deny", and "ignore" are supported`) }
 
                     const choice = options.dotfiles;
                     if (choice === 'ignore') {
                         if ('notFoundFile' in options) {
-                            const notFoundAvail = helpers.checkPathAccessibility(options.notFoundFile);
+                            const notFoundAvail = helpers.checkPathAccessibility(options.notFoundFile as string);
                             if (!notFoundAvail.valid) {
                                 if (notFoundAvail.errors.isString) { throw `The notFoundFile path should be a string, instead got ${typeof options.notFoundFile}` }
                                 if (notFoundAvail.errors.exist) { throw `The notFoundFile path (${options.notFoundFile}) doesn't exist` }
@@ -522,14 +510,14 @@ class HyperCloudResponse {
 
                     if (choice === 'deny') {
                         if ('unauthorizedFile' in options) {
-                            const unAuthAvail = helpers.checkPathAccessibility(options.unauthorizedFile)
+                            const unAuthAvail = helpers.checkPathAccessibility(options.unauthorizedFile as string)
                             if (!unAuthAvail.valid) {
-                                if (unAuthAvail.errors.isString) { throw `The unAuthAvail path should be a string, instead got ${typeof options.unAuthAvail}` }
-                                if (unAuthAvail.errors.exist) { throw `The unAuthAvail path (${options.unAuthAvail}) doesn't exist` }
-                                if (unAuthAvail.errors.accessible) { throw `You don't have enough permissions to access the unAuthAvail path: ${options.unAuthAvail}` }
+                                if (unAuthAvail.errors.isString) { throw `The unauthorizedFile path should be a string, instead got ${typeof options.unauthorizedFile}` }
+                                if (unAuthAvail.errors.exist) { throw `The unauthorizedFile path (${options.unauthorizedFile}) doesn't exist` }
+                                if (unAuthAvail.errors.accessible) { throw `You don't have enough permissions to access the unauthorizedFile path: ${options.unauthorizedFile}` }
                             }
 
-                            if (!options.unauthorizedFile?.toLowerCase().startsWith(root.toLowerCase())) { throw new RangeError(`The not 401 file (${options.unAuthAvail}) is not in your root directory.`) }
+                            if (!options.unauthorizedFile?.toLowerCase().startsWith(root.toLowerCase())) { throw new RangeError(`The not 401 file (${options.unauthorizedFile}) is not in your root directory.`) }
                             this.setHeader('Content-Type', 'text/html');
                             this.write({ chunk: fs.readFileSync(options.unauthorizedFile) });
                             this.end();
@@ -577,8 +565,8 @@ class HyperCloudResponse {
                         maxAge = value;
                     }
 
-                    if (options.maxAge < 0) { throw new RangeError(`The maxAge cannot be a negative value`) }
-                    if (options.maxAge > ONEYEAR) { throw new RangeError(`The maxAge value should not be more than one year`) }
+                    if ((options.maxAge as number) < 0) { throw new RangeError(`The maxAge cannot be a negative value`) }
+                    if ((options.maxAge as number) > ONEYEAR) { throw new RangeError(`The maxAge value should not be more than one year`) }
 
                     if ('immutable' in options) {
                         if (typeof options.immutable !== 'boolean') { throw new TypeError(`The immutable property only accepts boolean values, but instead got ${typeof options.immutable}`) }
@@ -595,14 +583,14 @@ class HyperCloudResponse {
             if (options && 'headers' in options) {
                 const headers = Object.keys(options.headers || {});
                 if (typeof options.headers === 'object' && headers.length > 0) {
-                    const preserved = [...this.#preservedHeaders, 'last-modified', 'cache-control', 'expires'];
+                    const preserved = [...this._preservedHeaders, 'last-modified', 'cache-control', 'expires'];
                     const headersUsed = [...preserved];
 
                     for (const headerInput of headers) {
-                        const headerName = header.toLowerCase()
+                        const headerName = headerInput.toLowerCase()
                         if (!headersUsed.includes(headerName)) {
                             headersUsed.push(headerName);
-                            this.setHeader(headerName, options.headers[headerInput]);
+                            this.setHeader(headerName, options.headers[headerInput] as string);
                         }
                     }
                 }
@@ -616,7 +604,7 @@ class HyperCloudResponse {
             // Preparing the mime-type
             const exts = fileName.split('.').filter(i => i.length > 0);
             const extension = `.${exts[exts.length - 1]}`;
-            const mime = extentions.find(i => i.extension.includes(extension)).mime;
+            const mime = extensions.find(i => i.extension === extension)?.mime as string;
 
 
             // Check if the download option is triggered or not
@@ -631,11 +619,11 @@ class HyperCloudResponse {
             // Checking the range settings
             if (options && 'acceptRanges' in options) {
                 if (typeof options.acceptRanges !== 'boolean') { throw new TypeError(`The acceptRanges option only accepts boolean values, but instead got ${typeof options.acceptRanges}`) }
+                const range = this.req.headers.range;
                 // Check if the request has ranges
-                if (this.req.headers.range) {
-                    const range = this.req.headers.range;
+                if (range) {
                     // Function to parse the Range header
-                    const parseRangeHeader = (range, size) => {
+                    const parseRangeHeader = (range: string, size: number) => {
                         const [start, end] = range.replace(/bytes=/, '').split('-');
                         const parsedStart = parseInt(start, 10);
                         const parsedEnd = parseInt(end, 10);
@@ -648,7 +636,7 @@ class HyperCloudResponse {
 
 
                     const totalSize = stats.size;
-                    const [start, end] = parseRangeHeader(rangeHeader, totalSize);
+                    const [start, end] = parseRangeHeader(range, totalSize);
                     const chunkSize = (end - start) + 1;
 
                     this.status(206);
@@ -657,23 +645,23 @@ class HyperCloudResponse {
                     this.setHeader('Content-Length', chunkSize);
 
                     const fileStream = fs.createReadStream(filePath, { start, end });
-                    return fileStream.pipe(this.#res);
+                    return fileStream.pipe(this._res);
                 }
             }
 
             this.status(200).setHeader('Content-Length', stats.size);
             const fileStream = fs.createReadStream(filePath);
-            return fileStream.pipe(this.#res);
+            return fileStream.pipe(this._res);
         } catch (error) {
             if (options && 'serverErrorFile' in options) {
-                const errValidity = helpers.checkPathAccessibility(options.serverErrorFile);
+                const errValidity = helpers.checkPathAccessibility(options.serverErrorFile as string);
                 if (!errValidity.valid) {
-                    if (errValidity.errors.isString) { throw `The errValidity path should be a string, instead got ${typeof options.errValidity}` }
-                    if (errValidity.errors.exist) { throw `The errValidity path (${options.errValidity}) doesn't exist` }
-                    if (errValidity.errors.accessible) { throw `You don't have enough permissions to access the errValidity path: ${options.errValidity}` }
+                    if (errValidity.errors.isString) { throw `The serverErrorFile path should be a string, instead got ${typeof options.serverErrorFile}` }
+                    if (errValidity.errors.exist) { throw `The serverErrorFile path (${options.serverErrorFile}) doesn't exist` }
+                    if (errValidity.errors.accessible) { throw `You don't have enough permissions to access the errValidity path: ${options.serverErrorFile}` }
                 }
 
-                if (!options.serverErrorFile?.toLowerCase().startsWith(root.toLowerCase())) { throw new RangeError(`The not 500 file (${options.errValidity}) is not in your root directory.`) }
+                if (!options.serverErrorFile?.toLowerCase().startsWith(root.toLowerCase())) { throw new RangeError(`The not 500 file (${options.serverErrorFile}) is not in your root directory.`) }
                 this.setHeader('Content-Type', 'text/html');
                 this.write({ chunk: fs.readFileSync(options.serverErrorFile) });
                 console.error(error);
@@ -703,11 +691,10 @@ class HyperCloudResponse {
      * const fs = require('fs');
      * response.status(200).send(fs.readFileSync('./style.css', { encoding: 'utf8' }), 'text/css');
      * @param {string|object|Buffer} data The data to be sent
-     * @param {Docs.MimeType} [contentType] Specify  the type of content
+     * @param {MimeType} [contentType] Specify  the type of content
      */
-    send(data, contentType) {
-        /**@type {Docs.MimeType} */
-        let type = null;
+    send(data: string | object | Buffer, contentType: MimeType) {
+        let type: MimeType = null as unknown as MimeType;
 
         if (typeof data === 'string') {
             if (typeof contentType === 'string' && mimes.includes(contentType.toLowerCase())) {
@@ -748,7 +735,7 @@ class HyperCloudResponse {
      * response.status(404).json('I dont have that');
      * @param {object|Array} data 
      */
-    json(data) {
+    json(data: object | Array<any>) {
         if (!(Array.isArray(data) || (typeof data === 'object' && data !== null))) {
             throw new TypeError("Invalid input. Expected either an object or an array.");
         }
@@ -768,7 +755,7 @@ class HyperCloudResponse {
      * @param {number} statusCode The status code of the request
      * @returns {this}
      */
-    status(statusCode) {
+    status(statusCode: number): this {
         try {
             this.statusCode = statusCode;
         } catch (error) {
@@ -781,12 +768,12 @@ class HyperCloudResponse {
      * Add an event handler
      * @param {EventConfig} config
      */
-    addListener(config) {
+    addListener(config: EventConfig) {
         const events = ['close', 'drain', 'error', 'finish', 'pipe', 'unpipe'];
         if (events.includes(config?.event)) { throw `${config.event} is not a valid response event` }
         if (typeof config?.listener !== 'function') { throw 'The event listener must be a function' }
 
-        this.#res.addListener(config.event, config.listener);
+        this._res.addListener(config.event, config.listener);
         return this;
     }
     /**
@@ -802,8 +789,8 @@ class HyperCloudResponse {
      * ```
      * @param {string|symbol} eventName The event name
      */
-    listeners(eventName) {
-        return this.#res.listeners(eventName);
+    listeners(eventName: string | symbol) {
+        return this._res.listeners(eventName);
     }
     /**
      * This method adds HTTP trailing headers (a header but at the end of the message) to the response.
@@ -811,8 +798,8 @@ class HyperCloudResponse {
      * Attempting to set a header field name or value that contains invalid characters will result in a ```TypeError``` being thrown.
      * @param {http2.OutgoingHttpHeaders} trailers 
      */
-    addTrailers(trailers) {
-        this.#res.addTrailers(trailers);
+    addTrailers(trailers: http2.OutgoingHttpHeaders) {
+        this._res.addTrailers(trailers);
     }
     /**
      * This method signals to the server that all of 
@@ -827,25 +814,30 @@ class HyperCloudResponse {
      * @param {ResponseEndOptions} [options] End stream options
      * @returns {this}
      */
-    end(options) {
+    end(options?: ResponseEndOptions): this {
+        if (helpers.is.undefined(options) || !helpers.is.realObject(options)) {
+            this._res.end();
+            return this;
+        }
+
         const params = {
             data: options && 'data' in options && options.data ? options.data : null,
             callback: options && 'callback' in options && typeof options.callback === 'function' ? options.callback : null,
-            encoding: options && 'encoding' in options && this.#encodings.includes(options.encoding) ? options.encoding : null
+            encoding: options && 'encoding' in options && typeof options.encoding === 'string' && this._encodings.includes(options.encoding) ? options.encoding : null
         }
 
         if (params.data) {
             if (params.encoding && params.callback) {
-                this.#res.end(params.data, params.encoding, params.callback);
+                this._res.end(params.data, params.encoding, params.callback);
             } else if (params.callback) {
-                this.#res.end(params.data, params.callback);
+                this._res.end(params.data, params.callback);
             } else {
-                this.#res.end(params.data);
+                this._res.end(params.data);
             }
         } else if (params.callback) {
-            this.#res.end(params.callback);
+            this._res.end(params.callback);
         } else {
-            this.#res.end();
+            this._res.end();
         }
 
         return this;
@@ -859,8 +851,8 @@ class HyperCloudResponse {
      * @param {string} name The header name
      * @returns {string} The header value
      */
-    getHeader(name) {
-        return this.#res.getHeader(name);
+    getHeader(name: string): string {
+        return this._res.getHeader(name);
     }
     /**
      * Returns an array containing the unique names of the current outgoing headers. All header names are lowercase.
@@ -872,11 +864,10 @@ class HyperCloudResponse {
      *  const headerNames = response.getHeaderNames();
      *  // headerNames === ['foo', 'set-cookie']
      * ```
-     * @param {string[]} names The names of the headers
      * @returns {string[]} The names of the provided headers
      */
-    getHeaderNames(names) {
-        return this.#res.getHeaderNames(names);
+    getHeaderNames(): string[] {
+        return this._res.getHeaderNames();
     }
     /**
      * Returns a shallow copy of the current outgoing headers.
@@ -892,8 +883,8 @@ class HyperCloudResponse {
      * and others are not defined and *will not work*.
      * @returns {http2.OutgoingHttpHeaders}
      */
-    getHeaders() {
-        return this.#res.getHeaders();
+    getHeaders(): http2.OutgoingHttpHeaders {
+        return this._res.getHeaders();
     }
     /**
      * Returns ```true``` if the header identified by name is currently
@@ -905,8 +896,8 @@ class HyperCloudResponse {
      * @param {string} name The name of the header
      * @returns {boolean}
      */
-    hasHeader(name) {
-        return this.#res.hasHeader(name);
+    hasHeader(name: string): boolean {
+        return this._res.hasHeader(name);
     }
     /**
      * Returns the number of listeners listening for the event named ```eventName```.
@@ -916,8 +907,8 @@ class HyperCloudResponse {
      * @param {function} [listener] The event handler function
      * @returns {number}
      */
-    listenerCount(eventName, listener) {
-        return this.#res.listenerCount(eventName, listener);
+    listenerCount(eventName: string | symbol, listener: Function): number {
+        return this._res.listenerCount(eventName, listener);
     }
     /**
      * Alias for ```emitter.removeListener()```.
@@ -925,8 +916,9 @@ class HyperCloudResponse {
      * @param {EventCallback} listener The event handler function
      * @returns {this}
      */
-    off(eventName, listener) {
-        return this.#res.off(eventName, listener);
+    off(eventName: string | symbol, listener: EventCallback): this {
+        this._res.off(eventName, listener);
+        return this;
     }
     /**
      * Adds the ```listener``` function to the end of the listeners array
@@ -960,12 +952,12 @@ class HyperCloudResponse {
      * @param {EventConfig} config 
      * @returns {this}
      */
-    on(config) {
+    on(config: EventConfig): this {
         const events = ['close', 'drain', 'error', 'finish', 'pipe', 'unpipe'];
         if (events.includes(config?.event)) { throw `${config.event} is not a valid response event` }
         if (typeof config?.listener !== 'function') { throw 'The event listener must be a function' }
 
-        this.#res.on(config.event, config.listener);
+        this._res.on(config.event, config.listener);
         return this;
     }
     /**
@@ -982,12 +974,12 @@ class HyperCloudResponse {
      * @param {EventConfig} config 
      * @returns {this}
      */
-    once(config) {
+    once(config: EventConfig): this {
         const events = ['close', 'drain', 'error', 'finish', 'pipe', 'unpipe'];
         if (events.includes(config?.event)) { throw `${config.event} is not a valid response event` }
         if (typeof config?.listener !== 'function') { throw 'The event listener must be a function' }
 
-        this.#res.once(config.event, config.listener);
+        this._res.once(config.event, config.listener);
         return this;
     }
     /**
@@ -997,8 +989,8 @@ class HyperCloudResponse {
      * @param {boolean} [options.end]
      * @returns {stream.Writable}
      */
-    pipe(destination, options) {
-        return this.#res.pipe(destination, { end: options?.end });
+    pipe(destination: stream.Writable, options: { end?: boolean; }): stream.Writable {
+        return this._res.pipe(destination, { end: options?.end });
     }
     /**
      * Removes all listeners, or those of the specified ```eventName```.
@@ -1011,13 +1003,13 @@ class HyperCloudResponse {
      * @param {EventType} [event] The event to remove all of its listeners, or nothing to remove all listeners from all events
      * @returns {this}
      */
-    removeAllListeners(event) {
+    removeAllListeners(event: EventType): this {
         if (typeof event === 'string') {
             const events = ['close', 'drain', 'error', 'finish', 'pipe', 'unpipe'];
             if (events.includes(event)) { throw `${event} is not a valid response event` }
         }
 
-        this.#res.removeAllListeners(event);
+        this._res.removeAllListeners(event);
         return this;
     }
     /**
@@ -1103,12 +1095,12 @@ class HyperCloudResponse {
      * @param {EventConfig} config 
      * @returns {this}
      */
-    removeListener(config) {
+    removeListener(config: EventConfig): this {
         const events = ['close', 'drain', 'error', 'finish', 'pipe', 'unpipe'];
         if (events.includes(config?.event)) { throw `${config.event} is not a valid response event` }
         if (typeof config?.listener !== 'function') { throw 'The event listener must be a function' }
 
-        this.#res.removeListener(config.event, config.listener);
+        this._res.removeListener(config.event, config.listener);
         return this;
     }
     /**
@@ -1120,18 +1112,18 @@ class HyperCloudResponse {
      * @param {string} name The name of the header to be removed
      * @returns {void}
      */
-    removeHeader(name) {
-        this.#res.removeHeader(name);
+    removeHeader(name: string): void {
+        this._res.removeHeader(name);
     }
     /**
      * The ```writable.setDefaultEncoding()``` method sets the default ```encoding``` for a ```Writable``` stream.
      * @param {BufferEncoding} encoding The new default encoding
      * @returns {this}
      */
-    setDefaultEncoding(encoding) {
-        if (!this.#encodings.includes(options.encoding)) { throw `${encoding} is not a valid buffer encoding` }
+    setDefaultEncoding(encoding: BufferEncoding): this {
+        if (!this._encodings.includes(encoding)) { throw `${encoding} is not a valid buffer encoding` }
 
-        this.#res.setDefaultEncoding(encoding);
+        this._res.setDefaultEncoding(encoding);
         return this;
     }
     /**
@@ -1172,7 +1164,7 @@ class HyperCloudResponse {
      * @param {string | number | readonly string[]} value The header value
      * @returns {this}
      */
-    setHeader(name, value) {
+    setHeader(name: string, value: string | number | readonly string[]): this {
         if (typeof name === 'string') {
             if (name.length === 0) { throw `${name} is not a valid header name` }
         }
@@ -1186,8 +1178,8 @@ class HyperCloudResponse {
             if (validItems.length < value.length) { throw `${value.toString()}` }
         }
 
-        if (name?.toLowerCase() === 'X-Server'.toLowerCase()) { return }
-        this.#res.setHeader(name, value);
+        if (name?.toLowerCase() === 'X-Server'.toLowerCase()) { return this }
+        this._res.setHeader(name, value);
         return this;
     }
     /**
@@ -1200,9 +1192,9 @@ class HyperCloudResponse {
      * @param {number} n The maximum number of listeners
      * @returns {this}
      */
-    setMaxListeners(n) {
+    setMaxListeners(n: number): this {
         if (typeof n !== 'number') { throw `The setMaxListeners expects a number, but instead got ${typeof n}` }
-        this.#res.setMaxListeners(n);
+        this._res.setMaxListeners(n);
         return this;
     }
     /**
@@ -1217,7 +1209,7 @@ class HyperCloudResponse {
      * @param {() => {}} [callback] An optional callback function to run when the time is over.
      * @returns {void}
      */
-    setTimeout(msecs, callback) {
+    setTimeout(msecs: number, callback: () => {}): void {
         if (typeof msecs !== 'number') { throw `The setTimeout method expects a number of milliseconds, but instead got ${typeof Number}` }
         if (msecs < 0) { throw `The setTimeout method expects a number of milliseconds. You know, time cannot be negative, so ${msecs} is invalid` }
 
@@ -1225,7 +1217,7 @@ class HyperCloudResponse {
             if (typeof callback !== 'function') { throw `The setTimeout method's callback can only be a function` }
         }
 
-        this.#res.setTimeout(msecs, typeof callback === 'function' ? callback : undefined);
+        this._res.setTimeout(msecs, typeof callback === 'function' ? callback : undefined);
     }
     /**
      * The `writable.cork()` method forces all written data to be buffered in memory.
@@ -1241,7 +1233,7 @@ class HyperCloudResponse {
      * See also: `writable.uncork()`, `writable._writev()`.
      * @returns {void}
      */
-    cork() { this.#res.cork() }
+    cork(): void { this._res.cork() }
     /**
      * The `writable.uncork()` method flushes all data buffered since {@link cork} was called.
      *
@@ -1275,7 +1267,7 @@ class HyperCloudResponse {
      * See also: `writable.cork()`.
      * @returns {void}
      */
-    uncork() { this.#res.uncork() }
+    uncork(): void { this._res.uncork() }
     /**
      * If this method is called and `response.writeHead()` has not been called,
      * it will switch to implicit header mode and flush the implicit headers.
@@ -1305,14 +1297,11 @@ class HyperCloudResponse {
      * @param {WriteOptions} options The `write` options
      * @returns {boolean}
      */
-    write(options) {
+    write(options: WriteOptions): boolean {
         const params = {
-            /**@type {string|Uint8Array} */
-            chunk: null,
-            /**@type {(err: Error) => void} */
-            callback: null,
-            /**@type {BufferEncoding} */
-            encoding: null
+            chunk: null as unknown as string | Uint8Array,
+            callback: null as unknown as (err: Error) => void,
+            encoding: null as unknown as BufferEncoding
         }
 
         // Validating and assigning valid argument
@@ -1324,7 +1313,7 @@ class HyperCloudResponse {
             params.chunk = options.chunk;
 
             if ('encoding' in options) {
-                if (this.#encodings.includes(options.encoding)) {
+                if (typeof options.encoding === 'string' && this._encodings.includes(options.encoding)) {
                     params.encoding = options.encoding;
                 } else {
                     throw new TypeError(`${options.encoding} is not a supported buffer encoding.`);
@@ -1343,11 +1332,11 @@ class HyperCloudResponse {
         }
 
         if (params.encoding && params.callback) {
-            return this.#res.write(params.chunk, params.encoding, params.callback);
+            return this._res.write(params.chunk, params.encoding, params.callback);
         } else if (params.callback) {
-            return this.#res.write(params.chunk, params.callback);
+            return this._res.write(params.chunk, params.callback);
         } else {
-            return this.#res.write(params.chunk);
+            return this._res.write(params.chunk);
         }
     }
     /**
@@ -1356,7 +1345,7 @@ class HyperCloudResponse {
      * event on `Http2Server` and `Http2SecureServer`.
      * @returns {void}
      */
-    writeContinue() { this.#res.writeContinue() }
+    writeContinue(): void { this._res.writeContinue() }
     /**
      * Sends a status `103 Early` Hints to the client with a Link header,
      * indicating that the user agent can preload/preconnect the linked
@@ -1381,7 +1370,7 @@ class HyperCloudResponse {
      * @param {Record<string, string | string[]>} hints 
      * @returns {void}
      */
-    writeEarlyHints(hints) { this.#res.writeEarlyHints(hints) }
+    writeEarlyHints(hints: Record<string, string | string[]>): void { this._res.writeEarlyHints(hints) }
     /**
      * Sends a response header to the request. The status code is a 3-digit HTTP
      * status code, like `404`. The last argument, `headers`, are the response headers.
@@ -1431,7 +1420,7 @@ class HyperCloudResponse {
      * @param {http2.OutgoingHttpHeaders} [headers] The headers you want to send;
      * @returns {this}
      */
-    writeHead(statusCode, headers) {
+    writeHead(statusCode: number, headers: http2.OutgoingHttpHeaders): this {
         try {
             if (typeof statusCode !== 'number') { throw new TypeError('The "writeHead" method expects status code number') }
             if (statusCode < 100 || statusCode > 511) { throw `${statusCode} is not a valid status code. The range is 100-511` }
@@ -1445,10 +1434,11 @@ class HyperCloudResponse {
                 }
             }
 
-            this.#res.writeHead(statusCode, headersNum > 0 ? headers : undefined);
+            this._res.writeHead(statusCode, headersNum > 0 ? headers : undefined);
             return this;
         } catch (error) {
             console.error(error)
+            throw error;
         }
 
     }
@@ -1459,17 +1449,17 @@ class HyperCloudResponse {
      * True if headers were sent, false otherwise (read-only).
      * @returns {boolean}
      */
-    get headersSent() { return this.#res.headersSent }
+    get headersSent(): boolean { return this._res.headersSent }
     /**
      * A reference to the original HyperCloud server object.
      * @returns {HyperCloudServer}
      */
-    get server() { return this.#server }
+    get server(): HyperCloudServer { return this._server }
     /**
      * A reference to the original HyperCloud request object.
      * @returns {HyperCloudRequest}
      */
-    get req() { return this.#req }
+    get req(): HyperCloudRequest { return this._req }
     /**
      * Returns a `Proxy` object that acts as a `net.Socket` (or `tls.TLSSocket`) but
      * applies getters, setters, and methods based on HTTP/2 logic.
@@ -1496,56 +1486,56 @@ class HyperCloudResponse {
      * ```
      * @returns {net.Socket|tls.TLSSocket}
      */
-    get socket() { return this.#res.socket }
+    get socket(): net.Socket | tls.TLSSocket { return this._res.socket }
     /**
      * The Http2Stream object backing the response.
      * @returns {http2.Http2Stream}
      */
-    get stream() { return this.#res.stream }
+    get stream(): http2.Http2Stream { return this._res.stream }
     /**
      * Is ```true``` if it is safe to call ```writable.write()```, which means the stream has not been destroyed, errored, or ended.
      * @returns {boolean}
      */
-    get writable() { return this.#res.writable }
+    get writable(): boolean { return this._res.writable }
     /**
      * Number of times ```writable.uncork()``` needs to be called in order to fully uncork the stream.
      * @returns {number}
      */
-    get writableCorked() { return this.#res.writableCorked }
+    get writableCorked(): number { return this._res.writableCorked }
     /**
      * Is `true` after `writable.end()` has been called. This property
      * does not indicate whether the data has been flushed, for this
      * use `writable.writableFinished` instead.
      * @returns {boolean}
      */
-    get writableEnded() { return this.#res.writableEnded }
+    get writableEnded(): boolean { return this._res.writableEnded }
     /**
      * Is set to `true` immediately before the `'finish'` event is emitted.
      * @returns {boolean}
      */
-    get writableFinished() { return this.#res.writableFinished }
+    get writableFinished(): boolean { return this._res.writableFinished }
     /**
      * Return the value of `highWaterMark` passed when creating this `Writable`.
      * @returns {number}
      */
-    get writableHighWaterMark() { return this.#res.writableHighWaterMark }
+    get writableHighWaterMark(): number { return this._res.writableHighWaterMark }
     /**
      * This property contains the number of bytes (or objects)
      * in the queue ready to be written. The value provides
      * introspection data regarding the status of the `highWaterMark`.
      * @returns {number}
      */
-    get writableLength() { return this.#res.writableLength }
+    get writableLength(): number { return this._res.writableLength }
     /**
      * Is `true` if the stream's buffer has been full and stream will emit `'drain'`.
      * @returns {boolean}
      */
-    get writableNeedDrain() { return this.#res.writableNeedDrain }
+    get writableNeedDrain(): boolean { return this._res.writableNeedDrain }
     /**
      * Getter for the property `objectMode` of a given `Writable` stream.
      * @returns {boolean}
      */
-    get writableObjectMode() { return this.#res.writableObjectMode }
+    get writableObjectMode(): boolean { return this._res.writableObjectMode }
     // Setters
     // ============================================================================
     // ============================================================================
@@ -1562,9 +1552,9 @@ class HyperCloudResponse {
      * status code which was sent out.
      * @param {number} status The status code of the request
      */
-    set statusCode(status) {
+    set statusCode(status: number) {
         if (typeof status === 'number' && status >= 100) {
-            this.#res.statusCode = status;
+            this._res.statusCode = status;
         } else {
             throw `${status} is not a valid status code`;
         }
@@ -1576,68 +1566,53 @@ class HyperCloudResponse {
      * @param {string} message The status message
      * @deprecated @since RFC 7540 8.1.2.4
      */
-    set statusMessage(message) {
+    set statusMessage(message: string) {
         if (typeof message !== 'string') { throw new Error(`The response's status message must be of type string, but instead got ${typeof message}`) }
         throw new Error('statusMessage is deprecated and is not supported by HTTP/2 (RFC 7540 8.1.2.4). It returns an empty string.');
     }
     /**
      * A module that allows you to create or get a list of cookies
      */
-    get cookies() { return this.#cookies }
+    get cookies() { return this._cookies }
 
     /**Check whether the `response` has been closed or not */
-    get closed() { return this.#status.closed }   
+    get closed() { return this._status.closed }
 
     /**
      * Change the response's `closed` value
      * @param {true} value
-     * @private
      */
-    set _closed(value) {
+    set __closed(value: true) {
         if (value === true) {
-            this.#status.closed = true;
+            this._status.closed = true;
         } else {
             throw `The response's "_sent" value can only be set to true`;
         }
     }
 }
 
-module.exports = HyperCloudResponse;
+export default HyperCloudResponse;
 
-/**
- * @typedef {object} ResponseEndOptions
- * @prop {string|Uint8Array} [data]
- * @prop {BufferEncoding} [encoding]
- * @prop {() => void} [callback]
- */
+interface ResponseEndOptions {
+    data?: string | Uint8Array;
+    encoding?: BufferEncoding;
+    callback?: () => void;
+};
 
-/**
- * @typedef {object} WriteOptions
- * @prop {string|Uint8Array} chunk
- * @prop {BufferEncoding} [encoding]
- * @prop {(err: Error) => void} [callback]
- */
-/**
- * @typedef {"ascii"|"utf8"| "utf-8"| "utf16le"|"utf-16le"|"ucs2"|"ucs-2"|"base64"|"base64url"| "latin1"|"binary"|"hex"} BufferEncoding
- */
+interface WriteOptions {
+    chunk: string | Uint8Array;
+    encoding?: BufferEncoding;
+    callback?: (err: Error) => void;
+};
 
-/**
- * @typedef {('pipe'|'unpipe'|'close'|'drain'|'finish'|'error')} EventType
- */
+type BufferEncoding = 'ascii' | 'utf8' | 'utf-8' | 'utf16le' | 'utf-16le' | 'ucs2' | 'ucs-2' | 'base64' | 'base64url' | 'latin1' | 'binary' | 'hex';
+type EventType = 'pipe' | 'unpipe' | 'close' | 'drain' | 'finish' | 'error';
 
-/**
- * @typedef {object} EventConfig
- * @prop {EventType} event - Specify an event to listen to.
- * @prop {EventCallback} listener - A callback function to run when the event occurs.
- */
+interface EventConfig {
+    event: EventType;
+    listener: EventCallback;
+};
 
-/**
- * @callback EventCallback
- * @param {...any} args - Arguments specific to the event.
- * @returns {void}
- */
+type EventCallback = (...args: any[]) => void;
 
-/**
- * @callback EmptyCallback
- * @returns {void}
- */
+type EmptyCallback = () => void;

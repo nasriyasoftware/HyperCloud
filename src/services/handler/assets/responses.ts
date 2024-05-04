@@ -1018,4 +1018,4 @@ class HTTPResponse {
     }
 }
 
-module.exports = HTTPResponse;
+export default HTTPResponse;

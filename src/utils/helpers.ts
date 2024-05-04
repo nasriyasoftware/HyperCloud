@@ -1,6 +1,7 @@
-const fs = require('fs');
-const crypto = require('crypto');
-const currencies = require('../data/currencies.json');
+import fs, { constants } from 'fs';
+import crypto from 'crypto';
+import currencies from '../data/currencies.json';
+import { RandomOptions } from '../docs/docs';
 
 class Helpers {
     /**
@@ -8,10 +9,9 @@ class Helpers {
      * @param {string} filePath The file path
      * @returns {Promise<string>} The hashed value
      */
-    calculateHash(filePath) {
+    calculateHash(filePath: string): Promise<string> {
         return new Promise((resolve, reject) => {
             const hash = crypto.createHash('sha256'); // You can use other hash algorithms like 'md5', 'sha1', etc.
-
             const stream = fs.createReadStream(filePath);
 
             stream.on('data', data => {
@@ -34,19 +34,19 @@ class Helpers {
      * @param {string|any} message
      * @returns {void}
     */
-    printConsole(message) {
-        if (process.env.HYPERCLOUD_SERVER_VERBOSE === true) {
-            console.debug(message)
+    printConsole(message: string | any): void {
+        if (process.env.HYPERCLOUD_SERVER_VERBOSE === 'TRUE') {
+            console.debug(message);
         }
     }
 
-    validate = Object.freeze({
+    public readonly validate = {
         /**
          * Valdiate a currency (regardless of letter case)
          * @param {string} currency A currency to validate
          * @returns {boolean}
          */
-        currency: (currency) => {
+        currency: (currency: string): boolean => {
             if (typeof currency === 'string') {
                 currency = currency.toUpperCase();
                 return currencies.includes(currency);
@@ -59,7 +59,7 @@ class Helpers {
          * @param {string} locale A locale to validate
          * @returns {boolean}
          */
-        locale: (locale) => {
+        locale: (locale: string): boolean => {
             const languageTagPattern = /^[a-zA-Z]{2,3}(?:-[a-zA-Z]{3})?(?:-[a-zA-Z]{4})?(?:-[a-zA-Z]{2})?(?:-[a-zA-Z]{2})?$/;
             return languageTagPattern.test(locale);
         },
@@ -73,7 +73,7 @@ class Helpers {
          * @param {string} ip The IP address to validate
          * @returns {boolean}
          */
-        ipAddress: (ip) => {
+        ipAddress: (ip: string): boolean => {
             const ipPattern = /^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$|^([0-9a-fA-F]{1,4}:){7,7}[0-9a-fA-F]{1,4}$|^([0-9a-fA-F]{1,4}:){1,7}:$|^([0-9a-fA-F]{1,4}:){1,6}:[0-9a-fA-F]{1,4}$|^([0-9a-fA-F]{1,4}:){1,5}(:[0-9a-fA-F]{1,4}){1,2}$|^([0-9a-fA-F]{1,4}:){1,4}(:[0-9a-fA-F]{1,4}){1,3}$|^([0-9a-fA-F]{1,4}:){1,3}(:[0-9a-fA-F]{1,4}){1,4}$|^([0-9a-fA-F]{1,4}:){1,2}(:[0-9a-fA-F]{1,4}){1,5}$|^[0-9a-fA-F]{1,4}:((:[0-9a-fA-F]{1,4}){1,6})$|:^:$/;
             return ipPattern.test(ip);
         },
@@ -82,14 +82,14 @@ class Helpers {
          * @param {string|string[]} toCheck The domain(s) to check
          * @returns {boolean}
         */
-        domains: (toCheck) => {
+        domains: (toCheck: string | string[]): boolean => {
             const regex = /^(\*\.)?([\w-]+\.)+[\w-]+$/;
 
             if (typeof toCheck === 'string') {
                 return regex.test(toCheck);
             } else if (Array.isArray(toCheck)) {
                 /**@type {string[]} */
-                const invalidDomains = [];
+                const invalidDomains: string[] = [];
 
                 for (const domain of toCheck) {
                     if (!regex.test(domain)) {
@@ -112,7 +112,7 @@ class Helpers {
          * @param {string} email The email address to check
          * @returns {boolean}
         */
-        email: (email) => {
+        email: (email: string): boolean => {
             const regex = /^([a-zA-Z0-9._%-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})$/;
             if (regex.test(email)) {
                 return true;
@@ -124,7 +124,7 @@ class Helpers {
          * @param {string} certbotPath
          * @returns {boolean}
         */
-        certbotPath: (certbotPath) => {
+        certbotPath: (certbotPath: string): boolean => {
             const validity = this.checkPathAccessibility(certbotPath);
             if (validity.valid) { return true }
 
@@ -148,7 +148,7 @@ class Helpers {
          * @param {string} projectPath 
          * @returns {boolean}
          */
-        projectPath: (projectPath) => {
+        projectPath: (projectPath: string): boolean => {
             const validity = this.checkPathAccessibility(projectPath);
 
             if (validity.valid) {
@@ -171,7 +171,7 @@ class Helpers {
                 return false;
             }
         }
-    })
+    }
 
     /**
      * Check the accessibility of a directory. This also checks whether the directory exists or not.
@@ -185,7 +185,14 @@ class Helpers {
      *      }
      * }|{ valid: true }}
      */
-    checkPathAccessibility(path) {
+    checkPathAccessibility(path: string): {
+        valid: false;
+        errors: {
+            isString: boolean;
+            exist: boolean;
+            accessible: boolean;
+        };
+    } | { valid: true; } {
         const checks = Object.seal({
             isString: typeof path === 'string',
             exist: false,
@@ -198,7 +205,7 @@ class Helpers {
         if (!checks.exist) { return { valid: false, errors: checks } }
 
         try {
-            fs.accessSync(path);
+            fs.accessSync(path, constants.R_OK | constants.W_OK);
             checks.accessible = true;
         } catch (error) {
             { return { valid: false, errors: checks } }
@@ -213,7 +220,7 @@ class Helpers {
      * @param {string} msg The message you want to add to the BAT string
      * @returns {string} The updated BAT string
      */
-    addBatMessage(batStr, msg) {
+    addBatMessage(batStr: string, msg: string): string {
         if (!batStr.includes('@echo off')) {
             batStr = `@echo off\n${batStr}`;
         }
@@ -227,7 +234,7 @@ class Helpers {
      * @param {string} cookiesHeader The cookies header from a request
      * @returns The cookies as an object
      */
-    parseCookies(cookiesHeader) {
+    parseCookies(cookiesHeader: string) {
         const cookies = {};
         if (typeof cookiesHeader === 'string') {
             cookiesHeader.split(';').forEach(cookie => {
@@ -243,7 +250,7 @@ class Helpers {
      * Get the local IP address of the server
      * @returns {string[]} An array of local IPs
      */
-    getLocalIPs() {
+    getLocalIPs(): string[] {
         const os = require('os');
         const nets = os.networkInterfaces();
         const interfaces = {}
@@ -279,15 +286,106 @@ class Helpers {
         })
 
         const local_ips = interfacesArr.map(i => i.ips).flat(3);
-        return [...new Set(local_ips)];
+        return [...new Set(local_ips)] as string[];
     }
+
+    /**
+     * Generate a random text
+     * @param length The length of the text. Minimum of `4`
+     * @param [options] Options for generating the text
+     * @returns 
+     */
+    generateRandom(length: number, options: RandomOptions = {}): string {
+        const {
+            includeNumbers = true,
+            includeLetters = true,
+            includeSymbols = true,
+            includeLowerCaseChars = true,
+            includeUpperCaseChars = true,
+            beginWithLetter = true,
+            noSimilarChars = true,
+            noDuplicateChars = false,
+            noSequentialChars = true
+        } = options;
+
+        let chars = '';
+        let text = '';
+
+        if (includeNumbers) chars += '0123456789';
+        if (includeLetters) {
+            if (includeLowerCaseChars) chars += 'abcdefghijklmnopqrstuvwxyz';
+            if (includeUpperCaseChars) chars += 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+        }
+
+        if (includeSymbols) chars += '!";#$%&\'()*+,-./:;<=>?@[]^_`{|}~';
+
+        if (beginWithLetter && (includeLetters || includeNumbers || includeSymbols)) {
+            const validChars = includeLetters && includeNumbers && includeSymbols ? chars : chars.slice(10);
+            text += validChars.charAt(Math.floor(Math.random() * validChars.length));
+        }
+
+        while (text.length < length) {
+            const randomIndex = Math.floor(Math.random() * chars.length);
+            const char = chars[randomIndex];
+
+            if (
+                (noSimilarChars && /[il1LoO]/.test(char)) ||
+                (noDuplicateChars && text.includes(char)) ||
+                (noSequentialChars && text.length > 0 && text[text.length - 1].charCodeAt(0) + 1 === char.charCodeAt(0))
+            ) {
+                continue;
+            }
+
+            text += char;
+        }
+
+        return text;
+    }
+
+    public readonly is = {
+        /**
+        * Check if a particular string is a valid HTML code
+        * @param {string} string The string to check
+        * @returns {boolean}
+        */
+        html(string: string): boolean {
+            const regex = /<([A-Za-z][A-Za-z0-9]*)\b[^>]*>(.*?)<\/\1>/;
+            return regex.test(string);
+        },
+        /**
+         * Pass anything to check if it's an object or not
+         * @param {*} obj 
+         * @returns {boolean}
+        */
+        realObject(obj: any): boolean {
+            return typeof obj === 'object' && obj !== null && !Array.isArray(obj);
+        },
+        /**
+         * Check whether the argument is a valid string or not
+         * @param {*} str 
+         * @returns {boolean}
+         */
+        validString(str: any): boolean {
+            return typeof str === 'string' && str.trim().length > 0;
+        },
+        /**
+         * Check if the value is undefined
+         * @param {any} arg 
+         * @returns {boolean}
+         */
+        undefined(arg: any): arg is undefined {
+            return typeof arg === 'undefined'
+        }
+    }
+
 
     /**
     * Check if a particular string is a valid HTML code
     * @param {string} str The string to check
     * @returns {boolean}
+    * @deprecated Use `helpers.is.html(string)` instead. This will be removed in `v2`.
     */
-    isHTML(string) {
+    isHTML(string): boolean {
         const regex = /<([A-Za-z][A-Za-z0-9]*)\b[^>]*>(.*?)<\/\1>/;
         return regex.test(string)
     }
@@ -296,10 +394,11 @@ class Helpers {
      * Pass anything to check if it's an object or not
      * @param {*} obj 
      * @returns {boolean}
+     * @deprecated Use `helpers.is.realObject(string)` instead. This will be removed in `v2`.
     */
-    isRealObject(obj) {
+    isRealObject(obj: any): boolean {
         return typeof obj === 'object' && obj !== null && !Array.isArray(obj);
     }
 }
 
-module.exports = new Helpers;
+export default new Helpers;

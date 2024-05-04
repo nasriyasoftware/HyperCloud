@@ -1,15 +1,15 @@
-const HyperCloudServer = require('./src/server');
-const { ProtocolsOptions, SSLCredentials, SSLOptions } = require('./src/utils/classes');
-const Docs = require('./src/utils/docs');
-const helpers = require('./src/utils/helpers');
-const dnsManager = require('nasriya-dns');
-const nasriyaCron = require('nasriya-cron');
+import HyperCloudServer from './server';
+import { ProtocolsOptions, SSLCredentials, SSLOptions } from './utils/classes';
+import Docs from './docs/docs';
+import helpers from './utils/helpers';
+import dnsManager from 'nasriya-dns';
+import nasriyaCron from 'nasriya-cron';
 
-const fs = require('fs');
-const path = require('path');
-const process = require('process');
+import fs from 'fs';
+import path from 'path';
+import process from 'process';
 
-global.HyperCloud_ServerVerbose = false;
+process.env.HYPERCLOUD_SERVER_VERBOSE = 'FALSE';
 
 
 class HyperCloud {
@@ -49,7 +49,7 @@ class HyperCloud {
      */
     SSLOptions(options) { return new SSLOptions(options) }
 
-    get verbose() { return typeof global.HyperCloud_ServerVerbose === 'boolean' ? global.HyperCloud_ServerVerbose : false }
+    get verbose() { return typeof process.env.HYPERCLOUD_SERVER_VERBOSE === 'boolean' ? process.env.HYPERCLOUD_SERVER_VERBOSE : false }
     /**
      * Display extra debugging details in the console. Default is ```false```.
      * 
@@ -57,8 +57,8 @@ class HyperCloud {
      * @param {boolean} value
      */
     set verbose(value) {
-        if (typeof global.HyperCloud_ServerVerbose === 'boolean') {
-            global.HyperCloud_ServerVerbose = value;
+        if (typeof process.env.HYPERCLOUD_SERVER_VERBOSE === 'boolean') {
+            process.env.HYPERCLOUD_SERVER_VERBOSE = value;
         } else {
             throw `HyperCloud verbose property can only accept boolean value, but instead got ${typeof value}`;
         }
