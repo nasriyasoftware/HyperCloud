@@ -581,4 +581,5 @@ class HyperCloudServer {
     }
 }
 
+export { HyperCloudInitOptions, HyperCloudInitFile, HyperCloudManagementOptions }
 export default HyperCloudServer;

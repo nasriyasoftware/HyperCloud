@@ -22,23 +22,22 @@ ___
 Quickly run a `HyperCloud` server in **5** easy steps.
 
 #### 1. Installation
-```shellscript
+```shell
 npm install nasriyasoftware/hypercloud
 ```
 
 #### 2. Importing
-```js
-const hypercloud = require('nasriya-hypercloud');
+```ts
+import hypercloud from 'nasriya-hypercloud';
 ```
 
 #### 3. Creating & Initializing a server
-```js
-const fs = require('fs');
+```ts
+import fs from 'fs';
 // Creates a new server
 const server = hypercloud.Server();
 
 // Prepare the initialization options
-/**@type {hypercloud.HyperCloudInitOptions} */
 const options = {
     protocols: hypercloud.Protocols({
         https: { port: 443 },
@@ -55,7 +54,7 @@ await server.initialize(options);
 
 #### 4. Define routes
 For now, you only have an HTTP2 server that serves a `404` page on any path, so let's define more routes now using the server's `Router`.
-```js
+```ts
 const router = server.Router();
 
 // Define the site's favicon
@@ -84,7 +83,7 @@ router.use('/v1', (request, response, next) => {
 
 // Define a dynamic profile page
 router.get('/u/<:profileId>', (request, response, next) => {
-    const profileId = request.params.profileId;
+    const { profileId } = request.params;
 
     // Make a database call.
     const user = {} // Something from the database
@@ -104,7 +103,7 @@ router.get('/u/<:profileId>', (request, response, next) => {
 
 #### 5. Start listening
 To start listening for requests just call the `listen` method on the server.
-```js
+```ts
 server.listen();
 // HTTP Server Prints: HyperCloud Server is listening on port #<The port you defined for HTTP>
 // HTTPS Server Prints: HyperCloud Server is listening securely on port #<The port you defined for HTTPS>
@@ -117,15 +116,14 @@ HyperCloud has more featues and advanced configurations.
 
 #### Enable Debugging
 You can enable debugging to get more details about operations and errors.
-```js
+```ts
 hypercloud.verbose = true;
 ```
 
 #### Proxy Servers
 If your server is running behind a proxy server, you need to configure the `proxy` option of the server before initializing it.
 When running behind a local proxy server, a `self_signed` certificate is enough, however, if your your proxy server is remote you should use a valid **SSL certificate**. Read [generate SSL certificate with Let's Encrypt](#1-generate-with-lets-encrypt).
-```js
-/**@type {hypercloud.HyperCloudInitOptions} */
+```ts
 const options = {
     protocols: hypercloud.Protocols({
         https: { port: 5000 },
@@ -150,8 +148,7 @@ With HyperCloud, you can generate SSL certificate to serve your site securely ov
 To generate valid **SSL certificates** with [Let's Encrypt](https://letsencrypt.org/), your server must have port `80` free and allows public traffic from the internet.
 
 **Note:** Wildcard domains are **NOT** supported.
-```js
-/**@type {hypercloud.HyperCloudInitOptions} */
+```ts
 const options = {
     protocols: hypercloud.Protocols({
         https: { port: 5000 },
@@ -173,8 +170,7 @@ await server.initialize(options);
 To generate a self-signed **SSL certificate** for your domain, just add the `self_signed` property to the `SSLOptions` and set it to `true`. This is useful if you're developing your site locally or behind a [proxy server](#proxy-servers).
 
 Here's how to set it up:
-```js
-/**@type {hypercloud.HyperCloudInitOptions} */
+```ts
 const options = {
     protocols: hypercloud.Protocols({
         https: { port: 5000 },
@@ -195,8 +191,8 @@ Some sites are multilingual, which means they somehow keep track of users' selec
 You can set a list of languages that your server supports to properly handle *language-related* requests, like checking users' preferred language to serve them content in their language.
 
 Here's how to set a list of supported languages on your server:
-```js
-const hypercloud = require('nasriya-hypercloud');
+```ts
+import hypercloud from 'nasriya-hypercloud';
 const server = hypercloud.Server();
 
 server.supportedLanguages = ['en', 'ar', 'de'];
@@ -207,7 +203,7 @@ If a user doesn't have a preferred language, the browser's language is selected 
 
 To set a default language:
 ```js
-const hypercloud = require('nasriya-hypercloud');
+import hypercloud from 'nasriya-hypercloud';
 const server = hypercloud.Server();
 
 server.defaultLanguage = 'ar';
@@ -219,7 +215,7 @@ server.defaultLanguage = 'ar';
 HyperCloud provides a built-in `user` on each `request` and allows you to populate it using a [custom handler](#user-handler), you can then access the `user` object from any route via the `request` object.
 
 The built-in `user` object looks like this:
-```js
+```ts
 // request.user
 {
     id: string,
@@ -262,8 +258,8 @@ To populate the `user` object, you need to implement a **handler** to check user
 
 To set the handler, we use the reserved handler name `userSessions` as the handler name on the server's `setHandler` method:
 
-```js
-const hypercloud = require('nasriya-hypercloud');
+```ts
+import hypercloud from 'nasriya-hypercloud';
 const server = hypercloud.Server();
 
 server.setHandler('userSessions', (request, response, next) => {
@@ -328,14 +324,14 @@ server.setHandler('userSessions', (request, response, next) => {
 You can customize what the pages say with your own words, the `401` and `403` uses the same page, thus the same rendering options, so we'll only cover one of them.
 
 Prepare the environment:
-```js
-const hypercloud = require('nasriya-hypercloud');
+```ts
+import hypercloud from 'nasriya-hypercloud';
 const server = hypercloud.Server();
 const router = server.Router();
 ```
 
 - Calling the `500` **server error** page:
-```js
+```ts
 router.use('*', (request, response, next) => {
     // This renders the default 500 pages as is, without any changes
     response.pages.serverError();
@@ -353,7 +349,7 @@ router.use('*', (request, response, next) => {
 ```
 
 - Calling the `404` **not-fonud** page:
-```js
+```ts
 router.use('*', (request, response, next) => {
     // This renders the default 404 pages as is, without any changes
     response.pages.notFound();
@@ -370,7 +366,7 @@ router.use('*', (request, response, next) => {
 })
 ```
 - Calling the `403` **forbidden** page:
-```js
+```ts
 router.use('*', (request, response, next) => {
     // This renders the default 403 pages as is, without any changes
     response.pages.forbidden();
@@ -413,7 +409,7 @@ To define custom handlers, we use the server's `setHandler` method as usual, how
 | Forbidden `403`    | `forbidden`    | Used for custom `403` pages |
 | Server Error `500` | `serverError`  | Used for custom `500` pages |
 
-```js
+```ts
 // 1) Define a custom 404 handler
 server.setHandler('notFound', (request, response, next) => {
     response.render('notFoundView', { statusCode: 404 });
@@ -424,6 +420,40 @@ router.use('*', (request, response, next) => {
     response.pages.notFound(); // This will now render the custom page
 })
 ```
+
+#### Error Handling
+Error handling in HyperCloud are done by defining an `http` error handler, to do that, we set the `onHTTPError` handler. The handler can be defined in another file and passed as a function to the `server.setHandler()` method.
+
+```ts
+/**A function to handle errors thrown due to an error in any of the HTTP middlewares */
+function onHTTPErrorHandler(request: HyperCloudRequest, response: HyperCloudResponse, next: NextFunction, error: HTTPError) {
+    response.pages.serverError({
+        lang: request.lang,
+        locals: {
+            message: `Request ID: ${request.id} failed. ${request.method} ${request.path.join('/')}`
+        }
+    })
+}
+
+server.setHandler('onHTTPError', onHTTPErrorHandler);
+```
+
+#### Request Logging
+You can add a logger to log incoming requests by setting a `logger` handler.
+
+```ts
+server.serHandler('logger', (request: HyperCloudRequest, response: HyperCloudResponse, next: NextFunction) => {
+    // Use the request to gather information and log them.
+})
+```
+
+You can also use another logging packages like [Logify](https://github.com/nasriyasoftware/Logify) to help you with logging.
+
+```ts
+import logify from 'nasriya-logify';
+
+server.serHandler('logger', logify.middlewares.hypercloud);
+```
 ___
 ## Features
 HyperCloud is equiped with common features out of the box. Here are some.
@@ -431,9 +461,9 @@ HyperCloud is equiped with common features out of the box. Here are some.
 #### Generating eTags
 [ETags](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/ETag) can signifucantly improve server performance. To generate `eTags` for your resources, use the following syntax:
 
-```js
-const path = require('path');
-const hypercloud = require('nasriya-hypercloud');
+```ts
+import path from 'path';
+import hypercloud from 'nasriya-hypercloud';
 
 hypercloud.generateETags(path.resolve('./src/images'));
 ```
@@ -453,8 +483,8 @@ You can schedule [cron jobs](https://en.wikipedia.org/wiki/Cron) to run periodic
 
 To use the cron scheduler, you can access it on the main `hypercloud` instance:
 
-```js
-const hypercloud = require('nasriya-hypercloud');
+```ts
+import hypercloud from 'nasriya-hypercloud';
 const cronManager = hypercloud.cronManager;
 ```
 
@@ -474,8 +504,8 @@ const expression2 = cronManager.time.onSpecificDays(['Tue', 2]);
 ###### Schedule a Periodic Task
 To schedule tasks using a cron-expression, use the `schedule` method:
 
-```js
-const hypercloud = require('nasriya-hypercloud');
+```ts
+import hypercloud from 'nasriya-hypercloud';
 
 const task = hypercloud.cronManager.schedule('* * * * *', () => {
     console.log('A cron-job is running...');
@@ -487,7 +517,7 @@ const task = hypercloud.cronManager.schedule('* * * * *', () => {
 ```
 
 The `schedule` methods returns:
-```js
+```ts
 {
     name: string,
     start: () => void,
@@ -498,9 +528,10 @@ The `schedule` methods returns:
 ###### Schedule a One-Time Task
 To schedule one-time tasks use the `scheduleTime` method. The method takes two arguments:
 1. `time`: A timestamp `number`, an [ISO date](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Date/toISOString), or a `Date` instance.
-2. `task`: a `function`.
-```js
-const hypercloud = require('nasriya-hypercloud');
+2. `task`: a `Function`.
+
+```ts
+import hypercloud from 'nasriya-hypercloud';
 
 // Schedule a task to run after 10 minutes from now:
 const tenMins = 10 * 60 * 1000;
@@ -510,7 +541,7 @@ const task = hypercloud.cronManager.scheduleTime(Date.now() + tenMins, () => {
 ```
 
 The `scheduleTime` methods returns:
-```js
+```ts
 {
     name: string,
     cancel: () => boolean,
@@ -524,15 +555,16 @@ If your server is running behind a dynamic IP address you make use of **HyperClo
 **Note:** For now, only [Cloudflare](https://cloudflare.com) and [Duckdns](https://duckdns.org) are supported.
 
 Start by preparing the DNS manager and the new IP address:
-```js
-const hypercloud = require('nasriya-hypercloud');
+
+```ts
+import hypercloud from 'nasriya-hypercloud';
 const dnsManager = hypercloud.dnsManager;
 
 const public_ip = await dnsManager.helpers.getPublicIP();
 ```
 
 **DuckDNS**
-```js
+```ts
 // Initialize a provider:
 const duckdns = dnsManager.duckdns(process.env.DUCKDNS_API_TOKEN);
 
@@ -541,7 +573,7 @@ await duckdns.records.update('<myDomain>', public_ip);
 ```
 
 **Cloudflare**
-```js
+```ts
 const cloudflare = dnsManager.cloudflare(process.env.CLOUDFLARE_API_TOKEN);
 
 // If you know the Zone ID of your domain;
