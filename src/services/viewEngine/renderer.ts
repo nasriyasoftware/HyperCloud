@@ -39,11 +39,11 @@ class Renderer {
 
             // Determine the engine
             const viewEngine = this.viewEngine;
-            let engine;
+            let engine: any;
 
             try {
                 switch (viewEngine) {
-                    case 'ejs': engine = require('ejs');
+                    case 'ejs': engine = eval('require')('ejs');
                         break;
                 }
             } catch (error) {

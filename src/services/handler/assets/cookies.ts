@@ -29,7 +29,7 @@ class Cookies {
      * @param {CookieOptions} [options] Customize the cookie with options
      * @returns {HyperCloudResponse}
      */
-    create(name: string, value: string, options: CookieOptions): HyperCloudResponse {
+    create(name: string, value: string, options?: CookieOptions): HyperCloudResponse {
         const cookie: string[] = [];
         const ONEYEAR = 31_536_000_000; // in ms
 

@@ -492,7 +492,6 @@ class HyperCloudServer {
                 this._config.initialized = true;
 
                 const protocol = this._config.protocols[this._config.secure ? 'https' : 'http'];
-                /**@type {http2.Http2Server | http.Server} */
                 const server: http2.Http2Server | http.Server = this._config.secure ? this._system.httpsServer : this._system.httpServer;
 
                 server.on('request', async (req, res) => {
@@ -532,7 +531,7 @@ class HyperCloudServer {
                                 }
                             });
                         } else {
-                            console.error(error)
+                            console.error(error);
                             res.statusCode = 500;
                             res.end();
                         }
@@ -571,7 +570,12 @@ class HyperCloudServer {
         if (!letterRegex.test(name)) { throw new SyntaxError(`The handler name can only starts with an (a-z/A-Z) letter.`) }
         if (typeof handler !== 'function') { throw new TypeError(`The provided handler isn't a function but a type of ${typeof handler}`) }
         const paramsNum = handler.length;
-        if (paramsNum !== 3) { throw new RangeError(`The provided handler has ${paramsNum}. The expected number of parameters is 3`) }
+
+        if (name === 'onHTTPError') {
+            if (paramsNum !== 4) { throw new RangeError(`The provided onHTTPError handler has ${paramsNum} parameters. The expected number of parameters is 4; (request, response, next, error)`) }
+        } else {
+            if (paramsNum !== 3) { throw new RangeError(`The provided handler has ${paramsNum} parameters. The expected number of parameters is 3`) }
+        }
 
         this._config.handlers[name] = handler;
     }

@@ -1,5 +1,5 @@
 import http2 from 'http2';
-import { InitializedRequest, ColorScheme, HyperCloudUserOptions, HttpMethod } from '../../../docs/docs';
+import { InitializedRequest, ColorScheme, HyperCloudUserOptions, HttpMethod, RequestBodyType } from '../../../docs/docs';
 import helpers from '../../../utils/helpers';
 import HyperCloudUser from './user';
 
@@ -26,37 +26,55 @@ class HyperCloudRequest {
         this._user.instance = new HyperCloudUser(this)
     }
 
-    get id() { return this._request.id }
-    get ip() { return this._request.ip }
-    get protocol() { return this._request.protocol }
-    get host() { return this._request.host }
-    get domain() { return this._request.domain }
-    get subDomain() { return this._request.subDomain }
-    get baseUrl() { return this._request.baseUrl }
-    get path() { return this._request.path }
-    get query() { return this._request.query }
-    get href() { return this._request.href }
-    get bodyType() { return this._request.bodyType }
-    get body() { return this._request.body }
-    get cookies() { return this._request.cookies }
+    /**The ID of the HTTP request */
+    get id(): string { return this._request.id }
+    /**The IP of the remote client */
+    get ip(): string { return this._request.ip }
+    /**The request protocol */
+    get protocol(): 'http' | 'https' { return this._request.protocol }
+    /**The request host */
+    get host(): string { return this._request.host }
+    /**The request domain */
+    get domain(): string { return this._request.domain }
+    /**The request subdomain */
+    get subDomain(): string | undefined { return this._request.subDomain }
+    /**The request base URL */
+    get baseUrl(): string { return this._request.baseUrl }
+    /**The request path, in other words, the part of the URL after the first `/`. */
+    get path(): string[] { return this._request.path }
+    /**The request query, in other words, the part of the URL after the `?`. */
+    get query(): Record<string, string> { return this._request.query }
+    /**
+     * The entire URL of the request. This includes: {@link protocol}, {@link host}, {@link path}, and any potential {@link query}.
+     * 
+     * Example: `https://auth.nasriya.net/tfa?token=randomID`.
+    */
+    get href(): string { return this._request.href }
+    /**The type of the recieved body. Note that the body is converted to `json` format whenever possible */
+    get bodyType(): RequestBodyType | undefined { return this._request.bodyType }
+    /**The body of the request */
+    get body(): string | Record<string, any> | Buffer | undefined { return this._request.body }
+    /**The request cookies object */
+    get cookies(): Record<string, string> { return this._request.cookies }
+    /**The request headers */
     get headers() { return this._req.headers }
-    /**The ```request.aborted``` property will be ```true``` if the request has been aborted. */
+    /**The `request.aborted` property will be `true` if the request has been aborted. */
     get aborted() { return this._req.aborted }
-    /**The request authority pseudo header field. Because HTTP/2 allows requests to set either ```:authority``` or ```host```, this value is derived from ```req.headers[':authority']``` if present. Otherwise, it is derived from ```req.headers['host']```. */
+    /**The request authority pseudo header field. Because HTTP/2 allows requests to set either `:authority` or `host`, this value is derived from `req.headers[':authority']` if present. Otherwise, it is derived from `req.headers['host']`. */
     get authority() { return this._req.authority }
-    /**Is ```true``` after ```'close'``` has been emitted. */
+    /**Is `true` after `'close'` has been emitted. */
     get closed() { return this._req.closed }
-    /**The ```request.complete``` property will be ```true``` if the request has been completed, aborted, or destroyed. */
+    /**The `request.complete` property will be `true` if the request has been completed, aborted, or destroyed. */
     get complete() { return this._req.complete }
     /**
-     * In case of server request, the HTTP version sent by the client. In the case of client response, the HTTP version of the connected-to server. Returns```'2.0'```.
+     * In case of server request, the HTTP version sent by the client. In the case of client response, the HTTP version of the connected-to server. Returns`'2.0'`.
      * 
-     * Also ```message.httpVersionMajor``` is the first integer and ```message.httpVersionMinor``` is the second.
+     * Also `message.httpVersionMajor` is the first integer and `message.httpVersionMinor` is the second.
      */
     get httpVersion() { return this._req.httpVersion }
     get httpVersionMajor() { return this._req.httpVersionMajor }
     get httpVersionMinor() { return this._req.httpVersionMinor }
-    /**The request method as a string. Read-only. Examples: ```'GET'```, ```'DELETE'```. */
+    /**The request method as a string. Read-only. Examples: `'GET'`, `'DELETE'`. */
     get method(): HttpMethod { return this._req.method as HttpMethod }
     get server() { return this._request.server }
 
@@ -94,7 +112,7 @@ class HyperCloudRequest {
     */
     get params() { return this._params }
     set params(value) {
-        if (helpers.isRealObject(value)) {
+        if (helpers.is.realObject(value)) {
             this._params = value;
         } else {
             throw `The request.params has been set with an invalid value. Expected an object but got ${typeof value}`

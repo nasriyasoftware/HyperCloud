@@ -19,7 +19,7 @@ export type NextFunction = () => void;
 export type HttpMethod = | 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH' | 'HEAD' | 'OPTIONS' | 'TRACE' | 'CONNECT';
 /**Represents the type of the request body. */
 export type RequestBodyType = 'text' | 'javascript' | 'json' | 'formData' | 'buffer' | 'graphql';
-export type HyperCloudServerHandlers = 'notFound' | 'serverError' | 'unauthorized' | 'forbidden' | 'userSessions' | 'logger';
+export type HyperCloudServerHandlers = 'notFound' | 'serverError' | 'unauthorized' | 'forbidden' | 'userSessions' | 'logger' | 'onHTTPError';
 
 
 
@@ -140,21 +140,21 @@ export interface StaticRouteOptions {
 
 export interface CookieOptions {
     /** Indicates that the cookie should only be sent over HTTPS connections */
-    secure: boolean;
+    secure?: boolean;
     /** Prevents client-side JavaScript from accessing the cookie */
-    httpOnly: boolean;
+    httpOnly?: boolean;
     /** Specifies the maximum age of the cookie in seconds. For example: `3600` (for one hour). If left empty, the cookie will only be valid until the browser session ends. */
-    maxAge: number;
+    maxAge?: number;
     /** Specifies the domain for which the cookie is valid. For example: `example.com`. */
-    domain: string;
+    domain?: string;
     /** Specifies the URL path for which the cookie is valid. For example: `/`. */
-    path: string;
+    path?: string;
     /** Specifies the date and time when the cookie will expire. For example: `Sat, 25 Feb 2023 12:00:00 GMT`. */
-    expires: Date;
+    expires?: Date;
     /** Controls whether the cookie should be sent with cross-site requests. */
-    sameSite: 'Strict' | 'Lax' | 'None';
+    sameSite?: 'Strict' | 'Lax' | 'None';
     /** Specifies the priority of the cookie. */
-    priority: 'High' | 'Medium' | 'Low';
+    priority?: 'High' | 'Medium' | 'Low';
 }
 
 export interface RouteOptions {
@@ -208,6 +208,8 @@ export interface DownloadFileOptions {
     unauthorizedFile?: string;
     /** Provide a `500` server error page to be displayed instead of throwing an `Error`. */
     serverErrorFile?: string;
+    /**eTags ae useful for caching */
+    eTag?: string
 }
 
 export interface SendFileOptions extends DownloadFileOptions {
@@ -257,17 +259,17 @@ export interface InitializedRequest {
     /** The path of the URL, for example, a URL of `/support/faq` corresponds to `['support', 'faq']`. */
     path: string[];
     /** The query parameters of the URL. Example: `/products/search?sku=random&lessThan=20` produces `{sku: 'random', lessThan: '20'}`. */
-    query: object;
+    query: Record<string, string>;
     /** The full URL, including the `protocol`, `baseUrl`, `path`, and `query`. Example: `https://nasriya.net/support?ticket=randomTicketID&lang=en`. */
     href: string;
     /** The type of the received data */
-    bodyType: RequestBodyType;
+    bodyType: RequestBodyType | undefined;
     /** The received data */
-    body: string | object | Buffer;
+    body: string | Record<string, any> | Buffer | undefined;
     /** The request cookies */
-    cookies: object;
+    cookies: Record<string, string>;
     /** The parameters of dynamic requests */
-    params: object;
+    params: Record<string, string>;
     /** A reference to the original server */
     server: HyperCloudServer;
 }

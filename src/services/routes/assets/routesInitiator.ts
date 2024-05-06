@@ -3,6 +3,8 @@ import StaticRoute from './staticRoute';
 
 import HyperCloudRequest from '../../handler/assets/request';
 import HyperCloudResponse from '../../handler/assets/response';
+import { ColorScheme } from '../../../docs/docs';
+import HTTPError from '../../../utils/errors/HTTPError';
 
 /**
  * Only one instance is allowed for each request.
@@ -30,17 +32,15 @@ class RequestRoutesManager {
         this._request = request;
         this._response = response;
 
-        const newRouts: (Route | StaticRoute)[] = []
+        const newRouts: (Route | StaticRoute)[] = [];
         // Check if the user has a `userSessions` handler configured
-        newRouts.push(new Route({
-            path: '*', method: 'USE', handler: (request, response, next) => {
-                if (typeof request.server.__handlers.userSessions === 'function') {
+        if (typeof request.server.__handlers.userSessions === 'function') {
+            newRouts.push(new Route({
+                path: '*', method: 'USE', handler: (request, response, next) => {
                     return request.server.__handlers.userSessions(request, response, next);
                 }
-
-                next();
-            }
-        }));
+            }))
+        }
 
         // Prepare the language
         newRouts.push(new Route({
@@ -54,8 +54,8 @@ class RequestRoutesManager {
                  */
                 if (request.user.loggedIn) {
                     const prefLang = request.user.preferences.language;
-                    if (supportedLanguages.includes(prefLang)) {
-                        request.__language = prefLang;
+                    if (supportedLanguages.includes(prefLang || '')) {
+                        request.__language = prefLang as string;
                         return next();
                     }
                 }
@@ -66,7 +66,7 @@ class RequestRoutesManager {
                 const [locale, bLang] = Array.isArray(acceptedLang) ? acceptedLang : ['en-PS', 'ar'];
                 const browserLang = bLang?.substring(0, 2).trim();
 
-                request._locale = locale;
+                request.__locale = locale;
 
 
                 /**
@@ -108,7 +108,7 @@ class RequestRoutesManager {
                  * set the language based on the browser (if supported),
                  * or use the default language.
                 */
-                request.lang = supportedLanguages.includes(browserLang) ? browserLang : defaultLanguage;
+                request.__language = supportedLanguages.includes(browserLang) ? browserLang : defaultLanguage;
                 next();
             }
         }))
@@ -118,7 +118,7 @@ class RequestRoutesManager {
             path: '*', method: 'USE', handler: (request, response, next) => {
                 const colorScheme = request.cookies.colorScheme;
                 if (['Default', 'Light', 'Dark'].includes(colorScheme)) {
-                    request._colorScheme = colorScheme;
+                    request.__colorScheme = colorScheme as ColorScheme;
                 } else {
                     response.cookies.create('colorScheme', 'Default', { priority: 'Medium' });
                 }
@@ -127,17 +127,60 @@ class RequestRoutesManager {
             }
         }))
 
+        // Check if the user has defined a logger handler or not;
+        if (typeof request.server.__handlers.logger === 'function') {
+            newRouts.push(new Route({
+                path: '*', method: 'USE', handler: (request, response, next) => {
+                    return request.server.__handlers.logger(request, response, next);
+                }
+            }))
+        }
+
         this._routes.unshift(...newRouts);
         this._runNext();
     }
 
     /**This method is only called by the server */
     private _runNext() {
-        // console.log('Running next')
         const route = this._routes[this._currentIndex];
         if (route) {
             this._request.params = route instanceof Route && Object.keys(route.params).length > 0 ? route.params : {};
-            route.handler(this._request, this._response, this._next);
+            try {
+                route.handler(this._request, this._response, this._next);
+            } catch (err) {
+                const routeError = new HTTPError({ message: typeof err?.message === 'string' ? err.message : `An error has occurred in one of your routes`, error: err, request: this._request.__toJSON(), route });
+                
+                const errRoute = new Route({
+                    path: route.path.join('/'), method: 'USE', handler: (request, response, next) => {
+                        const handler = this._request.server.__handlers.onHTTPError
+                        if (typeof handler === 'function') {
+                            try {
+                                return handler(request, response, next, routeError);
+                            } catch (error) {
+                                return response.pages.serverError({
+                                    lang: request.server.defaultLanguage,
+                                    locals: {
+                                        title: `Server Error (500)`,
+                                        subtitle: 'Server Error (500)',
+                                        message: `Ops! We're experincing some difficulties, pleaes refresh the page or try again later.\n\nIf you're the site owner and the error persisted, please review the your site logs and open an issue on Github.\n\nError Code: 0x00008`
+                                    }
+                                });
+                            }
+                        } else {
+                            return response.pages.serverError({
+                                lang: request.server.defaultLanguage,
+                                locals: {
+                                    title: `Server Error (500)`,
+                                    subtitle: 'Server Error (500)',
+                                    message: `Ops! We're experincing some difficulties, pleaes refresh the page or try again later.\n\nIf you're the site owner and the error persisted, please review the your site logs and open an issue on Github.\n\nError Code: 0x00009`
+                                }
+                            });
+                        }
+                    }
+                })
+
+                this._routes.splice(this._currentIndex + 1, 0, errRoute);
+            }
         } else {
             this._next();
         }

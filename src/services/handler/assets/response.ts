@@ -153,7 +153,7 @@ class HyperCloudResponse {
              * })
              * @param {ForbiddenAndUnauthorizedOptions} [options] 
              */
-            unauthorized: (options: ForbiddenAndUnauthorizedOptions) => {
+            unauthorized: (options?: ForbiddenAndUnauthorizedOptions) => {
                 if (typeof this._server.__handlers.unauthorized === 'function') {
                     try {
                         // Run the user defined handler for not-found resources
