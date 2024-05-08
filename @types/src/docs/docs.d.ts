@@ -281,17 +281,13 @@ export interface ProtocolsOptions {
         /** The port for HTTP. */
         port: number;
         /** Optional callback function for HTTP. */
-        callback?: () => void;
-        /** Whether HTTP is enabled. */
-        enabled: boolean;
+        callback?: () => void;        
     };
     https: {
         /** The port for HTTPS. */
         port: number;
         /** Optional callback function for HTTPS. */
         callback?: () => void;
-        /** Whether HTTPS is enabled. */
-        enabled: boolean;
     };
 }
 
