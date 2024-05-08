@@ -13,8 +13,7 @@ export type RedirectCode = 300 | 301 | 302 | 303 | 304 | 307 | 308;
 /** View engine type */
 export type ViewEngine = 'ejs' | 'nhc';
 /** Handler for HyperCloud requests */
-export type HyperCloudRequestHandler = (request: HyperCloudRequest, response: HyperCloudResponse, next: NextFunction) => void;
-export type HyperCloudHTTPErrorHandler = (request: HyperCloudRequest, response: HyperCloudResponse, next: NextFunction, error: Error | HTTPError) => void;
+export type HyperCloudRequestHandler = (request: HyperCloudRequest, response: HyperCloudResponse, next: NextFunction, error: Error | HTTPError) => void;
 /**HyperCloud's `next()` function */
 export type NextFunction = () => void;
 /**Represents various HTTP request methods. */
