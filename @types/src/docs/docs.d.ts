@@ -4,6 +4,7 @@ import SSLManager from '../services/ssl/manager';
 import HyperCloudRequest from '../../src/services/handler/assets/request';
 import HyperCloudResponse from '../../src/services/handler/assets/response';
 import HyperCloudServer from '../server';
+import HTTPError from '../utils/errors/HTTPError';
 
 /**The website's possible color schemes */
 export type ColorScheme = 'Dark' | 'Light' | 'Default';
@@ -13,6 +14,7 @@ export type RedirectCode = 300 | 301 | 302 | 303 | 304 | 307 | 308;
 export type ViewEngine = 'ejs' | 'nhc';
 /** Handler for HyperCloud requests */
 export type HyperCloudRequestHandler = (request: HyperCloudRequest, response: HyperCloudResponse, next: NextFunction) => void;
+export type HyperCloudHTTPErrorHandler = (request: HyperCloudRequest, response: HyperCloudResponse, next: NextFunction, error: Error | HTTPError) => void;
 /**HyperCloud's `next()` function */
 export type NextFunction = () => void;
 /**Represents various HTTP request methods. */

@@ -6,7 +6,7 @@ import path from 'path';
 import helpers from './utils/helpers';
 import SSLManager from './services/ssl/manager';
 import { ProtocolsOptions, SSLCredentials, SSLOptions } from './utils/classes';
-import { HyperCloudInitFile, HyperCloudInitOptions, HyperCloudManagementOptions, HyperCloudRequestHandler, HyperCloudServerHandlers, HyperCloudSystem, Protocols, SSLConfigs } from './docs/docs';
+import { HyperCloudHTTPErrorHandler, HyperCloudInitFile, HyperCloudInitOptions, HyperCloudManagementOptions, HyperCloudRequestHandler, HyperCloudServerHandlers, HyperCloudSystem, Protocols, SSLConfigs } from './docs/docs';
 
 import initializer from './services/handler/initializer';
 import HyperCloudResponse from './services/handler/assets/response';
@@ -565,7 +565,7 @@ class HyperCloudServer {
      * @throws {SyntaxError} If the `name` is an empty `string` or doesn't start with a letter.
      * @throws {TypeError} If the `handler` isn't a `function`.
      */
-    setHandler(name: HyperCloudServerHandlers, handler: HyperCloudRequestHandler) {
+    setHandler(name: HyperCloudServerHandlers, handler: HyperCloudRequestHandler | HyperCloudHTTPErrorHandler) {
         if (typeof name !== 'string') { throw new TypeError(`The handler name must be a string but got ${typeof name}`) }
         if (name.length === 0) { throw new SyntaxError(`The handler name cannot be empty`) }
         const letterRegex = /^[a-zA-Z]/;

@@ -1,4 +1,4 @@
-import { HyperCloudInitFile, HyperCloudInitOptions, HyperCloudManagementOptions, HyperCloudRequestHandler, HyperCloudServerHandlers } from './docs/docs';
+import { HyperCloudHTTPErrorHandler, HyperCloudInitFile, HyperCloudInitOptions, HyperCloudManagementOptions, HyperCloudRequestHandler, HyperCloudServerHandlers } from './docs/docs';
 import RenderingManager from './services/viewEngine/manager';
 import RoutesManager from './services/routes/manager';
 import Router from './services/routes/assets/router';
@@ -47,7 +47,7 @@ declare class HyperCloudServer {
      * @param handler - The handler function.
      * @throws If the handler name or function is invalid.
     */
-    setHandler(name: HyperCloudServerHandlers, handler: HyperCloudRequestHandler): void;
+    setHandler(name: HyperCloudServerHandlers, handler: HyperCloudRequestHandler | HyperCloudHTTPErrorHandler): void;
 
     /** Start listening for incoming requests */
     listen(): Promise<void>;
