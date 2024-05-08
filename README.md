@@ -36,7 +36,7 @@ import hypercloud from 'nasriya-hypercloud';
 // Creates a new server
 const server = hypercloud.Server();
 ```
-For more examples, [read this](https://github.com/nasriyasoftware/HyperCloud/examples/request.__language).
+For more examples, [read this](https://github.com/nasriyasoftware/HyperCloud/blob/main/examples/createServer.md).
 
 #### 4. Define routes
 For now, you only have an HTTP2 server that serves a `404` page on any path, so let's define more routes now using the server's `Router`.

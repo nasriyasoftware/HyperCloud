@@ -6,7 +6,7 @@ import nasriyaCron from 'nasriya-cron';
 /**HyperCloud class representing the main interface for managing HyperCloud servers and utilities. */
 declare class HyperCloud {
     /**
-     * Create an HTTP2 HyperCloud server instance and customize it to suite your needs. [Examples](https://github.com/nasriyasoftware/HyperCloud/examples/createServer.md)
+     * Create an HTTP2 HyperCloud server instance and customize it to suite your needs. [Examples](https://github.com/nasriyasoftware/HyperCloud/blob/main/examples/createServer.md)
      * @param userOptions Pass `SecureServerOptions` or `ServerOptions` to manually configure the server or load the configuration from a file
      * @param managementOptions Management options.
     */
