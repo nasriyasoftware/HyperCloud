@@ -275,9 +275,9 @@ class HyperCloudServer {
      * you want to create routes on, then mount the routes on the `Router`.
      * 
      * **Example**:
-     * ```js
+     * ```ts
      * // Main file: main.js
-     * const hypercloud = require('nasriya-hypercloud');
+     * import hypercloud from 'nasriya-hypercloud';
      * const server = hypercloud.Server();
      * 
      * const router = server.Router();
@@ -291,8 +291,8 @@ class HyperCloudServer {
      * module.exports = server;
      * ```
      * Now import the server on the API file:
-     * ```js
-     * const server = require('./main.js');
+     * ```ts
+     * import server from './main.js';
      * 
      * // Define a router for the APIs. All routes defined on this
      * // router will be under the `api` sub-domain, unless
@@ -309,21 +309,22 @@ class HyperCloudServer {
      * ```
      * Each created `Router` has a reference to the `HyperCloudServer`
      * that created it. So routes are automatically mounted on the server.
-     * @param {{ caseSensitive?: boolean, subDomain?: string}} options 
+     * @param {{ caseSensitive?: boolean, subDomain?: string}} [options] 
      * @returns {Router}
      */
-    Router(options: { caseSensitive?: boolean; subDomain?: string; }): Router {
+    Router(options?: { caseSensitive?: boolean; subDomain?: string; }): Router {
         return new Router(this, options || {})
     }
 
     /**
      * Initialize the server
-     * @param {HyperCloudInitOptions|HyperCloudInitFile} options Pass ```HyperCloudInitOptions``` to manually initialize the server, or use ```HyperCloudInitFile``` to initialize the server from a file
+     * @param {HyperCloudInitOptions|HyperCloudInitFile} options Pass `HyperCloudInitOptions` to manually initialize the server, or use `HyperCloudInitFile` to initialize the server from a file
      * @param {HyperCloudManagementOptions} [addOpt] Management options 
      * @returns {Promise} HyperCloud HTTP2 server
      * @example 
      * // Example: HTTP server only
-     * const server = require('nasriya-hypercloud');
+     * import hypercloud from 'nasriya-hypercloud';
+     * const server = hypercloud.Server();
      * 
      * const protocols = new server.Protocols({
      *      http: { port: 80, callback: () => console.log('HTTP Server is now listening') }
@@ -332,7 +333,8 @@ class HyperCloudServer {
      * server.initialize({ protocols }).listen();
      * @example
      * // Example: HTTPS server with Key and Certificate
-     * const server = require('nasriya-hypercloud');
+     * import hypercloud from 'nasriya-hypercloud';
+     * const server = hypercloud.Server();
      * 
      * const protocols = new server.Protocols({
      *      https: { port: 443, callback: () => console.log('HTTPS Server is now listening') }
@@ -343,7 +345,8 @@ class HyperCloudServer {
      * server.initialize({ protocols, ssl }).listen();
      * @example
      * // Example: HTTPS server with SSL Options
-     * const server = require('nasriya-hypercloud');
+     * import hypercloud from 'nasriya-hypercloud';
+     * const server = hypercloud.Server();
      * 
      * const protocols = new server.Protocols({
      *      https: { port: 443, callback: () => console.log('HTTPS Server is now listening') }
@@ -360,13 +363,15 @@ class HyperCloudServer {
      * server.initialize({ protocols, ssl }).listen();
      * @example
      * // Example: Enable debugging
-     * const server = require('nasriya-hypercloud');
+     * import hypercloud from 'nasriya-hypercloud';
+     * const server = hypercloud.Server();
      * 
      * server.initialize(options, { verbose: true }).listen();
      * @example
      * // Save configurations
-     * const server = require('nasriya-hypercloud');
-     * const path = require('path');
+     * import hypercloud from 'nasriya-hypercloud';
+     * const server = hypercloud.Server();
+     * import path from 'path';
      * 
      * server.initialize(options, { saveConfig: true, configPath: path.resolve('./') })
      */
