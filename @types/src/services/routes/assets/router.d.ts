@@ -8,49 +8,101 @@ declare class Router {
      * @param server The HyperCloudServer instance.
      * @param options The options for the router.
      */
-    constructor(server: HyperCloudServer, options: { caseSensitive?: boolean; subDomain?: string; });
+    constructor(server: HyperCloudServer, options?: { caseSensitive?: boolean; subDomain?: string; });
 
     /**
-     * Sets the favicon for the site.
+     * Set the favicon for the site.
      * @param faviconPath The path to the favicon file.
      * @param eTag Optional ETag for caching.
      */
     favicon(faviconPath: string, eTag?: string): void;
 
     /**
-     * Creates a static middleware for serving static files.
+     * Create a static route.
      * @param root The root directory to serve statically.
-     * @param options Additional options for the static middleware.
+     * @param options Optional configuration for the static route.
      */
-    static(root: string, options: StaticRouteOptions): void;
+    static(root: string, options?: StaticRouteOptions): void;
 
     /**
-     * Creates a route for handling requests with any HTTP method.
+     * Set a middleware for handling requests.
      * @param path The route path.
-     * @param handler The request handler function.
-     * @param options Additional options for the route.
+     * @param handler A function to handle the request.
+     * @param options Optional configuration for the route.
      */
-    use(path: string, handler: HyperCloudRequestHandler, options: { caseSensitive?: boolean; subDomain?: string; }): void;
-
-    // Methods for specific HTTP methods...
+    use(path: string, handler: HyperCloudRequestHandler, options?: { caseSensitive?: boolean; subDomain?: string; }): void;
 
     /**
-     * Creates a route for handling GET requests.
+     * Set a GET route handler.
      * @param path The route path.
-     * @param handler The request handler function.
-     * @param options Additional options for the route.
+     * @param handler A function to handle the request.
+     * @param options Optional configuration for the route.
      */
-    get(path: string, handler: HyperCloudRequestHandler, options: { caseSensitive?: boolean; subDomain?: string; }): void;
-
-    // Other HTTP method routes...
+    get(path: string, handler: HyperCloudRequestHandler, options?: { caseSensitive?: boolean; subDomain?: string; }): void;
 
     /**
-     * Creates a route for handling CONNECT requests.
+     * Set a POST route handler.
      * @param path The route path.
-     * @param handler The request handler function.
-     * @param options Additional options for the route.
+     * @param handler A function to handle the request.
+     * @param options Optional configuration for the route.
      */
-    connect(path: string, handler: HyperCloudRequestHandler, options: { caseSensitive?: boolean; subDomain?: string; }): void;
+    post(path: string, handler: HyperCloudRequestHandler, options?: { caseSensitive?: boolean; subDomain?: string; }): void;
+
+    /**
+     * Set a PUT route handler.
+     * @param path The route path.
+     * @param handler A function to handle the request.
+     * @param options Optional configuration for the route.
+     */
+    put(path: string, handler: HyperCloudRequestHandler, options?: { caseSensitive?: boolean; subDomain?: string; }): void;
+
+    /**
+     * Set a DELETE route handler.
+     * @param path The route path.
+     * @param handler A function to handle the request.
+     * @param options Optional configuration for the route.
+     */
+    delete(path: string, handler: HyperCloudRequestHandler, options?: { caseSensitive?: boolean; subDomain?: string; }): void;
+
+    /**
+     * Set a PATCH route handler.
+     * @param path The route path.
+     * @param handler A function to handle the request.
+     * @param options Optional configuration for the route.
+     */
+    patch(path: string, handler: HyperCloudRequestHandler, options?: { caseSensitive?: boolean; subDomain?: string; }): void;
+
+    /**
+     * Set a HEAD route handler.
+     * @param path The route path.
+     * @param handler A function to handle the request.
+     * @param options Optional configuration for the route.
+     */
+    head(path: string, handler: HyperCloudRequestHandler, options?: { caseSensitive?: boolean; subDomain?: string; }): void;
+
+    /**
+     * Set an OPTIONS route handler.
+     * @param path The route path.
+     * @param handler A function to handle the request.
+     * @param options Optional configuration for the route.
+     */
+    options(path: string, handler: HyperCloudRequestHandler, options?: { caseSensitive?: boolean; subDomain?: string; }): void;
+
+    /**
+     * Set a TRACE route handler.
+     * @param path The route path.
+     * @param handler A function to handle the request.
+     * @param options Optional configuration for the route.
+     */
+    trace(path: string, handler: HyperCloudRequestHandler, options?: { caseSensitive?: boolean; subDomain?: string; }): void;
+
+    /**
+     * Set a CONNECT route handler.
+     * @param path The route path.
+     * @param handler A function to handle the request.
+     * @param options Optional configuration for the route.
+     */
+    connect(path: string, handler: HyperCloudRequestHandler, options?: { caseSensitive?: boolean; subDomain?: string; }): void;
 }
 
 export default Router;

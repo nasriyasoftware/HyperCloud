@@ -15,22 +15,22 @@ class Router {
         subDomain: '*'
     }
 
-    constructor(server: HyperCloudServer, options: { caseSensitive?: boolean; subDomain?: string; }) {
+    constructor(server: HyperCloudServer, options?: { caseSensitive?: boolean; subDomain?: string; }) {
         this._server = server;
-        if ('caseSensitive' in options && typeof options.caseSensitive === 'boolean') { this._defaults.caseSensitive = options.caseSensitive }
-        if ('subDomain' in options && typeof options.subDomain === 'string') { this._defaults.subDomain = options.subDomain }
+        if (options && 'caseSensitive' in options && typeof options.caseSensitive === 'boolean') { this._defaults.caseSensitive = options.caseSensitive }
+        if (options && 'subDomain' in options && typeof options.subDomain === 'string') { this._defaults.subDomain = options.subDomain }
     }
 
     private _utils = Object.freeze({
         /**Create a route based on a method */
-        createRoute: (method: 'USE' | HttpMethod, path: string, handler: HyperCloudRequestHandler, options: { caseSensitive?: boolean; subDomain?: string; }) => {
+        createRoute: (method: 'USE' | HttpMethod, path: string, handler: HyperCloudRequestHandler, options?: { caseSensitive?: boolean; subDomain?: string; }) => {
             const caseSensitive = options && 'caseSensitive' in options ? options.caseSensitive : this._defaults.caseSensitive;
             const subDomain = options && 'subDomain' in options ? options.subDomain : this._defaults.subDomain;
 
             const route = new Route({ path, handler, method, caseSensitive, subDomain });
             this._server.__routesManager.add(route);
         },
-        createStaticRoute: (root: string, options: StaticRouteOptions) => {
+        createStaticRoute: (root: string, options?: StaticRouteOptions) => {
             const caseSensitive = options && 'caseSensitive' in options ? options.caseSensitive : this._defaults.caseSensitive;
             const subDomain = options && 'subDomain' in options ? options.subDomain : this._defaults.subDomain;
             const path = options && 'path' in options ? options.path : '/';
@@ -82,7 +82,7 @@ class Router {
      * @param {string} root The root directory to serve statically
      * @param {StaticRouteOptions} [options] static options
      */
-    static(root: string, options: StaticRouteOptions) {
+    static(root: string, options?: StaticRouteOptions) {
         this._utils.createStaticRoute(root, options);
     }
 
@@ -92,7 +92,7 @@ class Router {
      * @param {HyperCloudRequestHandler} handler A function to handle the request
      * @param {{caseSensitive?: boolean, subDomain?: string}} [options] Route options
      */
-    use(path: string, handler: HyperCloudRequestHandler, options: { caseSensitive?: boolean; subDomain?: string; }) {
+    use(path: string, handler: HyperCloudRequestHandler, options?: { caseSensitive?: boolean; subDomain?: string; }) {
         const method = 'USE';
         this._utils.createRoute(method, path, handler, options);
     }
@@ -103,7 +103,7 @@ class Router {
      * @param {HyperCloudRequestHandler} handler A function to handle the request
      * @param {{caseSensitive?: boolean, subDomain?: string}} [options] Route options
      */
-    get(path: string, handler: HyperCloudRequestHandler, options: { caseSensitive?: boolean; subDomain?: string; }) {
+    get(path: string, handler: HyperCloudRequestHandler, options?: { caseSensitive?: boolean; subDomain?: string; }) {
         const method = 'GET';
         this._utils.createRoute(method, path, handler, options);
     }
@@ -114,7 +114,7 @@ class Router {
      * @param {HyperCloudRequestHandler} handler A function to handle the request
      * @param {{caseSensitive?: boolean, subDomain?: string}} [options] Route options
      */
-    post(path: string, handler: HyperCloudRequestHandler, options: { caseSensitive?: boolean; subDomain?: string; }) {
+    post(path: string, handler: HyperCloudRequestHandler, options?: { caseSensitive?: boolean; subDomain?: string; }) {
         const method = 'POST';
         this._utils.createRoute(method, path, handler, options);
     }
@@ -125,7 +125,7 @@ class Router {
      * @param {HyperCloudRequestHandler} handler A function to handle the request
      * @param {{caseSensitive?: boolean, subDomain?: string}} [options] Route options
      */
-    put(path: string, handler: HyperCloudRequestHandler, options: { caseSensitive?: boolean; subDomain?: string; }) {
+    put(path: string, handler: HyperCloudRequestHandler, options?: { caseSensitive?: boolean; subDomain?: string; }) {
         const method = 'PUT';
         this._utils.createRoute(method, path, handler, options);
     }
@@ -136,7 +136,7 @@ class Router {
      * @param {HyperCloudRequestHandler} handler A function to handle the request
      * @param {{caseSensitive?: boolean, subDomain?: string}} [options] Route options
      */
-    delete(path: string, handler: HyperCloudRequestHandler, options: { caseSensitive?: boolean; subDomain?: string; }) {
+    delete(path: string, handler: HyperCloudRequestHandler, options?: { caseSensitive?: boolean; subDomain?: string; }) {
         const method = 'DELETE';
         this._utils.createRoute(method, path, handler, options);
     }
@@ -147,7 +147,7 @@ class Router {
      * @param {HyperCloudRequestHandler} handler A function to handle the request
      * @param {{caseSensitive?: boolean, subDomain?: string}} [options] Route options
      */
-    patch(path: string, handler: HyperCloudRequestHandler, options: { caseSensitive?: boolean; subDomain?: string; }) {
+    patch(path: string, handler: HyperCloudRequestHandler, options?: { caseSensitive?: boolean; subDomain?: string; }) {
         const method = 'PATCH';
         this._utils.createRoute(method, path, handler, options);
     }
@@ -158,7 +158,7 @@ class Router {
      * @param {HyperCloudRequestHandler} handler A function to handle the request
      * @param {{caseSensitive?: boolean, subDomain?: string}} [options] Route options
      */
-    head(path: string, handler: HyperCloudRequestHandler, options: { caseSensitive?: boolean; subDomain?: string; }) {
+    head(path: string, handler: HyperCloudRequestHandler, options?: { caseSensitive?: boolean; subDomain?: string; }) {
         const method = 'HEAD';
         this._utils.createRoute(method, path, handler, options);
     }
@@ -169,7 +169,7 @@ class Router {
      * @param {HyperCloudRequestHandler} handler A function to handle the request
      * @param {{caseSensitive?: boolean, subDomain?: string}} [options] Route options
      */
-    options(path: string, handler: HyperCloudRequestHandler, options: { caseSensitive?: boolean; subDomain?: string; }) {
+    options(path: string, handler: HyperCloudRequestHandler, options?: { caseSensitive?: boolean; subDomain?: string; }) {
         const method = 'OPTIONS';
         this._utils.createRoute(method, path, handler, options);
     }
@@ -180,7 +180,7 @@ class Router {
      * @param {HyperCloudRequestHandler} handler A function to handle the request
      * @param {{caseSensitive?: boolean, subDomain?: string}} [options] Route options
      */
-    trace(path: string, handler: HyperCloudRequestHandler, options: { caseSensitive?: boolean; subDomain?: string; }) {
+    trace(path: string, handler: HyperCloudRequestHandler, options?: { caseSensitive?: boolean; subDomain?: string; }) {
         const method = 'TRACE';
         this._utils.createRoute(method, path, handler, options);
     }
@@ -191,7 +191,7 @@ class Router {
      * @param {HyperCloudRequestHandler} handler A function to handle the request
      * @param {{caseSensitive?: boolean, subDomain?: string}} [options] Route options
      */
-    connect(path: string, handler: HyperCloudRequestHandler, options: { caseSensitive?: boolean; subDomain?: string; }) {
+    connect(path: string, handler: HyperCloudRequestHandler, options?: { caseSensitive?: boolean; subDomain?: string; }) {
         const method = 'CONNECT';
         this._utils.createRoute(method, path, handler, options);
     }
