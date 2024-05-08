@@ -1,4 +1,4 @@
-import { HyperCloudInitFile, HyperCloudInitOptions, HyperCloudManagementOptions, HyperCloudRequestHandler, HyperCloudServerHandlers } from './docs/docs';
+import { HyperCloudInitFile, HyperCloudManagementOptions, HyperCloudRequestHandler, HyperCloudServerHandlers, SecureServerOptions, ServerOptions } from './docs/docs';
 import RenderingManager from './services/viewEngine/manager';
 import RoutesManager from './services/routes/manager';
 import Router from './services/routes/assets/router';
@@ -6,6 +6,8 @@ import Router from './services/routes/assets/router';
 
 /** HyperCloud HTTP2 server */
 declare class HyperCloudServer {
+    constructor(userOptions?: SecureServerOptions | ServerOptions | HyperCloudInitFile, addOpt?: HyperCloudManagementOptions)
+
     /** Get the default language of the server */
     get defaultLanguage(): string;
     /** Set the default language of the server */
@@ -27,14 +29,6 @@ declare class HyperCloudServer {
     get __handlers(): Record<string, Function>;
 
     /**
-     * Initialize the server with provided options.
-     * @param options - Initialization options for the server.
-     * @param addOpt - Additional management options.
-     * @returns A promise that resolves when initialization is complete.
-     */
-    initialize(options: HyperCloudInitOptions | HyperCloudInitFile, addOpt: HyperCloudManagementOptions): Promise<void>;
-
-    /**
      * Create a new Router instance for defining routes.
      * @param options - Router options such as case sensitivity and subdomain.
      * @returns A new Router instance.
@@ -53,5 +47,5 @@ declare class HyperCloudServer {
     listen(): Promise<void>;
 }
 
-export { HyperCloudInitOptions, HyperCloudInitFile, HyperCloudManagementOptions };
+export { HyperCloudInitFile, HyperCloudManagementOptions };
 export default HyperCloudServer;

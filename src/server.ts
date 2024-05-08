@@ -5,8 +5,7 @@ import path from 'path';
 
 import helpers from './utils/helpers';
 import SSLManager from './services/ssl/manager';
-import { ProtocolsOptions, SSLCredentials, SSLOptions } from './utils/classes';
-import { HyperCloudInitFile, HyperCloudInitOptions, HyperCloudManagementOptions, HyperCloudRequestHandler, HyperCloudServerHandlers, HyperCloudSystem, Protocols, SSLConfigs } from './docs/docs';
+import { HyperCloudInitFile, HyperCloudManagementOptions, HyperCloudRequestHandler, HyperCloudServerHandlers, HyperCloudSystem, Protocol, Protocols, SSLConfigs, SecureServerOptions, ServerOptions, ServerPlusSecureOptions } from './docs/docs';
 
 import initializer from './services/handler/initializer';
 import HyperCloudResponse from './services/handler/assets/response';
@@ -27,9 +26,9 @@ class HyperCloudServer {
     private readonly _rendering: RenderingManager;
     private readonly _routesManager: RoutesManager;
 
-    private _config = {
-        protocols: { http: { port: 0, callback: undefined }, https: { port: 0, callback: undefined } } as Protocols,
-        /**@type {SSLConfigs} */
+    private readonly _config = {
+        protocol: { port: 0, callback: undefined } as Protocol,
+        secure: false,
         ssl: {
             domains: [] as string[],
             email: null as unknown as string,
@@ -40,7 +39,6 @@ class HyperCloudServer {
             staging: false,
             storePath: null as string | null
         } as SSLConfigs,
-        secure: false,
         verbose: false,
         initialized: false,
         trusted_proxies: [] as string[],
@@ -53,13 +51,13 @@ class HyperCloudServer {
         }
     }
 
-    private _utils = Object.freeze({
+    private readonly _utils = Object.freeze({
         config: {
             /**
              * @param {string} filePath The path of the configurations file. Or pass ```default``` to read from the default config. file.
              * @returns {HyperCloudInitOptions} Initialization options
              */
-            read: (filePath: string): HyperCloudInitOptions => {
+            read: (filePath: string): ServerPlusSecureOptions => {
                 if (filePath === 'default') {
                     filePath = path.resolve('./config.json');
                     const validity = helpers.checkPathAccessibility(filePath);
@@ -111,7 +109,7 @@ class HyperCloudServer {
              * @param {HyperCloudInitOptions} options 
              * @returns {void}
              */
-            save: (filePath: string, options: HyperCloudInitOptions): void => {
+            save: (filePath: string, options: any): void => {
                 if (filePath === 'default') {
                     filePath = path.resolve('./');
                 } else {
@@ -121,99 +119,210 @@ class HyperCloudServer {
                 }
 
                 fs.writeFileSync(path.resolve(`${filePath}/config.json`), JSON.stringify(options, null, 4), { encoding: 'utf-8' });
-            },
-            validate: {
-                /**@param {string} filePath */
-                file: (filePath: string) => {
-                    try {
-                        const config = this._utils.config.read(filePath);
-                        /**@type {HyperCloudInitOptions} */
-                        const opts: HyperCloudInitOptions = {
-                            protocols: new ProtocolsOptions(config.protocols),
-                        }
-
-                        if (config.ssl) {
-                            if ('cert' in config.ssl && config.ssl.cert) {
-                                opts.ssl = new SSLCredentials(config.ssl)
-                            }
-
-                            if ('email' in config.ssl && config.ssl.email) {
-                                opts.ssl = new SSLOptions(config.ssl)
-                            }
-                        }
-
-                        this._utils.config.validate.options(opts, true);
-                    } catch (error) {
-                        throw error;
-                    }
-                },
-                /**
-                 * @param {HyperCloudInitOptions} options 
-                 * @param {boolean} [fromFile] Default: ```false```.
-                 */
-                options: (options: HyperCloudInitOptions, fromFile: boolean = false) => {
-                    try {
-                        if (!('protocols' in options && options.protocols instanceof ProtocolsOptions)) {
-                            if (fromFile === true) {
-                                helpers.printConsole(`The configuration file is missing the protocols property.`)
-                                throw `The configuration file is not a valid HyperCloud initialization file.`;
-                            } else {
-                                helpers.printConsole(`Your configurations are missing the protocols property.`)
-                                throw `Your configurations are not an instance of ProtocolsOptions.`;
-                            }
-                        }
-
-                        /**Validating config file */
-                        const protocols = options.protocols;
-                        if (protocols.http.enabled) {
-                            this._config.protocols.http.port = protocols.http.port;
-                            if (typeof protocols.http.callback === 'string') { this._config.protocols.http.callback = protocols.http.callback }
-                        }
-
-                        if (protocols.https.enabled) {
-                            this._config.protocols.https.port = protocols.https.port;
-                            if (typeof protocols.https.callback === 'string') { this._config.protocols.https.callback = protocols.https.callback }
-                            this._config.secure = true;
-                        }
-
-                        if (options.ssl) {
-                            let valid = false;
-                            if (options.ssl instanceof SSLCredentials) {
-                                this._config.ssl.cert = options.ssl.cert;
-                                this._config.ssl.key = options.ssl.key;
-                                valid = true;
-                            }
-
-                            if (options.ssl instanceof SSLOptions) {
-                                this._config.ssl.email = options.ssl.email;
-                                this._config.ssl.domains = options.ssl.domains;
-                                this._config.ssl.certName = options.ssl.certName;
-                                this._config.ssl.self_signed = options.ssl.self_signed;
-                                this._config.ssl.staging = options.ssl.staging;
-                                this._config.ssl.storePath = options.ssl.storePath;
-                                valid = true
-                            }
-
-                            if (!valid) {
-                                if (fromFile === true) {
-                                    throw `The configuration file uses the HTTPS protocol without implementing SSL configs.`;
-                                } else {
-                                    throw `The server configurations use the HTTPS protocol without implementing SSL configs.`;
-                                }
-                            }
-                        }
-                    } catch (error) {
-                        throw error;
-                    }
-                }
             }
         }
     })
 
-    constructor() {
+    constructor(userOptions?: SecureServerOptions | ServerOptions | HyperCloudInitFile, addOpt?: HyperCloudManagementOptions) {
         this._rendering = new RenderingManager(this);
         this._rendering.addViews(path.resolve(path.join(__dirname, './services/pages')));
-        this._routesManager = new RoutesManager()
+        this._routesManager = new RoutesManager();
+
+        try {
+            if (helpers.is.undefined(userOptions) || userOptions === null) { throw `The server configuration is missing` }
+            if (!helpers.is.realObject(userOptions)) { throw `The server configuration is expecting an object, but instead got ${typeof userOptions}` }
+
+            let isFromFile = false;
+            if ('path' in userOptions) {
+                // Initialize the server from the config file.
+                if (typeof userOptions.path !== 'string') { throw `The server configuration path must be a string, instead got ${typeof userOptions.path}` }
+                const savedConfig = this._utils.config.read(userOptions.path);
+                userOptions = savedConfig;
+                isFromFile = true;
+            }
+
+            const options = userOptions as unknown as SecureServerOptions | ServerOptions;
+            const config_src = isFromFile ? 'file' : 'options';
+
+            if ('callback' in options) {
+                if (typeof options.callback === 'function') { this._config.protocol.callback = options.callback }
+            }
+
+            if ('secure' in options) {
+                if (typeof options.secure !== 'boolean') { throw `The secure option in the configuration ${config_src} is expecting a boolean value, instead got ${typeof options.secure}` }
+                if (options.secure === true) {
+                    this._config.secure = true;
+
+                    if ('ssl' in options) {
+                        if (helpers.is.undefined(options.ssl) || !helpers.is.realObject(options.ssl)) { throw `The SSL options used in server configurations ${config_src} is expectd to be an object, instead got ${options.ssl}` }
+
+                        if ('cert' in options.ssl || 'key' in options.ssl) {
+                            if ('cert' in options.ssl) {
+                                if (typeof options.ssl.cert !== 'string') { throw `The "cert" option in server's configuration ${config_src} is expecting a string value, instead got ${typeof options.ssl.cert}` }
+                                if (!(options.ssl.cert.startsWith('---- BEGIN CERTIFICATE----') && options.ssl.cert.startsWith('----END CERTIFICATE----'))) {
+                                    throw `The provided certificate (cert) in the configuration ${config_src} is not a valid certificate`;
+                                }
+
+                                this._config.ssl.cert = options.ssl.cert;
+                            }
+
+                            if ('key' in options.ssl) {
+                                if (typeof options.ssl.key !== 'string') { throw `The "key" option in server's configuration ${config_src} is expecting a string value, instead got ${typeof options.ssl.key}` }
+                                if (!(options.ssl.key.startsWith('-----BEGIN') && options.ssl.key.startsWith('PRIVATE KEY-----'))) {
+                                    throw `The provided private key (key) in the configuration ${config_src} is not a valid key`;
+                                }
+
+                                this._config.ssl.key = options.ssl.key;
+                            }
+                        } else {
+                            // Check if the user wants a self-signed certificate
+                            if ('self_signed' in options.ssl) {
+                                if (typeof options.ssl.self_signed !== 'boolean') { throw `The "self_signed" SSL option in the configuration ${config_src} is expecting a boolean value, instead got ${typeof options.ssl.self_signed}` }
+                                if (options.ssl.self_signed === true) { this._config.ssl.self_signed = true }
+                            }
+
+                            // Check the options to generate an SSL certificate via Let's Encrypt
+                            if (this._config.ssl.self_signed !== true) {
+
+                                if ('email' in options.ssl) {
+                                    if (!helpers.is.validString(options.ssl.email)) { throw `The "email" SSL option in the configuration ${config_src} is expecting a string value, instead got ${typeof options.ssl.email}` }
+                                    if (!helpers.validate.email(options.ssl.email)) { throw `The provided email (${options.ssl.email}) is not a valid email address` }
+                                    this._config.ssl.email = options.ssl.email;
+                                } else {
+                                    throw `The "email" SSL option in the configuration ${config_src} is missing.`
+                                }
+
+                                if ('certName' in options.ssl && !helpers.is.undefined(options.ssl.certName)) {
+                                    if (!helpers.is.validString(options.ssl.certName)) { throw `The "certName" SSL option in the configuration ${config_src} is expecting a string value, instead got ${typeof options.ssl.certName}` }
+                                    this._config.ssl.certName = options.ssl.certName;
+                                } else {
+                                    this._config.ssl.certName = helpers.getProjectName().replace(/-/g, '');
+                                }
+
+                                if ('domains' in options.ssl && !helpers.is.undefined(options.ssl.domains)) {
+                                    if (Array.isArray(options.ssl.domains)) {
+                                        if (!helpers.validate.domains(options.ssl.domains)) { throw `The provided domains array (${options.ssl.domains.join(', ')}) is not a valid domains array` }
+                                        this._config.ssl.domains = options.ssl.domains;
+                                    } else {
+                                        throw `The "domains" property expected an array as a value but instead got ${typeof options.ssl.domains}`
+                                    }
+                                } else {
+                                    throw `The "domains" SSL option in the configuration ${config_src} is missing.`;
+                                }
+                            }
+                        }
+
+                        if ('storePath' in options.ssl && !helpers.is.undefined(options.ssl.storePath)) {
+                            const validity = helpers.checkPathAccessibility(options.ssl.storePath);
+                            if (validity.valid) {
+                                this._config.ssl.storePath = options.ssl.storePath;
+                            } else {
+                                if (!validity.errors.isString) { throw new TypeError(`Invalid "storePath" was provided. Expected a string but instead got ${typeof options.ssl.storePath}`) }
+                                if (!validity.errors.exist) { throw new Error(`The "storePath" that you've provided (${options.ssl.storePath}) doesn't exist`) }
+                                if (!validity.errors.accessible) { throw Error(`You don't have enough read permissions to access ${options.ssl.storePath}`) }
+                            }
+                        } else {
+                            this._config.ssl.storePath = path.join(process.cwd(), 'SSL');
+                        }
+
+                    } else {
+                        this._config.ssl.self_signed = true;
+                    }
+                }
+            }
+
+            if ('port' in options) {
+                if (typeof options.port === 'number') {
+                    if (options.port > 0) {
+                        this._config.protocol.port = options.port;
+                    } else {
+                        throw `The port in the configuration ${config_src} is expecting a positive number, but instead got ${options.port}`
+                    }
+                } else {
+                    throw `The port in the configuration ${config_src} is expecting a number, but instead got ${typeof options.port}`
+                }
+            } else {
+                this._config.protocol.port = this._config.secure ? 443 : 80;
+            }
+
+            if ('proxy' in options && options.proxy) {
+                const validProxies: string[] = [];
+
+                if (options.proxy.isLocal === true) {
+                    validProxies.push('127.0.0.1');
+                }
+
+                if (options.proxy.isDockerContainer === true) {
+                    validProxies.push('172.17.0.1');
+                }
+
+                if ('trusted_proxies' in options.proxy) {
+                    const invalidProxies: string[] = [];
+
+                    if (!Array.isArray(options.proxy?.trusted_proxies)) {
+                        throw `The server expected an array of trusted proxies in the "trusted_proxies" property but instead got ${typeof options.proxy.trusted_proxies}`;
+                    }
+
+                    for (let proxy of options.proxy.trusted_proxies) {
+                        if (proxy === 'localhost') { proxy = '127.0.0.1' }
+                        if (proxy === 'docker') { proxy = '172.17.0.1' }
+
+                        if (helpers.validate.ipAddress(proxy)) {
+                            if (!validProxies.includes(proxy)) { validProxies.push(proxy) }
+                        } else {
+                            if (!invalidProxies.includes(proxy)) { invalidProxies.push(proxy) }
+                        }
+                    }
+
+                    if (invalidProxies.length > 0) {
+                        helpers.printConsole(invalidProxies)
+                        throw `The server expected an array of trusted proxies, but some of them were invalid: ${invalidProxies.join(', ')}`;
+                    }
+                }
+
+                if (validProxies.length === 0) {
+                    throw `The 'proxy' option in the HyperCloud server was used without valid proxy IP addresses.`
+                }
+
+                this._config.trusted_proxies = validProxies;
+            }
+
+            if (!isFromFile) {
+                if (!helpers.is.undefined(addOpt) && helpers.is.realObject(addOpt)) {
+                    if ('saveConfig' in addOpt) {
+                        if (typeof addOpt.saveConfig !== 'boolean') { throw `The saveConfig option in the server's management options expects a boolean value, but instead got ${addOpt.saveConfig}` }
+                        if (addOpt.saveConfig === true) {
+
+                            const savePath = (() => {
+                                if ('configPath' in addOpt) {
+                                    if (helpers.is.undefined(addOpt.configPath) || !helpers.is.validString(addOpt.configPath)) { throw `The "configPath" option in the server's management options expects a string value, but instead got ${addOpt.configPath}` }
+                                    return addOpt.configPath;
+                                } else {
+                                    return 'default';
+                                }
+                            })();
+
+                            const toSave = {
+                                protocol: this._config.protocol,
+                                secure: this._config.secure,
+                                ssl: this._config.ssl,
+                                proxy: this._config.trusted_proxies
+                            }
+
+                            this._utils.config.save(savePath, toSave)
+                        }
+                    }
+                }
+            }
+
+            if (addOpt?.saveConfig === true && typeof addOpt.configPath === 'string' && addOpt.configPath.length > 0) {
+                this._utils.config.save(addOpt.configPath, options);
+            }
+        } catch (error) {
+            if (typeof error === 'string') { error = `Cannot initialize the server: ${error}` }
+            helpers.printConsole(error);
+            throw new Error('Cannot initialize the server');
+        }
     }
 
     get defaultLanguage() { return this._config.languages.default }
@@ -317,156 +426,6 @@ class HyperCloudServer {
     }
 
     /**
-     * Initialize the server
-     * @param {HyperCloudInitOptions|HyperCloudInitFile} options Pass `HyperCloudInitOptions` to manually initialize the server, or use `HyperCloudInitFile` to initialize the server from a file
-     * @param {HyperCloudManagementOptions} [addOpt] Management options 
-     * @returns {Promise} HyperCloud HTTP2 server
-     * @example 
-     * // Example: HTTP server only
-     * import hypercloud from 'nasriya-hypercloud';
-     * const server = hypercloud.Server();
-     * 
-     * const protocols = new server.Protocols({
-     *      http: { port: 80, callback: () => console.log('HTTP Server is now listening') }
-     * })
-     * 
-     * server.initialize({ protocols }).listen();
-     * @example
-     * // Example: HTTPS server with Key and Certificate
-     * import hypercloud from 'nasriya-hypercloud';
-     * const server = hypercloud.Server();
-     * 
-     * const protocols = new server.Protocols({
-     *      https: { port: 443, callback: () => console.log('HTTPS Server is now listening') }
-     * })
-     * 
-     * const ssl = new server.SSLCredentials({ cert: '<certificate_string>', key: '<key_string>' })
-     * 
-     * server.initialize({ protocols, ssl }).listen();
-     * @example
-     * // Example: HTTPS server with SSL Options
-     * import hypercloud from 'nasriya-hypercloud';
-     * const server = hypercloud.Server();
-     * 
-     * const protocols = new server.Protocols({
-     *      https: { port: 443, callback: () => console.log('HTTPS Server is now listening') }
-     * })
-     * 
-     * const ssl = new server.SSLCredentials({
-     *      email: 'email@yourdomain.com',
-     *      domains: ['yourdomain.com', 'auth.yourdomain.com'],
-     *      self_signed: false, // Issue a self-signed certificate, if set to true, the following two properties will be ignored
-     *      staging: false, // Only set this to true when testing the SSL certificates' functionalities, set to false on production code
-     *      certName: 'your_project_or_company' // This value must be consistent
-     * })
-     * 
-     * server.initialize({ protocols, ssl }).listen();
-     * @example
-     * // Example: Enable debugging
-     * import hypercloud from 'nasriya-hypercloud';
-     * const server = hypercloud.Server();
-     * 
-     * server.initialize(options, { verbose: true }).listen();
-     * @example
-     * // Save configurations
-     * import hypercloud from 'nasriya-hypercloud';
-     * const server = hypercloud.Server();
-     * import path from 'path';
-     * 
-     * server.initialize(options, { saveConfig: true, configPath: path.resolve('./') })
-     */
-    async initialize(options: HyperCloudInitOptions | HyperCloudInitFile, addOpt?: HyperCloudManagementOptions): Promise<void> {
-        try {
-            if (this._config.initialized) {
-                throw 'The server is already initialized.';
-            }
-
-            if ('path' in options && options.path) {
-                // Initialize the server from the config file.
-                this._utils.config.validate.file(options.path);
-            }
-
-            if ('protocols' in options && options.protocols) {
-                this._utils.config.validate.options(options);
-                if (addOpt?.saveConfig === true && typeof addOpt.configPath === 'string' && addOpt.configPath.length > 0) {
-                    this._utils.config.save(addOpt.configPath, options);
-                }
-            }
-
-            if ('proxy' in options && options.proxy) {
-                const validProxies: string[] = [];
-
-                if (options.proxy.isLocal === true) {
-                    validProxies.push('127.0.0.1');
-                }
-
-                if (options.proxy.isDockerContainer === true) {
-                    validProxies.push('172.17.0.1');
-                }
-
-                if ('trusted_proxies' in options.proxy) {
-                    const invalidProxies: string[] = [];
-
-                    if (!Array.isArray(options.proxy?.trusted_proxies)) {
-                        throw `The server expected an array of trusted proxies in the "trusted_proxies" property but instead got ${typeof options.proxy.trusted_proxies}`;
-                    }
-
-                    for (let proxy of options.proxy.trusted_proxies) {
-                        if (proxy === 'localhost') { proxy = '127.0.0.1' }
-                        if (proxy === 'docker') { proxy = '172.17.0.1' }
-
-                        if (helpers.validate.ipAddress(proxy)) {
-                            if (!validProxies.includes(proxy)) { validProxies.push(proxy) }
-                        } else {
-                            if (!invalidProxies.includes(proxy)) { invalidProxies.push(proxy) }
-                        }
-                    }
-
-                    if (invalidProxies.length > 0) {
-                        helpers.printConsole(invalidProxies)
-                        throw `The server expected an array of trusted proxies, but some of them were invalid: ${invalidProxies.join(', ')}`;
-                    }
-                }
-
-                if (validProxies.length === 0) {
-                    throw `The 'proxy' option in the HyperCloud server was used without valid proxy IP addresses.`
-                }
-
-                this._config.trusted_proxies = validProxies;
-            }
-
-            // Initialize the server
-            //console.log(this._config)
-            if (typeof this._config.protocols.https.port === 'number' && this._config.protocols.https.port > 0) {
-                const creds = { cert: '', key: '' }
-
-                // Extract/generate SSL
-                if (this._config.ssl.cert && this._config.ssl.key) {
-                    creds.cert = this._config.ssl.cert;
-                    creds.key = this._config.ssl.key;
-                } else {
-                    this._system.SSL = new SSLManager(this._config.ssl, this._config.protocols.http.port);
-                    const { key, cert } = await this._system.SSL.generate();
-                    creds.cert = cert;
-                    creds.key = key;
-                }
-
-                this._system.httpsServer = http2.createSecureServer({ ...creds, allowHTTP1: true });
-            } else if (typeof this._config.protocols.http.port === 'number' && this._config.protocols.http.port > 0) {
-                this._system.httpServer = http.createServer();
-            } else {
-                helpers.printConsole('No protocols were configured for initialization');
-            }
-
-            this._config.initialized = true;
-        } catch (error) {
-            if (typeof error === 'string') { error = `Cannot initialize the server: ${error}` }
-            helpers.printConsole(error);
-            throw 'Cannot initialize the server';
-        }
-    }
-
-    /**
      * The `server.locals` object has properties that are local
      * variables within the application, and will be available
      * in templates rendered with `{@link HyperCloudResponse.render}`.
@@ -493,7 +452,7 @@ class HyperCloudServer {
                 if (!this._config.initialized) { throw 'Please initialize the server first.' }
                 this._config.initialized = true;
 
-                const protocol = this._config.protocols[this._config.secure ? 'https' : 'http'];
+                const protocol = this._config.protocol;
                 const server: http2.Http2Server | http.Server = this._config.secure ? this._system.httpsServer : this._system.httpServer;
 
                 server.on('request', async (req, res) => {
@@ -583,5 +542,5 @@ class HyperCloudServer {
     }
 }
 
-export { HyperCloudInitOptions, HyperCloudInitFile, HyperCloudManagementOptions }
+export { ServerOptions, SecureServerOptions, HyperCloudInitFile, HyperCloudManagementOptions }
 export default HyperCloudServer;

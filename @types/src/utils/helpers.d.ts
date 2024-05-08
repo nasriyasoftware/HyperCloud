@@ -1,6 +1,9 @@
 import { RandomOptions } from '../docs/docs';
 
 declare class Helpers {
+    /**Get the name if this package (project) from the `package.json` file */
+    getProjectName(): string
+    
     /**
      * Calculate the hash value if a file
      * @param filePath The file path

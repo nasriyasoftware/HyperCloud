@@ -281,7 +281,7 @@ export interface ProtocolsOptions {
         /** The port for HTTP. */
         port: number;
         /** Optional callback function for HTTP. */
-        callback?: () => void;        
+        callback?: () => void;
     };
     https: {
         /** The port for HTTPS. */
@@ -298,13 +298,15 @@ export interface SSLOptions {
     /** The domain(s) you want to add. At least one. */
     domains: string[];
     /** Whether you want to use a self-signed certificate or not. */
-    self_signed: boolean;
-    /** Enable to request a valid testing SSL certificate from Let's Encrypt. */
-    staging: boolean;
-    /** Bind the issued certificate to this name - used the `name` in the `package.json` of the project. */
-    certName: string;
-    /** The path you choose to store the SSL certificate and private key. */
-    storePath: string;
+    self_signed?: boolean;
+    /** Enable to request a valid testing SSL certificate from Let's Encrypt. Default: `false` */
+    staging?: boolean;
+    /** Bind the issued certificate to this name. Default: Uses the `name` in the `package.json` of the project. */
+    certName?: string;
+    /** The path you choose to store the SSL certificate and private key. (if you wish to) */
+    storePath?: string;
+    /**A port number to be used for achm challenges. Default: `80` */
+    challengePort?: number
 }
 
 /**SSL credentials consisting of a certificate and a private key. */
@@ -354,9 +356,9 @@ export interface HyperCloudConfigs {
 /** Define the HTTP and HTTPS protocols. */
 export interface Protocols {
     /** Define the HTTP protocol. */
-    http: Protocol;
+    http?: Protocol;
     /** Define the HTTPS protocol. */
-    https: Protocol;
+    https?: Protocol;
 }
 
 /** Define a protocol configuration. */
@@ -383,22 +385,33 @@ export interface HyperCloudInitFile {
     path: string;
 }
 
-/** Manually configure the server */
-export interface HyperCloudInitOptions {
-    /** Specify the protocols you want your server to run on */
-    protocols: ProtocolsOptions;
-    /** Configure the SSL certificate. These configurations are required if you want to use a secure connection */
-    ssl?: SSLOptions | SSLCredentials;
-    /** If your server is running behind a reverse proxy, add its IP address to get the true IP address of the client. */
-    proxy?: {
-        /** Set the IP address of your reverse proxy(ies) */
-        trusted_proxies?: string[];
-        /** Set this to true if your proxy is running in a docker container. */
-        isDockerContainer?: boolean;
-        /** Set this to true if the proxy is running on your machine. */
-        isLocal?: boolean;
-    };
+/** If your server is running behind a reverse proxy, add its IP address to get the true IP address of the client. */
+export interface ProxyOptions {
+    /** Set the IP address of your reverse proxy(ies) */
+    trusted_proxies?: string[];
+    /** Set this to true if your proxy is running in a docker container. */
+    isDockerContainer?: boolean;
+    /** Set this to true if the proxy is running on your machine. */
+    isLocal?: boolean;
 }
+
+export interface ServerOptions {
+    /** Specify the port number of the protocol for the server. Default: `443` for secure servers and `80` for plain HTTP ones */
+    port?: number;
+    /** Pass a callback function to run when the server starts listening. */
+    callback?: () => void;
+    /** If your server is running behind a reverse proxy, add its IP address to get the true IP address of the client. */
+    proxy?: ProxyOptions
+}
+
+export interface SecureServerOptions extends ServerOptions {
+    /**Set to `true` to use `https`. Default: `false`, which means `http`. */
+    secure: true;
+    /** Configure the SSL certificate. If not options were provided, a self signed certificate will be used */
+    ssl?: SSLOptions | SSLCredentials;    
+}
+
+export interface ServerPlusSecureOptions extends ServerOptions, SecureServerOptions {}
 
 /** Options for managing HyperCloud */
 export interface HyperCloudManagementOptions {

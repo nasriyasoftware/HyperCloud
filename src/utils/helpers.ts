@@ -4,6 +4,15 @@ import currencies from '../data/currencies.json';
 import { RandomOptions } from '../docs/docs';
 
 class Helpers {
+    /**Get the name if this package (project) from the `package.json` file */
+    getProjectName(): string {
+        // Read package.json file
+        const packageJson = fs.readFileSync('package.json', 'utf8');
+        // Parse package.json as JSON
+        const packageData = JSON.parse(packageJson);
+        // Extract project name
+        return packageData.name;
+    }
     /**
      * Calculate the hash value if a file
      * @param {string} filePath The file path

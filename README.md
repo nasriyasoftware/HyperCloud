@@ -36,21 +36,8 @@ import hypercloud from 'nasriya-hypercloud';
 import fs from 'fs';
 // Creates a new server
 const server = hypercloud.Server();
-
-// Prepare the initialization options
-const options = {
-    protocols: hypercloud.Protocols({
-        https: { port: 443 },
-    }),
-    ssl: hypercloud.SSLCredentials({
-        cert: fs.readFileSync('path to cert', { encoding: 'utf-8' }),
-        key: fs.readFileSync('path to key', { encoding: 'utf-8' }), 
-    })
-}
-
-// Initialize the server
-await server.initialize(options);
 ```
+For more examples, [read this](https://github.com/nasriyasoftware/HyperCloud/examples/request.__language).
 
 #### 4. Define routes
 For now, you only have an HTTP2 server that serves a `404` page on any path, so let's define more routes now using the server's `Router`.

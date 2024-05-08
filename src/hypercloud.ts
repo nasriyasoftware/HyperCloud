@@ -1,6 +1,5 @@
 import HyperCloudServer from './server';
-import { ProtocolsOptions, SSLCredentials, SSLOptions } from './utils/classes';
-import { Protocols } from './docs/docs';
+import { HyperCloudInitFile, HyperCloudManagementOptions, Protocols, SecureServerOptions, ServerOptions } from './docs/docs';
 import helpers from './utils/helpers';
 import hypercloudDNS from 'nasriya-dns';
 import nasriyaCron from 'nasriya-cron';
@@ -15,23 +14,19 @@ process.env.HYPERCLOUD_SERVER_VERBOSE = 'FALSE';
 class HyperCloud {
     private readonly _servers: HyperCloudServer[] = []
 
-    /**Create a new server */
-    Server(): HyperCloudServer {
-        const server = new HyperCloudServer();
+    /**
+     * Create an HTTP2 HyperCloud server instance and customize it to suite your needs. [Examples](https://github.com/nasriyasoftware/HyperCloud/examples/createServer.md)
+     * @param userOptions Pass `SecureServerOptions` or `ServerOptions` to manually configure the server or load the configuration from a file
+     * @param managementOptions Management options.
+    */
+    Server(userOptions?: SecureServerOptions | ServerOptions | HyperCloudInitFile, managementOptions?: HyperCloudManagementOptions): HyperCloudServer {
+        const server = new HyperCloudServer(userOptions, managementOptions);
         this._servers.push(server);
         return server;
     }
 
     get cronManager() { return nasriyaCron }
     get dnsManager() { return hypercloudDNS }
-
-    /**Create `Protocols` instance for the server */
-    Protocols(protocols: Protocols): ProtocolsOptions { return new ProtocolsOptions(protocols) }
-    /**Create `SSLCredentials` for the `ssl` option in `InitOptions`. */
-    SSLCredentials(credentials: SSLCredentials): SSLCredentials { return new SSLCredentials(credentials) }
-    /**Create `SSLOptions` for the `ssl` option in `InitOptions`. */
-    SSLOptions(options: SSLOptions): SSLOptions { return new SSLOptions(options) }
-
     get verbose() { return process.env.HYPERCLOUD_SERVER_VERBOSE === 'TRUE' ? true : false }
     /**
      * Display extra debugging details in the console. Default is ```false```.
