@@ -306,7 +306,7 @@ class HyperCloudServer {
                                 protocol: this._config.protocol,
                                 secure: this._config.secure,
                                 ssl: this._config.ssl,
-                                proxy: this._config.trusted_proxies
+                                proxy: { trusted_proxies: this._config.trusted_proxies }
                             }
 
                             this._utils.config.save(savePath, toSave)
