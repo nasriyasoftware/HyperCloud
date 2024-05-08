@@ -1,4 +1,3 @@
-
 import http2 from 'http2';
 import http from 'http';
 import fs from 'fs';
@@ -56,7 +55,7 @@ class HyperCloudServer {
         }
     }
 
-    _utils = Object.freeze({
+    private _utils = Object.freeze({
         config: {
             /**
              * @param {string} filePath The path of the configurations file. Or pass ```default``` to read from the default config. file.
@@ -373,7 +372,7 @@ class HyperCloudServer {
      * 
      * server.initialize(options, { saveConfig: true, configPath: path.resolve('./') })
      */
-    async initialize(options: HyperCloudInitOptions | HyperCloudInitFile, addOpt: HyperCloudManagementOptions): Promise<any> {
+    async initialize(options: HyperCloudInitOptions | HyperCloudInitFile, addOpt: HyperCloudManagementOptions): Promise<void> {
         try {
             if (this._config.initialized) {
                 throw 'The server is already initialized.';

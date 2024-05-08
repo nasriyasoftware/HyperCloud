@@ -1,4 +1,4 @@
-import { StaticRouteOptions, RouteOptions, HyperCloudRequestHandler } from '../../../docs/docs';
+import { StaticRouteOptions, HyperCloudRequestHandler } from '../../../docs/docs';
 import helpers from '../../../utils/helpers';
 
 import fs from 'fs';

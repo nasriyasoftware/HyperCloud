@@ -6,7 +6,7 @@ import HyperCloudResponse from './assets/response';
 import tldts from 'tldts';
 import { InitializedRequest, RequestBodyType } from '../../docs/docs';
 import { TLSSocket } from 'tls';
-import helpers from '../../utils/helpers'
+import helpers from '../../utils/helpers';
 
 class Initializer {
     /**

@@ -17,7 +17,7 @@ class HyperCloudRequest {
         initialized: false
     });
 
-    _colorScheme: ColorScheme = 'Default';
+    private _colorScheme: ColorScheme = 'Default';
 
     constructor(request: InitializedRequest, req: http2.Http2ServerRequest) {
         this._request = request;

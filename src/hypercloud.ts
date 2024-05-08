@@ -2,7 +2,7 @@ import HyperCloudServer from './server';
 import { ProtocolsOptions, SSLCredentials, SSLOptions } from './utils/classes';
 import { Protocols } from './docs/docs';
 import helpers from './utils/helpers';
-import dnsManager from 'nasriya-dns';
+import hypercloudDNS from 'nasriya-dns';
 import nasriyaCron from 'nasriya-cron';
 
 import fs from 'fs';
@@ -23,7 +23,7 @@ class HyperCloud {
     }
 
     get cronManager() { return nasriyaCron }
-    get dnsManager() { return dnsManager }
+    get dnsManager() { return hypercloudDNS }
 
     /**Create `Protocols` instance for the server */
     Protocols(protocols: Protocols): ProtocolsOptions { return new ProtocolsOptions(protocols) }

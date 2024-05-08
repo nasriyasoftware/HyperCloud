@@ -1597,13 +1597,13 @@ interface ResponseEndOptions {
     data?: string | Uint8Array;
     encoding?: BufferEncoding;
     callback?: () => void;
-};
+}
 
 interface WriteOptions {
     chunk: string | Uint8Array;
     encoding?: BufferEncoding;
     callback?: (err: Error) => void;
-};
+}
 
 type BufferEncoding = 'ascii' | 'utf8' | 'utf-8' | 'utf16le' | 'utf-16le' | 'ucs2' | 'ucs-2' | 'base64' | 'base64url' | 'latin1' | 'binary' | 'hex';
 type EventType = 'pipe' | 'unpipe' | 'close' | 'drain' | 'finish' | 'error';
@@ -1611,8 +1611,7 @@ type EventType = 'pipe' | 'unpipe' | 'close' | 'drain' | 'finish' | 'error';
 interface EventConfig {
     event: EventType;
     listener: EventCallback;
-};
+}
 
 type EventCallback = (...args: any[]) => void;
-
 type EmptyCallback = () => void;

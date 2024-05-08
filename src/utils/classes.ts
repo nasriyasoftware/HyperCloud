@@ -6,7 +6,7 @@ export class SSLCredentials {
     /**The certificate to be used */
     public readonly cert: string;
     /**The private key to be used */
-    public key: string;
+    public readonly key: string;
 
     /**
      * Provide a certificate and a key to validate

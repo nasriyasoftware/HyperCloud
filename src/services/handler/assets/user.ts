@@ -6,7 +6,7 @@ class HyperCloudUser {
     private readonly _preferences: UserPreferences;
     private readonly _request: HyperCloudRequest;
 
-    _data = {
+    private readonly _data = {
         id: null as unknown as string,
         loggedIn: false,
         role: 'Visitor' as UserRole
