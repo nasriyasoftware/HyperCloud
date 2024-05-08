@@ -33,7 +33,6 @@ import hypercloud from 'nasriya-hypercloud';
 
 #### 3. Creating & Initializing a server
 ```ts
-import fs from 'fs';
 // Creates a new server
 const server = hypercloud.Server();
 ```
