@@ -375,7 +375,7 @@ class HyperCloudServer {
      * 
      * server.initialize(options, { saveConfig: true, configPath: path.resolve('./') })
      */
-    async initialize(options: HyperCloudInitOptions | HyperCloudInitFile, addOpt: HyperCloudManagementOptions): Promise<void> {
+    async initialize(options: HyperCloudInitOptions | HyperCloudInitFile, addOpt?: HyperCloudManagementOptions): Promise<void> {
         try {
             if (this._config.initialized) {
                 throw 'The server is already initialized.';
