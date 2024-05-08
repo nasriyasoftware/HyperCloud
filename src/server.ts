@@ -14,8 +14,6 @@ import RenderingManager from './services/viewEngine/manager';
 import RoutesManager from './services/routes/manager';
 import RequestRoutesManager from './services/routes/assets/routesInitiator';
 import Router from './services/routes/assets/router';
-import HyperCloudRequest from './services/handler/assets/request';
-import HyperCloudUser from './services/handler/assets/user';
 
 /**HyperCloud HTTP2 server */
 class HyperCloudServer {

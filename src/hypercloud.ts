@@ -104,4 +104,4 @@ class HyperCloud {
     }
 }
 
-module.exports = new HyperCloud();
+export default new HyperCloud();
