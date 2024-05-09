@@ -145,7 +145,7 @@ class SSLManager {
                 this._cache.bat_str = command;
                 const batFilePath = this._cache.filesLocations.reqBatFile;
 
-                fs.writeFileSync(batFilePath, this._cache.bat_str.trim(), { encoding: 'utf8' });
+                fs.writeFileSync(batFilePath, this._cache.bat_str.trim(), { encoding: 'utf8', flag: 'w' });
                 const openCom = this._utils.getFileOpenCommand(batFilePath);
                 await execAsync(openCom);
 
@@ -205,12 +205,15 @@ class SSLManager {
                 }
             }
 
-            this._data.storePath = options.storePath ? options.storePath : this._defaults.filesLocations.certificatePath
-           
-            helpers.printConsole('HyperCloud SSL: Storing the obtained SSL certificate & key...');
-            fs.writeFileSync(path.resolve(this._data.storePath, 'privateKey.key'), response.key, { encoding: 'utf-8' })
-            fs.writeFileSync(path.resolve(this._data.storePath, 'cert.crt'), response.cert, { encoding: 'utf-8' })
+            this._data.storePath = options.storePath ? options.storePath : this._defaults.filesLocations.certificatePath;
 
+            if (!fs.existsSync(this._data.storePath)) {
+                fs.mkdirSync(this._data.storePath, { recursive: true });
+            }
+
+            helpers.printConsole('HyperCloud SSL: Storing the obtained SSL certificate & key...');
+            fs.writeFileSync(path.join(this._data.storePath, 'privateKey.key'), response.key, { encoding: 'utf-8', flag: 'w' })
+            fs.writeFileSync(path.join(this._data.storePath, 'cert.crt'), response.cert, { encoding: 'utf-8', flag: 'w' })
             return response;
         } catch (error) {
             console.error(error);
