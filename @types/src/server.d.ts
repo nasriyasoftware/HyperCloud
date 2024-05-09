@@ -1,8 +1,7 @@
-import { HyperCloudInitFile, HyperCloudManagementOptions, HyperCloudRequestHandler, HyperCloudServerHandlers, SecureServerOptions, ServerOptions } from './docs/docs';
+import { HyperCloudInitFile, HyperCloudManagementOptions, HyperCloudRequestHandler, HyperCloudServerHandlers, OptionalProtocol, SecureServerOptions, ServerOptions } from './docs/docs';
 import RenderingManager from './services/viewEngine/manager';
 import RoutesManager from './services/routes/manager';
 import Router from './services/routes/assets/router';
-
 
 /** HyperCloud HTTP2 server */
 declare class HyperCloudServer {
@@ -43,9 +42,13 @@ declare class HyperCloudServer {
     */
     setHandler(name: HyperCloudServerHandlers, handler: HyperCloudRequestHandler): void;
 
-    /** Start listening for incoming requests */
-    listen(): Promise<void>;
+    /**
+     * Start listening for incoming requests
+     * @param protocol Specify the port number of the protocol for the server. Default: `443` for secure servers and `80` for plain HTTP ones. You can pass a callback too.
+     * @param callback Pass a callback function to run when the server starts listening.
+     * @returns {Promise<void>}
+    */
+    listen(protocol: OptionalProtocol): Promise<void>;
 }
 
-export { HyperCloudInitFile, HyperCloudManagementOptions };
 export default HyperCloudServer;

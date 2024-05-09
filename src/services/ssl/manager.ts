@@ -6,25 +6,33 @@ import fs from 'fs';
 import path from 'path';
 import http from 'http';
 
-import { SSLConfigs } from '../../docs/docs';
+import { SSLOptions } from '../../docs/docs';
 import helpers from '../../utils/helpers';
 
 class SSLManager {
-    private _initialized: boolean;
+    private readonly _type: 'SelfSigned' | 'LetsEncrypt';
 
     private readonly _defaults = Object.freeze({
         certbotPath: 'C:\\Program Files\\Certbot',
-        certName: 'nasriyasoftware'
+        certName: 'nasriyasoftware',
+        filesLocations: {
+            certificatePath: path.resolve(path.join(__dirname, 'config')),
+            reqBatFile: path.resolve(path.join(__dirname, 'config/req_cert.bat')),
+            key: path.resolve(path.join(__dirname, 'config/privateKey.pem')),
+            cert: path.resolve(path.join(__dirname, 'config/cert.crt'))
+        }
     })
 
-    private readonly _data = {
-        certName: 'nasriyasoftware',
-        domains: [] as string[],
-        email: null as unknown as string,
-        projectPath: null as unknown as string,
-        staging: false,
-        self_signed: false,
-        storePath: null as unknown as string,
+    private _data: SSLOptions = {
+        type: 'selfSigned',
+        letsEncrypt: {
+            certName: undefined,
+            domains: [],
+            email: undefined as unknown as string,
+            staging: false,
+            challengePort: 80
+        },
+        storePath: '',
     }
 
     private readonly _cache = {
@@ -42,22 +50,6 @@ class SSLManager {
             key: path.resolve(path.join(__dirname, 'config/privateKey.pem')),
             cert: path.resolve(path.join(__dirname, 'config/cert.crt'))
         }
-    }
-
-    /**
-     * @param {SSLConfigs} config
-     * @param {number} port The port for SSL challenge over HTTP
-    */
-    constructor(config: SSLConfigs, port: number) {
-        //console.log(config)
-        this._cache.port = port;
-        this._data.self_signed = config.self_signed;
-        this._data.staging = config.staging;
-        this._data.domains = config.domains
-
-        if (config.email) { this._data.email = config.email }
-        if (config.certName) { this._data.certName = config.certName }
-        if (config.storePath) { this._data.storePath = config.storePath }
     }
 
     private readonly _utils = {
@@ -142,8 +134,9 @@ class SSLManager {
                 }
             },
             /**Use this to request/renew certificate */
-            request: async (force: boolean) => {
-                const d = this._data;
+            request: async (force: boolean = false) => {
+                const d = this._data.letsEncrypt;
+                if (helpers.is.undefined(d)) { throw `Let's Encrypt data are undefined` }
                 const domainString = d.domains.map(i => `-d ${i}`).join(' ');
                 const certificatePath = this._cache.filesLocations.certificatePath;
                 const challengePath = `${certificatePath}\\challenge`;
@@ -157,16 +150,12 @@ class SSLManager {
                 await execAsync(openCom);
 
                 return {
-                    cert: `C:\\Certbot\\live\\${d.certName}\\cert.pem`,
-                    key: `C:\\Certbot\\live\\${d.certName}\\privkey.pem`
+                    cert: fs.readFileSync(`C:\\Certbot\\live\\${d.certName}\\cert.pem`, { encoding: 'utf-8' }),
+                    key: fs.readFileSync(`C:\\Certbot\\live\\${d.certName}\\privkey.pem`, { encoding: 'utf-8' })
                 }
             },
             generateSelfSigned: async () => {
                 const selfSigned = require('openssl-self-signed-certificate');
-
-                fs.writeFileSync(this._cache.filesLocations.cert, selfSigned.cert, { encoding: 'utf-8' });
-                fs.writeFileSync(this._cache.filesLocations.key, selfSigned.key, { encoding: 'utf-8' });
-
                 return { key: selfSigned.key.toString('utf-8'), cert: selfSigned.cert.toString('utf-8') }
             },
             cleanUp: () => {
@@ -184,51 +173,50 @@ class SSLManager {
     }
 
     /**
-     * 
-     * @param {object} buildOptions 
-     * @returns {Promise<{ key: string, cert: string }>}
+     * @param {object} options
+     * @returns {Promise<{key: string;cert: string;}>}
      */
-    async generate(buildOptions: { force: boolean } = { force: false }): Promise<{ key: string; cert: string; }> {
-        helpers.printConsole('Running HyperFlow SSL Manager')
+    async generate(options: SSLOptions): Promise<{ key: string; cert: string; }> {
+        helpers.printConsole('Running HyperCloud SSL Manager');
 
         try {
-            if (this._data.self_signed) {
-                helpers.printConsole('HyperFlow SSL: Generating self-signed certificate...');
-                const { key, cert } = await this._utils.certInfo.generateSelfSigned();
-
-                if (this._data.storePath) {
-                    helpers.printConsole('HyperFlow SSL: Storing the generated SSL certificate & key...');
-                    fs.writeFileSync(path.resolve(this._data.storePath, 'privateKey.key'), key, { encoding: 'utf-8' })
-                    fs.writeFileSync(path.resolve(this._data.storePath, 'cert.crt'), cert, { encoding: 'utf-8' })
-                }
-
-                return { key, cert };
+            const response = { key: '', cert: '' }            
+            if (options.type === 'selfSigned') {
+                helpers.printConsole('HyperCloud SSL: Generating self-signed certificate...');
+                const res = await this._utils.certInfo.generateSelfSigned();;
+                response.cert = res.cert;
+                response.key = res.key;
             } else {
-                helpers.printConsole('HyperFlow SSL: Running a temp auth server...');
-                await this._utils.certInfo.authServer.run();
-                this._utils.certInfo.authServer.stop();
+                if ('letsEncrypt' in options) {
+                    if (helpers.is.undefined(options.letsEncrypt)) { throw '' }
+                    helpers.printConsole('HyperCloud SSL: Running a temp auth server...');
+                    this._data.letsEncrypt = options.letsEncrypt;
+                    await this._utils.certInfo.authServer.run();
+                    this._utils.certInfo.authServer.stop();
 
-                helpers.printConsole('HyperFlow SSL: Requesting and authenticating...');
-                const { key, cert } = await this._utils.certInfo.request(buildOptions.force);
-                const creds = { key: fs.readFileSync(key, { encoding: 'utf-8' }), cert: fs.readFileSync(cert, { encoding: 'utf-8' }) }
+                    helpers.printConsole('HyperCloud SSL: Requesting and authenticating...');
+                    const { key, cert } = await this._utils.certInfo.request();
+                    response.key = fs.readFileSync(key, { encoding: 'utf-8' });
+                    response.cert = fs.readFileSync(cert, { encoding: 'utf-8' })
 
-                if (!creds.cert || !creds.key) {
-                    throw 'Unable to obtain SSL certificate from Let\'s Encrypt.'
+                    if (!response.cert || !response.key) {
+                        throw 'Unable to obtain SSL certificate from Let\'s Encrypt.'
+                    }
                 }
-
-                if (this._data.storePath) {
-                    helpers.printConsole('HyperFlow SSL: Storing the obtained SSL certificate & key...');
-                    fs.writeFileSync(path.resolve(this._data.storePath, 'privateKey.key'), creds.key, { encoding: 'utf-8' })
-                    fs.writeFileSync(path.resolve(this._data.storePath, 'cert.crt'), creds.cert, { encoding: 'utf-8' })
-                }
-
-                return creds;
             }
+
+            this._data.storePath = options.storePath ? options.storePath : this._defaults.filesLocations.certificatePath
+           
+            helpers.printConsole('HyperCloud SSL: Storing the obtained SSL certificate & key...');
+            fs.writeFileSync(path.resolve(this._data.storePath, 'privateKey.key'), response.key, { encoding: 'utf-8' })
+            fs.writeFileSync(path.resolve(this._data.storePath, 'cert.crt'), response.cert, { encoding: 'utf-8' })
+
+            return response;
         } catch (error) {
             console.error(error);
             throw error;
         } finally {
-            helpers.printConsole('HyperFlow SSL: Cleaning up after SSL manager...')
+            helpers.printConsole('HyperCloud SSL: Cleaning up after SSL manager...')
             this._utils.certInfo.cleanUp();
         }
     }

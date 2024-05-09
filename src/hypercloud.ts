@@ -1,5 +1,5 @@
 import HyperCloudServer from './server';
-import { HyperCloudInitFile, HyperCloudManagementOptions, Protocols, SecureServerOptions, ServerOptions } from './docs/docs';
+import { HyperCloudInitFile, HyperCloudManagementOptions, SecureServerOptions, ServerOptions } from './docs/docs';
 import helpers from './utils/helpers';
 import hypercloudDNS from 'nasriya-dns';
 import nasriyaCron from 'nasriya-cron';
@@ -9,7 +9,6 @@ import path from 'path';
 import process from 'process';
 
 process.env.HYPERCLOUD_SERVER_VERBOSE = 'FALSE';
-
 
 class HyperCloud {
     private readonly _servers: HyperCloudServer[] = []
@@ -35,7 +34,7 @@ class HyperCloud {
      * @param {boolean} value
      */
     set verbose(value: boolean) {
-        if (typeof process.env.HYPERCLOUD_SERVER_VERBOSE === 'boolean') {
+        if (typeof value === 'boolean') {
             process.env.HYPERCLOUD_SERVER_VERBOSE = value === true ? 'TRUE' : 'FALSE';
         } else {
             throw `HyperCloud verbose property can only accept boolean value, but instead got ${typeof value}`;

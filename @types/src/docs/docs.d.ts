@@ -291,22 +291,28 @@ export interface ProtocolsOptions {
     };
 }
 
-/**Options for configuring SSL. */
-export interface SSLOptions {
+export interface LetsEncryptOptions {
     /** The maintainer email address. This must be consistent. */
     email: string;
     /** The domain(s) you want to add. At least one. */
     domains: string[];
-    /** Whether you want to use a self-signed certificate or not. */
-    self_signed?: boolean;
     /** Enable to request a valid testing SSL certificate from Let's Encrypt. Default: `false` */
     staging?: boolean;
     /** Bind the issued certificate to this name. Default: Uses the `name` in the `package.json` of the project. */
     certName?: string;
-    /** The path you choose to store the SSL certificate and private key. (if you wish to) */
-    storePath?: string;
     /**A port number to be used for achm challenges. Default: `80` */
     challengePort?: number
+}
+
+/**Options for configuring SSL. */
+export interface SSLOptions {
+    /**The type of SSL configurations. Default: `selfSigned` */
+    type?: 'selfSigned' | 'letsEncrypt' | 'credentials';
+    letsEncrypt?: LetsEncryptOptions;
+    /**SSL credentials consisting of a certificate and a private key. */
+    credentials?: SSLCredentials;
+    /** The path you choose to store the SSL certificate and private key. (if you wish to) */
+    storePath?: string;
 }
 
 /**SSL credentials consisting of a certificate and a private key. */
@@ -315,26 +321,6 @@ export interface SSLCredentials {
     cert: string;
     /** The private key to be used. */
     key: string;
-}
-
-/**SSL configurations. */
-export interface SSLConfigs {
-    /** The certificate to be used. */
-    cert: string;
-    /** The private key to be used. */
-    key: string;
-    /** Whether a self-signed certificate is used. */
-    self_signed: boolean;
-    /** Whether staging mode is enabled. */
-    staging: boolean;
-    /** The maintainer email address. */
-    email: string;
-    /** The domain(s) you want to add. At least one. */
-    domains: string[];
-    /** Bind the issued certificate to this name - used the `name` in the `package.json` of the project. */
-    certName: string;
-    /** The path to store the SSL certificate and private key. */
-    storePath: string;
 }
 
 /**HyperCloud configurations. */
@@ -369,6 +355,14 @@ export interface Protocol {
     callback?: () => void;
 }
 
+/** Define a protocol configuration. */
+export interface OptionalProtocol {
+    /** Specify the port number of the protocol. Default: `443` for secure servers and `80` for plain HTTP ones */
+    port?: number;
+    /** Pass a callback function to run when the server starts listening. */
+    callback?: () => void;
+}
+
 /** Represents the HyperCloud system components. */
 export interface HyperCloudSystem {
     /** The HTTPS server instance. */
@@ -396,22 +390,33 @@ export interface ProxyOptions {
 }
 
 export interface ServerOptions {
-    /** Specify the port number of the protocol for the server. Default: `443` for secure servers and `80` for plain HTTP ones */
-    port?: number;
-    /** Pass a callback function to run when the server starts listening. */
-    callback?: () => void;
     /** If your server is running behind a reverse proxy, add its IP address to get the true IP address of the client. */
-    proxy?: ProxyOptions
+    proxy?: ProxyOptions;
+    /**Configure your server's default and supported languages */
+    languages?: {
+        /**Set your server's default language. Default: `en` */
+        default?: string;
+        /**Set your server's supported languages. Default: `['en']` */
+        supported?: string[]
+    },
+    /**
+     * The `server.locals` object has properties that are local
+     * variables within the application, and will be available
+     * in templates rendered with `{@link HyperCloudResponse.render}`.
+     */
+    locals?: Record<string, string>,
+    /**Define handlers for various scenarios */
+    handlers?: Record<HyperCloudServerHandlers, HyperCloudRequestHandler>
 }
 
 export interface SecureServerOptions extends ServerOptions {
     /**Set to `true` to use `https`. Default: `false`, which means `http`. */
     secure: true;
     /** Configure the SSL certificate. If not options were provided, a self signed certificate will be used */
-    ssl?: SSLOptions | SSLCredentials;    
+    ssl?: SSLOptions;
 }
 
-export interface ServerPlusSecureOptions extends ServerOptions, SecureServerOptions {}
+export interface ServerPlusSecureOptions extends ServerOptions, SecureServerOptions { }
 
 /** Options for managing HyperCloud */
 export interface HyperCloudManagementOptions {
