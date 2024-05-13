@@ -10,9 +10,7 @@ import { SSLOptions } from '../../docs/docs';
 import helpers from '../../utils/helpers';
 
 class SSLManager {
-    private readonly _type: 'SelfSigned' | 'LetsEncrypt';
-
-    private readonly _defaults = Object.freeze({
+    readonly #_defaults = Object.freeze({
         certbotPath: 'C:\\Program Files\\Certbot',
         certName: 'nasriyasoftware',
         filesLocations: {
@@ -23,7 +21,7 @@ class SSLManager {
         }
     })
 
-    private _data: SSLOptions = {
+    readonly #_data: SSLOptions = {
         type: 'selfSigned',
         letsEncrypt: {
             certName: undefined,
@@ -35,7 +33,7 @@ class SSLManager {
         storePath: '',
     }
 
-    private readonly _cache = {
+    readonly #_cache = {
         bat_str: '',
         staging: false,
         certInfo: {
@@ -52,19 +50,20 @@ class SSLManager {
         }
     }
 
-    private readonly _utils = {
+    readonly #_utils = {
         /**
          * Function to execute win-acme command
          * @param {string} command 
         */
-        async executeCertbot(command: string): Promise<string | undefined> {
-            const { stdout, stderr } = await execAsync(`"${this._defaults.certbotPath}\\run.bat" ${command}`);
+        executeCertbot: async (command: string): Promise<string | undefined> => {
+            const { stdout, stderr } = await execAsync(`"${this.#_defaults.certbotPath}\\run.bat" ${command}`);
             if (stdout) {
                 return stdout;
             }
 
             if (stderr) {
                 console.error(stderr);
+                throw stderr;
             }
         },
         getFileOpenCommand(filePath: string): string {
@@ -92,17 +91,17 @@ class SSLManager {
         },
         certInfo: {
             addBatMessage: (msg: string) => {
-                if (!this._cache.bat_str.includes('@echo off')) {
-                    this._cache.bat_str = `@echo off\n${this._cache.bat_str}`;
+                if (!this.#_cache.bat_str.includes('@echo off')) {
+                    this.#_cache.bat_str = `@echo off\n${this.#_cache.bat_str}`;
                 }
 
-                this._cache.bat_str += `echo ${msg}\n`
+                this.#_cache.bat_str += `echo ${msg}\n`
             },
             authServer: {
                 run: async () => {
                     let num = 0;
                     // Creating and running a server at your port or port 80
-                    this._cache.server = http.createServer(async (req, res) => {
+                    this.#_cache.server = http.createServer(async (req, res) => {
                         console.log(`Auth Request #${num++}`)
                         // Parse the URL to extract the challenge token
                         const urlParts = (req.url as string).split('/');
@@ -111,7 +110,7 @@ class SSLManager {
                         // Check if the request is for the challenge route
                         if ((req.url as string).startsWith('/.well-known/acme-challenge/')) {
                             // Construct the file path for the challenge file
-                            const challengeFilePath = path.join(this._cache.filesLocations.certificatePath, 'challenge', '.well-known\\acme-challenge', challengeToken);
+                            const challengeFilePath = path.join(this.#_cache.filesLocations.certificatePath, 'challenge', '.well-known\\acme-challenge', challengeToken);
 
                             // Read the challenge file and respond with its content
                             fs.readFile(challengeFilePath, 'utf8', (err, data) => {
@@ -126,27 +125,27 @@ class SSLManager {
                         }
                     });
 
-                    this._cache.server.listen(this._cache.port);
+                    this.#_cache.server.listen(this.#_cache.port);
                 },
                 stop: () => {
-                    this._cache.server?.close();
-                    this._cache.server = null;
+                    this.#_cache.server?.close();
+                    this.#_cache.server = null;
                 }
             },
             /**Use this to request/renew certificate */
             request: async (force: boolean = false) => {
-                const d = this._data.letsEncrypt;
+                const d = this.#_data.letsEncrypt;
                 if (helpers.is.undefined(d)) { throw `Let's Encrypt data are undefined` }
                 const domainString = d.domains.map(i => `-d ${i}`).join(' ');
-                const certificatePath = this._cache.filesLocations.certificatePath;
+                const certificatePath = this.#_cache.filesLocations.certificatePath;
                 const challengePath = `${certificatePath}\\challenge`;
                 const command = `certbot certonly --webroot -w ${challengePath} --cert-name ${d.certName} --agree-tos --non-interactive${force === true ? ' --force-renewal' : ''} --email ${d.email} ${domainString} --work-dir ${certificatePath} --logs-dir ${certificatePath}\\logs -v${d.staging === true ? ' --test-cert' : ''}\nexit`
 
-                this._cache.bat_str = command;
-                const batFilePath = this._cache.filesLocations.reqBatFile;
+                this.#_cache.bat_str = command;
+                const batFilePath = this.#_cache.filesLocations.reqBatFile;
 
-                fs.writeFileSync(batFilePath, this._cache.bat_str.trim(), { encoding: 'utf8', flag: 'w' });
-                const openCom = this._utils.getFileOpenCommand(batFilePath);
+                fs.writeFileSync(batFilePath, this.#_cache.bat_str.trim(), { encoding: 'utf8', flag: 'w' });
+                const openCom = this.#_utils.getFileOpenCommand(batFilePath);
                 await execAsync(openCom);
 
                 return {
@@ -159,15 +158,15 @@ class SSLManager {
                 return { key: selfSigned.key.toString('utf-8'), cert: selfSigned.cert.toString('utf-8') }
             },
             cleanUp: () => {
-                this._cache.bat_str = '';;
-                if (this._cache.server) {
-                    this._cache.server.close();
-                    this._cache.server = null;
+                this.#_cache.bat_str = '';;
+                if (this.#_cache.server) {
+                    this.#_cache.server.close();
+                    this.#_cache.server = null;
                 }
 
-                this._utils.removeFile(this._cache.filesLocations.reqBatFile);
-                this._utils.removeFile(this._cache.filesLocations.cert);
-                this._utils.removeFile(this._cache.filesLocations.key);
+                this.#_utils.removeFile(this.#_cache.filesLocations.reqBatFile);
+                this.#_utils.removeFile(this.#_cache.filesLocations.cert);
+                this.#_utils.removeFile(this.#_cache.filesLocations.key);
             }
         }
     }
@@ -180,22 +179,22 @@ class SSLManager {
         helpers.printConsole('Running HyperCloud SSL Manager');
 
         try {
-            const response = { key: '', cert: '' }            
+            const response = { key: '', cert: '' }
             if (options.type === 'selfSigned') {
                 helpers.printConsole('HyperCloud SSL: Generating self-signed certificate...');
-                const res = await this._utils.certInfo.generateSelfSigned();;
+                const res = await this.#_utils.certInfo.generateSelfSigned();;
                 response.cert = res.cert;
                 response.key = res.key;
             } else {
                 if ('letsEncrypt' in options) {
                     if (helpers.is.undefined(options.letsEncrypt)) { throw '' }
                     helpers.printConsole('HyperCloud SSL: Running a temp auth server...');
-                    this._data.letsEncrypt = options.letsEncrypt;
-                    await this._utils.certInfo.authServer.run();
-                    this._utils.certInfo.authServer.stop();
+                    this.#_data.letsEncrypt = options.letsEncrypt;
+                    await this.#_utils.certInfo.authServer.run();
+                    this.#_utils.certInfo.authServer.stop();
 
                     helpers.printConsole('HyperCloud SSL: Requesting and authenticating...');
-                    const { key, cert } = await this._utils.certInfo.request();
+                    const { key, cert } = await this.#_utils.certInfo.request();
                     response.key = fs.readFileSync(key, { encoding: 'utf-8' });
                     response.cert = fs.readFileSync(cert, { encoding: 'utf-8' })
 
@@ -205,22 +204,22 @@ class SSLManager {
                 }
             }
 
-            this._data.storePath = options.storePath ? options.storePath : this._defaults.filesLocations.certificatePath;
+            this.#_data.storePath = options.storePath ? options.storePath : this.#_defaults.filesLocations.certificatePath;
 
-            if (!fs.existsSync(this._data.storePath)) {
-                fs.mkdirSync(this._data.storePath, { recursive: true });
+            if (!fs.existsSync(this.#_data.storePath)) {
+                fs.mkdirSync(this.#_data.storePath, { recursive: true });
             }
 
             helpers.printConsole('HyperCloud SSL: Storing the obtained SSL certificate & key...');
-            fs.writeFileSync(path.join(this._data.storePath, 'privateKey.key'), response.key, { encoding: 'utf-8', flag: 'w' })
-            fs.writeFileSync(path.join(this._data.storePath, 'cert.crt'), response.cert, { encoding: 'utf-8', flag: 'w' })
+            fs.writeFileSync(path.join(this.#_data.storePath, 'privateKey.key'), response.key, { encoding: 'utf-8', flag: 'w' })
+            fs.writeFileSync(path.join(this.#_data.storePath, 'cert.crt'), response.cert, { encoding: 'utf-8', flag: 'w' })
             return response;
         } catch (error) {
             console.error(error);
             throw error;
         } finally {
             helpers.printConsole('HyperCloud SSL: Cleaning up after SSL manager...')
-            this._utils.certInfo.cleanUp();
+            this.#_utils.certInfo.cleanUp();
         }
     }
 }

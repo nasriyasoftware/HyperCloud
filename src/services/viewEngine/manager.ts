@@ -10,28 +10,28 @@ import HyperCloudServer from '../../server';
  * `{@link HyperCloudServer.rendering}`
  */
 class RenderingManager {
-    private readonly _server: HyperCloudServer;
-    private readonly _constants = Object.freeze({
+    readonly #_server: HyperCloudServer;
+    readonly #_constants = Object.freeze({
         viewEngines: ['nhc', 'ejs']
     })
 
-    private _viewEngine: ViewEngine = 'ejs';
-    private _views = {}
+    #_viewEngine: ViewEngine = 'ejs';
+    readonly #_views = {}
 
     constructor(server: HyperCloudServer) {
-        this._server = server;
+        this.#_server = server;
     }
 
     /**
      * Register a directory as views folder
      * @param {string} directory 
      */
-    private _registerTemplates(directory: string): void {
+    #_registerTemplates(directory: string): void {
         try {
             const files = fs.readdirSync(directory);
             files.forEach(file => {
                 const parsed = path.parse(file);
-                if (parsed.ext === `.${this._viewEngine}`) {
+                if (parsed.ext === `.${this.#_viewEngine}`) {
                     const filePath = path.join(directory, file);
                     const viewName = parsed.name;
                     const template = fs.readFileSync(filePath, 'utf8');
@@ -59,14 +59,14 @@ class RenderingManager {
         for (const viewsPath of paths) {
             const validity = helpers.checkPathAccessibility(viewsPath);
             if (validity.valid) {
-                this._registerTemplates(viewsPath);
+                this.#_registerTemplates(viewsPath);
                 continue;
             }
 
             const error = { path: viewsPath, type: 'invalid_path', errors: [] as string[] }
-            if (!validity.errors.isString) { error.errors.push('Not a string') }
-            if (!validity.errors.exist) { error.errors.push('Path doesn\'t exist') }
-            if (!validity.errors.accessible) { error.errors.push('access denied: no read permissions') }
+            if (validity.errors.isString !== true) { error.errors.push('Not a string') }
+            if (validity.errors.exist !== true) { error.errors.push('Path doesn\'t exist') }
+            if (validity.errors.accessible !== true) { error.errors.push('access denied: no read permissions') }
             errors.push(error);
         }
 
@@ -77,19 +77,19 @@ class RenderingManager {
      * Get an object of the registered templates
      * @returns {Record<string, string>}
      */
-    get views(): Record<string, string> { return this._views }
+    get views(): Record<string, string> { return this.#_views }
 
     /**
      * Get or set the view engine of the server
      * @returns {ViewEngine}
      */
-    get viewEngine(): ViewEngine { return this._viewEngine }
+    get viewEngine(): ViewEngine { return this.#_viewEngine }
     /**@param {ViewEngine} engine The view engine you want to choose */
     set viewEngine(engine: ViewEngine) {
-        if (this._constants.viewEngines.includes(engine)) {
-            this._viewEngine = engine;
+        if (this.#_constants.viewEngines.includes(engine)) {
+            this.#_viewEngine = engine;
         } else {
-            throw new RangeError(`${engine} is not a supportd view engine. You can only use ${this._constants.viewEngines.join(', ')}`)
+            throw new RangeError(`${engine} is not a supportd view engine. You can only use ${this.#_constants.viewEngines.join(', ')}`)
         }
     }
 }

@@ -3,35 +3,24 @@ import StaticRoute from './assets/staticRoute';
 import HyperCloudRequest from '../handler/assets/request';
 
 class RoutesManager {
-    private readonly _stack = {
+    readonly #_stack = {
         routes: [] as Route[],
         static: [] as StaticRoute[],
-        all: [] as (Route|StaticRoute)[]
+        all: [] as (Route | StaticRoute)[]
     }
 
-    /**Add a route to the stack */
-    add(route: Route | StaticRoute) {
-        if (route instanceof Route || route instanceof StaticRoute) {
-            if (route instanceof Route) { this._stack.routes.push(route) }
-            if (route instanceof StaticRoute) { this._stack.static.push(route) }
-            this._stack.all.push(route);
-        } else {
-            throw new TypeError(`Unable to add route to the routes stack: The provided route is not an instance of Route.`)
-        }
-    }
-
-    private readonly _utils = Object.freeze({
-        match: {            
-            subDomain: (subDomain: string, route: Route| StaticRoute) => {
+    readonly #_utils = Object.freeze({
+        match: {
+            subDomain: (subDomain: string, route: Route | StaticRoute) => {
                 if (route.subDomain === '*') { return true }
                 if (route.caseSensitive) {
                     return route.subDomain === subDomain
                 } else {
                     return route.subDomain.toLowerCase() === subDomain.toLowerCase()
                 }
-            },            
+            },
             routePath: (path: string[], route: Route) => {
-                const response = { valid: false, hasParams: false, params: {} }
+                const response = { valid: false, hasParams: false, params: {} as Record<string, string> }
 
                 if (route.path[0] === '*') { response.valid = true; return response }
                 if (route.path.length !== path.length) { return response }
@@ -93,7 +82,7 @@ class RoutesManager {
                 }
 
                 response.valid = true; return response;
-            },            
+            },
             staticPath: (path: string[], route: StaticRoute) => {
                 // console.log({ path, rPath: route.path })
                 if (path.length === 0 || path.length < route.path.length) { return false }
@@ -113,6 +102,17 @@ class RoutesManager {
         }
     })
 
+    /**Add a route to the stack */
+    add(route: Route | StaticRoute) {
+        if (route instanceof Route || route instanceof StaticRoute) {
+            if (route instanceof Route) { this.#_stack.routes.push(route) }
+            if (route instanceof StaticRoute) { this.#_stack.static.push(route) }
+            this.#_stack.all.push(route);
+        } else {
+            throw new TypeError(`Unable to add route to the routes stack: The provided route is not an instance of Route.`)
+        }
+    }
+
     /**
      * Use an incoming {@link HyperCloudRequest} to get all matching routes
      * @param {HyperCloudRequest} request 
@@ -122,15 +122,15 @@ class RoutesManager {
         const subDomain = request.subDomain || '*';
         const path = request.path || [];
 
-        return this._stack.all.filter(route => {
+        return this.#_stack.all.filter(route => {
             if (route.method !== 'USE' && route.method !== request.method) { return false }
 
-            if (!this._utils.match.subDomain(subDomain, route)) {
+            if (!this.#_utils.match.subDomain(subDomain, route)) {
                 return false;
             }
 
             if (route instanceof Route) {
-                const pathRes = this._utils.match.routePath(path, route);
+                const pathRes = this.#_utils.match.routePath(path, route);
                 if (pathRes.valid) {
                     if (pathRes.hasParams) { route.params = pathRes.params }
                 } else {
@@ -139,7 +139,7 @@ class RoutesManager {
             }
 
             if (route instanceof StaticRoute) {
-                if (!this._utils.match.staticPath(path, route)) { return false }
+                if (!this.#_utils.match.staticPath(path, route)) { return false }
             }
 
             return true;

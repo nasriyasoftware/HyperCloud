@@ -11,7 +11,7 @@ import process from 'process';
 process.env.HYPERCLOUD_SERVER_VERBOSE = 'FALSE';
 
 class HyperCloud {
-    private readonly _servers: HyperCloudServer[] = []
+    readonly #_servers: HyperCloudServer[] = [];
 
     /**
      * Create an HTTP2 HyperCloud server instance and customize it to suite your needs. [Examples](https://github.com/nasriyasoftware/HyperCloud/blob/main/examples/createServer.md)
@@ -20,7 +20,7 @@ class HyperCloud {
     */
     Server(userOptions?: SecureServerOptions | ServerOptions | HyperCloudInitFile, managementOptions?: HyperCloudManagementOptions): HyperCloudServer {
         const server = new HyperCloudServer(userOptions, managementOptions);
-        this._servers.push(server);
+        this.#_servers.push(server);
         return server;
     }
 
@@ -53,15 +53,15 @@ class HyperCloud {
         const startTime = process.hrtime();
         console.log(`${new Date().toUTCString()}: Generating eTags...`);
         const validity = helpers.checkPathAccessibility(root);
-        if (!validity.valid) {
+        if (validity.valid !== true) {
             const errors = validity.errors;
-            if (!errors.isString) { throw `The root directory should be a string value, instead got ${typeof root}` }
-            if (!errors.exist) { throw `The provided root directory (${root}) doesn't exist.` }
-            if (!errors.accessible) { throw `Unable to access (${root}): read permission denied.` }
+            if (errors.isString !== true) { throw `The root directory should be a string value, instead got ${typeof root}` }
+            if (errors.exist !== true) { throw `The provided root directory (${root}) doesn't exist.` }
+            if (errors.accessible !== true) { throw `Unable to access (${root}): read permission denied.` }
         }
 
-        const processFolder = async (root) => {
-            const hashes = {}
+        const processFolder = async (root: string) => {
+            const hashes = {} as Record<string, any>
             const content = fs.readdirSync(root, { withFileTypes: true });
 
             const files = content.filter(i => i.isFile());

@@ -24,13 +24,13 @@ const extensions = !helpers.is.undefined(_extensions) ? _extensions : [] as unkn
 
 /**This class is used internallly, not by the user */
 class HyperCloudResponse {
-    private readonly _server: HyperCloudServer;
-    private readonly _req: HyperCloudRequest;
-    private readonly _res: http2.Http2ServerResponse;
-    private readonly _cookies: Cookies;
+    readonly #_server: HyperCloudServer;
+    readonly #_req: HyperCloudRequest;
+    readonly #_res: http2.Http2ServerResponse;
+    readonly #_cookies: Cookies;
 
-    private readonly _preservedHeaders = ['x-server', 'x-request-id']
-    private readonly _encodings = Object.freeze([
+    readonly #_preservedHeaders = ['x-server', 'x-request-id']
+    readonly #_encodings = Object.freeze([
         "ascii",
         "utf8",
         "utf-8",
@@ -45,28 +45,15 @@ class HyperCloudResponse {
         "hex"
     ]);
 
-    private _status = Object.seal({
+    #_status = Object.seal({
         closed: false
     })
 
     constructor(server: HyperCloudServer, req: HyperCloudRequest, res: http2.Http2ServerResponse) {
-        this._server = server;
-        this._req = req;
-        this._res = res;
-        this._cookies = new Cookies(this);
-
-        // Context Binding: Ensure that the ```this``` context is properly bound on methods
-        for (const prop in this._res) {
-            if (typeof this._res[prop] === 'function') {
-                this._res[prop] = this._res[prop].bind(this._res)
-            }
-        }
-
-        for (const prop in this._req) {
-            if (typeof this._req[prop] === 'function') {
-                this._req[prop] = this._req[prop].bind(this._res)
-            }
-        }
+        this.#_server = server;
+        this.#_req = req;
+        this.#_res = res;
+        this.#_cookies = new Cookies(this);        
     }
 
     get pages() {
@@ -95,12 +82,12 @@ class HyperCloudResponse {
              * @param {NotFoundResponseOptions} [options] Rendering options
              */
             notFound: (options?: NotFoundResponseOptions) => {
-                if (typeof this._server.__handlers.notFound === 'function') {
+                if (typeof this.#_server._handlers.notFound === 'function') {
                     try {
                         // Run the user defined handler for not-found resources
-                        this._server.__handlers.notFound();
+                        this.#_server._handlers.notFound();
                     } catch (error) {
-                        this.pages.serverError({ error });
+                        this.pages.serverError({ error: error as Error });
                     }
                 } else {
                     const viewName = 'hypercloud_404';
@@ -109,7 +96,7 @@ class HyperCloudResponse {
                         cacheControl: false,
                         statusCode: 404,
                         locals: {
-                            lang: options?.lang || this._req.language,
+                            lang: options?.lang || this.#_req.language,
                             title: options?.locals?.title || `404 - Page Not Found`,
                             subtitle: options?.locals?.subtitle || 'Oops. Looks like you took a wrong turn.',
                             homeBtnLabel: options?.locals?.home || 'HOME'
@@ -154,12 +141,12 @@ class HyperCloudResponse {
              * @param {ForbiddenAndUnauthorizedOptions} [options] 
              */
             unauthorized: (options?: ForbiddenAndUnauthorizedOptions) => {
-                if (typeof this._server.__handlers.unauthorized === 'function') {
+                if (typeof this.#_server._handlers.unauthorized === 'function') {
                     try {
                         // Run the user defined handler for not-found resources
-                        this._server.__handlers.unauthorized();
+                        this.#_server._handlers.unauthorized();
                     } catch (error) {
-                        this.pages.serverError({ error });
+                        this.pages.serverError({ error: error as Error });
                     }
                 } else {
                     const viewName = 'hypercloud_401_403';
@@ -169,7 +156,7 @@ class HyperCloudResponse {
                         cacheControl: false,
                         statusCode: 401,
                         locals: {
-                            lang: options?.lang || this._req.language,
+                            lang: options?.lang || this.#_req.language,
                             title: options?.locals?.title || 'Unauthorized',
                             code: 401,
                             commands: {
@@ -226,12 +213,12 @@ class HyperCloudResponse {
              * @param {ForbiddenAndUnauthorizedOptions} options 
              */
             forbidden: (options: ForbiddenAndUnauthorizedOptions) => {
-                if (typeof this._server.__handlers.forbidden === 'function') {
+                if (typeof this.#_server._handlers.forbidden === 'function') {
                     try {
                         // Run the user defined handler for not-found resources
-                        this._server.__handlers.forbidden();
+                        this.#_server._handlers.forbidden();
                     } catch (error) {
-                        this.pages.serverError({ error });
+                        this.pages.serverError({ error: error as Error });
                     }
                 } else {
                     const viewName = 'hypercloud_401_403';
@@ -241,7 +228,7 @@ class HyperCloudResponse {
                         cacheControl: false,
                         statusCode: 403,
                         locals: {
-                            lang: options?.lang || this._req.language,
+                            lang: options?.lang || this.#_req.language,
                             title: options?.locals?.title || 'Forbidden',
                             code: 403,
                             commands: {
@@ -293,16 +280,16 @@ class HyperCloudResponse {
 
                     helpers.printConsole(diver);
                     console.error(`A server error has occurred`);
-                    helpers.printConsole(`${new Date().toUTCString()} - Page Load Error - Request ID: ${this._req.id}`);
-                    helpers.printConsole(`Request:\n${this._req.__toString()}`);
+                    helpers.printConsole(`${new Date().toUTCString()} - Page Load Error - Request ID: ${this.#_req.id}`);
+                    helpers.printConsole(`Request:\n${this.#_req._toString()}`);
                     helpers.printConsole(options.error);
                     helpers.printConsole(diver);
                 }
 
-                if (typeof this._server.__handlers.serverError === 'function' && options?.bypassHandler !== true) {
+                if (typeof this.#_server._handlers.serverError === 'function' && options?.bypassHandler !== true) {
                     try {
                         // Run the user defined handler for not-found resources
-                        this._server.__handlers.serverError();
+                        this.#_server._handlers.serverError();
                     } catch (error) {
                         this.pages.serverError({ bypassHandler: true });
                     }
@@ -314,7 +301,7 @@ class HyperCloudResponse {
                         cacheControl: false,
                         statusCode: 500,
                         locals: {
-                            lang: options?.lang || this._req.language,
+                            lang: options?.lang || this.#_req.language,
                             title: options?.locals?.title || 'Server Error',
                             subtitle: options?.locals?.subtitle || 'Internal <code>Server&nbsp;error<span>!</span></code>',
                             message: options?.locals?.message || `<p> We're sorry, but something went wrong on our end. Our team has been notified, and we're working to fix the issue as soon as possible. </p>\n<p>In the meantime, you can try refreshing the page or coming back later. If the problem persists, feel free to <a href="/contact-us">contact us</a> for further assistance.</p>\n<p>Thank you for your understanding.</p>`,
@@ -356,7 +343,7 @@ class HyperCloudResponse {
             }
         } catch (error) {
             if (typeof error === 'string') { error = `Unable to redirect: ${error}` }
-            if (typeof error?.messasge === 'string') { error.message = `Unable to redirect: ${error.message}` }
+            if (error instanceof Error) { error.message = `Unable to redirect: ${error.message}` }
             throw error;
         }
     }
@@ -426,7 +413,7 @@ class HyperCloudResponse {
             return this.end();
         } catch (error) {
             if (typeof error === 'string') { error = `Unable to render page: ${error}` }
-            if (typeof error?.messasge === 'string') { error.message = `Unable to render page: ${error.message}` }
+            if (error instanceof Error) { error.message = `Unable to render page: ${error.message}` }
             throw error;
         }
     }
@@ -583,7 +570,7 @@ class HyperCloudResponse {
             if (options && 'headers' in options) {
                 const headers = Object.keys(options.headers || {});
                 if (typeof options.headers === 'object' && headers.length > 0) {
-                    const preserved = [...this._preservedHeaders, 'last-modified', 'cache-control', 'expires'];
+                    const preserved = [...this.#_preservedHeaders, 'last-modified', 'cache-control', 'expires'];
                     const headersUsed = [...preserved];
 
                     for (const headerInput of headers) {
@@ -645,13 +632,13 @@ class HyperCloudResponse {
                     this.setHeader('Content-Length', chunkSize);
 
                     const fileStream = fs.createReadStream(filePath, { start, end });
-                    return fileStream.pipe(this._res);
+                    return fileStream.pipe(this.#_res);
                 }
             }
 
             this.status(200).setHeader('Content-Length', stats.size);
             const fileStream = fs.createReadStream(filePath);
-            return fileStream.pipe(this._res);
+            return fileStream.pipe(this.#_res);
         } catch (error) {
             if (options && 'serverErrorFile' in options) {
                 const errValidity = helpers.checkPathAccessibility(options.serverErrorFile as string);
@@ -669,7 +656,7 @@ class HyperCloudResponse {
                 return;
             }
 
-            if (typeof error?.message === 'string') { error.message = `Unable to send file: ${error.message}` }
+            if (error instanceof Error) { error.message = `Unable to send file: ${error.message}` }
             throw error;
         }
     }
@@ -773,7 +760,7 @@ class HyperCloudResponse {
         if (events.includes(config?.event)) { throw `${config.event} is not a valid response event` }
         if (typeof config?.listener !== 'function') { throw 'The event listener must be a function' }
 
-        this._res.addListener(config.event, config.listener);
+        this.#_res.addListener(config.event, config.listener);
         return this;
     }
     /**
@@ -790,7 +777,7 @@ class HyperCloudResponse {
      * @param {string|symbol} eventName The event name
      */
     listeners(eventName: string | symbol) {
-        return this._res.listeners(eventName);
+        return this.#_res.listeners(eventName);
     }
     /**
      * This method adds HTTP trailing headers (a header but at the end of the message) to the response.
@@ -799,7 +786,7 @@ class HyperCloudResponse {
      * @param {http2.OutgoingHttpHeaders} trailers 
      */
     addTrailers(trailers: http2.OutgoingHttpHeaders) {
-        this._res.addTrailers(trailers);
+        this.#_res.addTrailers(trailers);
     }
     /**
      * This method signals to the server that all of 
@@ -816,28 +803,28 @@ class HyperCloudResponse {
      */
     end(options?: ResponseEndOptions): this {
         if (helpers.is.undefined(options) || !helpers.is.realObject(options)) {
-            this._res.end();
+            this.#_res.end();
             return this;
         }
 
         const params = {
             data: options && 'data' in options && options.data ? options.data : null,
             callback: options && 'callback' in options && typeof options.callback === 'function' ? options.callback : null,
-            encoding: options && 'encoding' in options && typeof options.encoding === 'string' && this._encodings.includes(options.encoding) ? options.encoding : null
+            encoding: options && 'encoding' in options && typeof options.encoding === 'string' && this.#_encodings.includes(options.encoding) ? options.encoding : null
         }
 
         if (params.data) {
             if (params.encoding && params.callback) {
-                this._res.end(params.data, params.encoding, params.callback);
+                this.#_res.end(params.data, params.encoding, params.callback);
             } else if (params.callback) {
-                this._res.end(params.data, params.callback);
+                this.#_res.end(params.data, params.callback);
             } else {
-                this._res.end(params.data);
+                this.#_res.end(params.data);
             }
         } else if (params.callback) {
-            this._res.end(params.callback);
+            this.#_res.end(params.callback);
         } else {
-            this._res.end();
+            this.#_res.end();
         }
 
         return this;
@@ -852,7 +839,7 @@ class HyperCloudResponse {
      * @returns {string} The header value
      */
     getHeader(name: string): string {
-        return this._res.getHeader(name);
+        return this.#_res.getHeader(name);
     }
     /**
      * Returns an array containing the unique names of the current outgoing headers. All header names are lowercase.
@@ -867,7 +854,7 @@ class HyperCloudResponse {
      * @returns {string[]} The names of the provided headers
      */
     getHeaderNames(): string[] {
-        return this._res.getHeaderNames();
+        return this.#_res.getHeaderNames();
     }
     /**
      * Returns a shallow copy of the current outgoing headers.
@@ -884,7 +871,7 @@ class HyperCloudResponse {
      * @returns {http2.OutgoingHttpHeaders}
      */
     getHeaders(): http2.OutgoingHttpHeaders {
-        return this._res.getHeaders();
+        return this.#_res.getHeaders();
     }
     /**
      * Returns ```true``` if the header identified by name is currently
@@ -897,7 +884,7 @@ class HyperCloudResponse {
      * @returns {boolean}
      */
     hasHeader(name: string): boolean {
-        return this._res.hasHeader(name);
+        return this.#_res.hasHeader(name);
     }
     /**
      * Returns the number of listeners listening for the event named ```eventName```.
@@ -908,7 +895,7 @@ class HyperCloudResponse {
      * @returns {number}
      */
     listenerCount(eventName: string | symbol, listener: Function): number {
-        return this._res.listenerCount(eventName, listener);
+        return this.#_res.listenerCount(eventName, listener);
     }
     /**
      * Alias for ```emitter.removeListener()```.
@@ -917,7 +904,7 @@ class HyperCloudResponse {
      * @returns {this}
      */
     off(eventName: string | symbol, listener: EventCallback): this {
-        this._res.off(eventName, listener);
+        this.#_res.off(eventName, listener);
         return this;
     }
     /**
@@ -957,7 +944,7 @@ class HyperCloudResponse {
         if (events.includes(config?.event)) { throw `${config.event} is not a valid response event` }
         if (typeof config?.listener !== 'function') { throw 'The event listener must be a function' }
 
-        this._res.on(config.event, config.listener);
+        this.#_res.on(config.event, config.listener);
         return this;
     }
     /**
@@ -979,7 +966,7 @@ class HyperCloudResponse {
         if (events.includes(config?.event)) { throw `${config.event} is not a valid response event` }
         if (typeof config?.listener !== 'function') { throw 'The event listener must be a function' }
 
-        this._res.once(config.event, config.listener);
+        this.#_res.once(config.event, config.listener);
         return this;
     }
     /**
@@ -990,7 +977,7 @@ class HyperCloudResponse {
      * @returns {stream.Writable}
      */
     pipe(destination: stream.Writable, options: { end?: boolean; }): stream.Writable {
-        return this._res.pipe(destination, { end: options?.end });
+        return this.#_res.pipe(destination, { end: options?.end });
     }
     /**
      * Removes all listeners, or those of the specified ```eventName```.
@@ -1009,7 +996,7 @@ class HyperCloudResponse {
             if (events.includes(event)) { throw `${event} is not a valid response event` }
         }
 
-        this._res.removeAllListeners(event);
+        this.#_res.removeAllListeners(event);
         return this;
     }
     /**
@@ -1100,7 +1087,7 @@ class HyperCloudResponse {
         if (events.includes(config?.event)) { throw `${config.event} is not a valid response event` }
         if (typeof config?.listener !== 'function') { throw 'The event listener must be a function' }
 
-        this._res.removeListener(config.event, config.listener);
+        this.#_res.removeListener(config.event, config.listener);
         return this;
     }
     /**
@@ -1113,7 +1100,7 @@ class HyperCloudResponse {
      * @returns {void}
      */
     removeHeader(name: string): void {
-        this._res.removeHeader(name);
+        this.#_res.removeHeader(name);
     }
     /**
      * The ```writable.setDefaultEncoding()``` method sets the default ```encoding``` for a ```Writable``` stream.
@@ -1121,9 +1108,9 @@ class HyperCloudResponse {
      * @returns {this}
      */
     setDefaultEncoding(encoding: BufferEncoding): this {
-        if (!this._encodings.includes(encoding)) { throw `${encoding} is not a valid buffer encoding` }
+        if (!this.#_encodings.includes(encoding)) { throw `${encoding} is not a valid buffer encoding` }
 
-        this._res.setDefaultEncoding(encoding);
+        this.#_res.setDefaultEncoding(encoding);
         return this;
     }
     /**
@@ -1179,7 +1166,7 @@ class HyperCloudResponse {
         }
 
         if (name?.toLowerCase() === 'X-Server'.toLowerCase()) { return this }
-        this._res.setHeader(name, value);
+        this.#_res.setHeader(name, value);
         return this;
     }
     /**
@@ -1194,7 +1181,7 @@ class HyperCloudResponse {
      */
     setMaxListeners(n: number): this {
         if (typeof n !== 'number') { throw `The setMaxListeners expects a number, but instead got ${typeof n}` }
-        this._res.setMaxListeners(n);
+        this.#_res.setMaxListeners(n);
         return this;
     }
     /**
@@ -1217,7 +1204,7 @@ class HyperCloudResponse {
             if (typeof callback !== 'function') { throw `The setTimeout method's callback can only be a function` }
         }
 
-        this._res.setTimeout(msecs, typeof callback === 'function' ? callback : undefined);
+        this.#_res.setTimeout(msecs, typeof callback === 'function' ? callback : undefined);
     }
     /**
      * The `writable.cork()` method forces all written data to be buffered in memory.
@@ -1233,7 +1220,7 @@ class HyperCloudResponse {
      * See also: `writable.uncork()`, `writable._writev()`.
      * @returns {void}
      */
-    cork(): void { this._res.cork() }
+    cork(): void { this.#_res.cork() }
     /**
      * The `writable.uncork()` method flushes all data buffered since {@link cork} was called.
      *
@@ -1267,7 +1254,7 @@ class HyperCloudResponse {
      * See also: `writable.cork()`.
      * @returns {void}
      */
-    uncork(): void { this._res.uncork() }
+    uncork(): void { this.#_res.uncork() }
     /**
      * If this method is called and `response.writeHead()` has not been called,
      * it will switch to implicit header mode and flush the implicit headers.
@@ -1313,7 +1300,7 @@ class HyperCloudResponse {
             params.chunk = options.chunk;
 
             if ('encoding' in options) {
-                if (typeof options.encoding === 'string' && this._encodings.includes(options.encoding)) {
+                if (typeof options.encoding === 'string' && this.#_encodings.includes(options.encoding)) {
                     params.encoding = options.encoding;
                 } else {
                     throw new TypeError(`${options.encoding} is not a supported buffer encoding.`);
@@ -1332,11 +1319,11 @@ class HyperCloudResponse {
         }
 
         if (params.encoding && params.callback) {
-            return this._res.write(params.chunk, params.encoding, params.callback);
+            return this.#_res.write(params.chunk, params.encoding, params.callback);
         } else if (params.callback) {
-            return this._res.write(params.chunk, params.callback);
+            return this.#_res.write(params.chunk, params.callback);
         } else {
-            return this._res.write(params.chunk);
+            return this.#_res.write(params.chunk);
         }
     }
     /**
@@ -1345,7 +1332,7 @@ class HyperCloudResponse {
      * event on `Http2Server` and `Http2SecureServer`.
      * @returns {void}
      */
-    writeContinue(): void { this._res.writeContinue() }
+    writeContinue(): void { this.#_res.writeContinue() }
     /**
      * Sends a status `103 Early` Hints to the client with a Link header,
      * indicating that the user agent can preload/preconnect the linked
@@ -1370,7 +1357,7 @@ class HyperCloudResponse {
      * @param {Record<string, string | string[]>} hints 
      * @returns {void}
      */
-    writeEarlyHints(hints: Record<string, string | string[]>): void { this._res.writeEarlyHints(hints) }
+    writeEarlyHints(hints: Record<string, string | string[]>): void { this.#_res.writeEarlyHints(hints) }
     /**
      * Sends a response header to the request. The status code is a 3-digit HTTP
      * status code, like `404`. The last argument, `headers`, are the response headers.
@@ -1434,7 +1421,7 @@ class HyperCloudResponse {
                 }
             }
 
-            this._res.writeHead(statusCode, headersNum > 0 ? headers : undefined);
+            this.#_res.writeHead(statusCode, headersNum > 0 ? headers : undefined);
             return this;
         } catch (error) {
             console.error(error)
@@ -1449,17 +1436,17 @@ class HyperCloudResponse {
      * True if headers were sent, false otherwise (read-only).
      * @returns {boolean}
      */
-    get headersSent(): boolean { return this._res.headersSent }
+    get headersSent(): boolean { return this.#_res.headersSent }
     /**
      * A reference to the original HyperCloud server object.
      * @returns {HyperCloudServer}
      */
-    get server(): HyperCloudServer { return this._server }
+    get server(): HyperCloudServer { return this.#_server }
     /**
      * A reference to the original HyperCloud request object.
      * @returns {HyperCloudRequest}
      */
-    get req(): HyperCloudRequest { return this._req }
+    get req(): HyperCloudRequest { return this.#_req }
     /**
      * Returns a `Proxy` object that acts as a `net.Socket` (or `tls.TLSSocket`) but
      * applies getters, setters, and methods based on HTTP/2 logic.
@@ -1486,56 +1473,56 @@ class HyperCloudResponse {
      * ```
      * @returns {net.Socket|tls.TLSSocket}
      */
-    get socket(): net.Socket | tls.TLSSocket { return this._res.socket }
+    get socket(): net.Socket | tls.TLSSocket { return this.#_res.socket }
     /**
      * The Http2Stream object backing the response.
      * @returns {http2.Http2Stream}
      */
-    get stream(): http2.Http2Stream { return this._res.stream }
+    get stream(): http2.Http2Stream { return this.#_res.stream }
     /**
      * Is ```true``` if it is safe to call ```writable.write()```, which means the stream has not been destroyed, errored, or ended.
      * @returns {boolean}
      */
-    get writable(): boolean { return this._res.writable }
+    get writable(): boolean { return this.#_res.writable }
     /**
      * Number of times ```writable.uncork()``` needs to be called in order to fully uncork the stream.
      * @returns {number}
      */
-    get writableCorked(): number { return this._res.writableCorked }
+    get writableCorked(): number { return this.#_res.writableCorked }
     /**
      * Is `true` after `writable.end()` has been called. This property
      * does not indicate whether the data has been flushed, for this
      * use `writable.writableFinished` instead.
      * @returns {boolean}
      */
-    get writableEnded(): boolean { return this._res.writableEnded }
+    get writableEnded(): boolean { return this.#_res.writableEnded }
     /**
      * Is set to `true` immediately before the `'finish'` event is emitted.
      * @returns {boolean}
      */
-    get writableFinished(): boolean { return this._res.writableFinished }
+    get writableFinished(): boolean { return this.#_res.writableFinished }
     /**
      * Return the value of `highWaterMark` passed when creating this `Writable`.
      * @returns {number}
      */
-    get writableHighWaterMark(): number { return this._res.writableHighWaterMark }
+    get writableHighWaterMark(): number { return this.#_res.writableHighWaterMark }
     /**
      * This property contains the number of bytes (or objects)
      * in the queue ready to be written. The value provides
      * introspection data regarding the status of the `highWaterMark`.
      * @returns {number}
      */
-    get writableLength(): number { return this._res.writableLength }
+    get writableLength(): number { return this.#_res.writableLength }
     /**
      * Is `true` if the stream's buffer has been full and stream will emit `'drain'`.
      * @returns {boolean}
      */
-    get writableNeedDrain(): boolean { return this._res.writableNeedDrain }
+    get writableNeedDrain(): boolean { return this.#_res.writableNeedDrain }
     /**
      * Getter for the property `objectMode` of a given `Writable` stream.
      * @returns {boolean}
      */
-    get writableObjectMode(): boolean { return this._res.writableObjectMode }
+    get writableObjectMode(): boolean { return this.#_res.writableObjectMode }
     // Setters
     // ============================================================================
     // ============================================================================
@@ -1554,7 +1541,7 @@ class HyperCloudResponse {
      */
     set statusCode(status: number) {
         if (typeof status === 'number' && status >= 100) {
-            this._res.statusCode = status;
+            this.#_res.statusCode = status;
         } else {
             throw `${status} is not a valid status code`;
         }
@@ -1573,18 +1560,18 @@ class HyperCloudResponse {
     /**
      * A module that allows you to create or get a list of cookies
      */
-    get cookies() { return this._cookies }
+    get cookies() { return this.#_cookies }
 
     /**Check whether the `response` has been closed or not */
-    get closed() { return this._status.closed }
+    get closed() { return this.#_status.closed }
 
     /**
      * Change the response's `closed` value
      * @param {true} value
      */
-    set __closed(value: true) {
+    set _closed(value: true) {
         if (value === true) {
-            this._status.closed = true;
+            this.#_status.closed = true;
         } else {
             throw `The response's "_sent" value can only be set to true`;
         }

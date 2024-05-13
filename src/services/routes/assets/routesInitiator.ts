@@ -13,31 +13,31 @@ import HTTPError from '../../../utils/errors/HTTPError';
  * on the request `subDomain` and `path`.
  */
 class RequestRoutesManager {
-    private _currentIndex = -1;
-    private readonly _routes: (Route | StaticRoute)[] = [];
+    #_currentIndex = -1;
+    readonly #_routes: (Route | StaticRoute)[] = [];
 
-    private readonly _request: HyperCloudRequest;
-    private readonly _response: HyperCloudResponse;
-    private readonly _next = () => {
-        this._currentIndex++;
-        if (this._currentIndex <= this._routes.length) {
-            this._runNext();
+    readonly #_request: HyperCloudRequest;
+    readonly #_response: HyperCloudResponse;
+    readonly #_next = () => {
+        this.#_currentIndex++;
+        if (this.#_currentIndex <= this.#_routes.length) {
+            this.#_runNext();
         } else {
-            return this._response.pages.notFound();
+            return this.#_response.pages.notFound();
         }
     }
 
     constructor(routes: (Route | StaticRoute)[], request: HyperCloudRequest, response: HyperCloudResponse) {
-        this._routes = routes;
-        this._request = request;
-        this._response = response;
+        this.#_routes = routes;
+        this.#_request = request;
+        this.#_response = response;
 
         const newRouts: (Route | StaticRoute)[] = [];
         // Check if the user has a `userSessions` handler configured
-        if (typeof request.server.__handlers.userSessions === 'function') {
+        if (typeof request.server._handlers.userSessions === 'function') {
             newRouts.push(new Route({
                 path: '*', method: 'USE', handler: (request, response, next) => {
-                    return request.server.__handlers.userSessions(request, response, next);
+                    return request.server._handlers.userSessions(request, response, next);
                 }
             }))
         }
@@ -45,8 +45,8 @@ class RequestRoutesManager {
         // Prepare the language
         newRouts.push(new Route({
             path: '*', method: 'USE', handler: (request, response, next) => {
-                const supportedLanguages = this._response.server.supportedLanguages;
-                const defaultLanguage = this._response.server.defaultLanguage || 'en';
+                const supportedLanguages = this.#_response.server.supportedLanguages;
+                const defaultLanguage = this.#_response.server.defaultLanguage || 'en';
 
                 /**
                  * Check if the user has a preferred language and if it's supported.
@@ -55,7 +55,7 @@ class RequestRoutesManager {
                 if (request.user.loggedIn) {
                     const prefLang = request.user.preferences.language;
                     if (supportedLanguages.includes(prefLang || '')) {
-                        request.__language = prefLang as string;
+                        request._language = prefLang as string;
                         return next();
                     }
                 }
@@ -66,7 +66,7 @@ class RequestRoutesManager {
                 const [locale, bLang] = Array.isArray(acceptedLang) ? acceptedLang : ['en-PS', 'ar'];
                 const browserLang = bLang?.substring(0, 2).trim();
 
-                request.__locale = locale;
+                request._locale = locale;
 
 
                 /**
@@ -77,7 +77,7 @@ class RequestRoutesManager {
                  */
                 if (typeof queryLang === 'string') {
                     if (supportedLanguages.includes(queryLang)) {
-                        request.__language = queryLang;
+                        request._language = queryLang;
                         if (queryLang !== cookieLang) {
                             response.cookies.create('language', request.language, { priority: 'Medium' })
                         }
@@ -98,7 +98,7 @@ class RequestRoutesManager {
                  */
                 if (typeof cookieLang === 'string') {
                     if (supportedLanguages.includes(cookieLang)) {
-                        request.__language = cookieLang;
+                        request._language = cookieLang;
                         return next();
                     }
                 }
@@ -108,7 +108,7 @@ class RequestRoutesManager {
                  * set the language based on the browser (if supported),
                  * or use the default language.
                 */
-                request.__language = supportedLanguages.includes(browserLang) ? browserLang : defaultLanguage;
+                request._language = supportedLanguages.includes(browserLang) ? browserLang : defaultLanguage;
                 next();
             }
         }))
@@ -118,7 +118,7 @@ class RequestRoutesManager {
             path: '*', method: 'USE', handler: (request, response, next) => {
                 const colorScheme = request.cookies.colorScheme;
                 if (['Default', 'Light', 'Dark'].includes(colorScheme)) {
-                    request.__colorScheme = colorScheme as ColorScheme;
+                    request._colorScheme = colorScheme as ColorScheme;
                 } else {
                     response.cookies.create('colorScheme', 'Default', { priority: 'Medium' });
                 }
@@ -128,31 +128,31 @@ class RequestRoutesManager {
         }))
 
         // Check if the user has defined a logger handler or not;
-        if (typeof request.server.__handlers.logger === 'function') {
+        if (typeof request.server._handlers.logger === 'function') {
             newRouts.push(new Route({
                 path: '*', method: 'USE', handler: (request, response, next) => {
-                    return request.server.__handlers.logger(request, response, next);
+                    return request.server._handlers.logger(request, response, next);
                 }
             }))
         }
 
-        this._routes.unshift(...newRouts);
-        this._runNext();
+        this.#_routes.unshift(...newRouts);
+        this.#_runNext();
     }
 
     /**This method is only called by the server */
-    private _runNext() {
-        const route = this._routes[this._currentIndex];
+    #_runNext() {
+        const route = this.#_routes[this.#_currentIndex];
         if (route) {
-            this._request.params = route instanceof Route && Object.keys(route.params).length > 0 ? route.params : {};
+            this.#_request.params = route instanceof Route && Object.keys(route.params).length > 0 ? route.params : {};
             try {
-                route.handler(this._request, this._response, this._next);
+                route.handler(this.#_request, this.#_response, this.#_next);
             } catch (err) {
-                const routeError = new HTTPError({ message: typeof err?.message === 'string' ? err.message : `An error has occurred in one of your routes`, error: err, request: this._request.__toJSON(), route });
-                
+                const routeError = new HTTPError({ message: err instanceof Error ? err.message : `An error has occurred in one of your routes`, error: err, request: this.#_request._toJSON(), route });
+
                 const errRoute = new Route({
                     path: route.path.join('/'), method: 'USE', handler: (request, response, next) => {
-                        const handler = this._request.server.__handlers.onHTTPError
+                        const handler = this.#_request.server._handlers.onHTTPError
                         if (typeof handler === 'function') {
                             try {
                                 return handler(request, response, next, routeError);
@@ -179,10 +179,10 @@ class RequestRoutesManager {
                     }
                 })
 
-                this._routes.splice(this._currentIndex + 1, 0, errRoute);
+                this.#_routes.splice(this.#_currentIndex + 1, 0, errRoute);
             }
         } else {
-            this._next();
+            this.#_next();
         }
     }
 }

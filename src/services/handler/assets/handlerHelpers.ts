@@ -18,7 +18,7 @@ export function buildQuery(q: string) {
 
 export function cookieParser(rawCookieHeader: any): Record<string, any> {
     // Parse the raw cookie header into an object
-    const cookies = {};
+    const cookies = {} as Record<string, string>;
     if (rawCookieHeader && typeof rawCookieHeader === 'string') {
         rawCookieHeader.split(';').forEach(cookie => {
             const parts = cookie.split('=');
@@ -65,7 +65,7 @@ export function bodyParser(body: any, contentType: string): BodyParserResult {
 
     if (contentType.includes('application/x-www-form-urlencoded')) {
         // Parse the form data
-        const sections = request.body.split('&').filter(i => i.length > 0);
+        const sections = (request.body.split('&') as string[]).filter(i => i.length > 0);
         request.body = {}
         for (const section of sections) {
             const [key, value] = section.split('=');
@@ -91,7 +91,7 @@ export function bodyParser(body: any, contentType: string): BodyParserResult {
 
     if (request.body.includes('Content-Disposition: form-data; name=')) {
         // Handle 'form-data'
-        const body = {}; // The new body
+        const body = {} as Record<string, any>; // The new body
         const newLine = '%0D%0A';
         let all = encodeURIComponent(request.body);
         const lines = all.split(newLine);

@@ -3,10 +3,10 @@ import { CookieOptions } from '../../../docs/docs';
 import ms from 'ms';
 
 class Cookies {
-    private readonly _response: HyperCloudResponse;
+    readonly #_response: HyperCloudResponse;
 
     constructor(res: HyperCloudResponse) {
-        this._response = res;
+        this.#_response = res;
     }
 
     /**
@@ -102,11 +102,11 @@ class Cookies {
                 cookie.push(`Priority=${options.priority}`)
             }
 
-            this._response.setHeader('Set-Cookie', cookie.join('; '));
-            return this._response;
+            this.#_response.setHeader('Set-Cookie', cookie.join('; '));
+            return this.#_response;
         } catch (error) {
             if (typeof error === 'string') { error = `Unable to create cookie: ${error}` }
-            if (typeof error?.messasge === 'string') { error.message = `Unable to create cookie: ${error.message}` }
+            if (error instanceof Error && typeof error?.message === 'string') { error.message = `Unable to create cookie: ${error.message}` }
             throw error;
         }
     }
@@ -118,14 +118,14 @@ class Cookies {
      */
     delete(name: string): HyperCloudResponse {
         if (typeof name !== 'string' || name?.length === 0) { throw `(${name}) is not a valid cookie name` }
-        this._response.setHeader('Set-Cookie', `${name}=deleted; Expires=Thu, 01 Jan 1970 00:00:00 GMT; Path=/`);
-        return this._response;
+        this.#_response.setHeader('Set-Cookie', `${name}=deleted; Expires=Thu, 01 Jan 1970 00:00:00 GMT; Path=/`);
+        return this.#_response;
     }
 
     /**
      * Get a list of all the created cookies
      */
-    get list() { return this._response.getHeaders()['set-cookie'] }
+    get list() { return this.#_response.getHeaders()['set-cookie'] }
 }
 
 export default Cookies;

@@ -137,16 +137,16 @@ class Helpers {
             const validity = this.checkPathAccessibility(certbotPath);
             if (validity.valid) { return true }
 
-            if (!validity.errors.isString) {
+            if (validity.errors.isString !== true) {
                 this.printConsole(`The certbot path should've been a string, but instead got ${typeof certbotPath}`)
                 throw new Error(`The certbot path that was provided is invalid`)
             }
 
-            if (!validity.errors.exist) {
+            if (validity.errors.exist !== true) {
                 this.printConsole(`The cerbot path you provided (${certbotPath}) does not exist`);
             }
 
-            if (!validity.errors.accessible) {
+            if (validity.errors.accessible!== true) {
                 this.printConsole(`Certbot path error: You do not have permissions to read path: ${certbotPath}`)
             }
 
@@ -164,16 +164,16 @@ class Helpers {
                 const dirs = fs.readdirSync(projectPath);
                 return dirs.includes('package.json');
             } else {
-                if (!validity.errors.isString) {
+                if (validity.errors.isString !== true) {
                     this.printConsole(`The project path should've been a string, but instead got ${typeof projectPath}`)
                     throw new Error(`The project path that was provided is invalid`)
                 }
 
-                if (!validity.errors.exist) {
+                if (validity.errors.exist !== true) {
                     this.printConsole(`The project path you provided (${projectPath}) does not exist`);
                 }
 
-                if (!validity.errors.accessible) {
+                if (validity.errors.accessible!== true) {
                     this.printConsole(`Project path path error: You do not have permissions to read path: ${projectPath}`)
                 }
 
@@ -262,7 +262,7 @@ class Helpers {
     getLocalIPs(): string[] {
         const os = require('os');
         const nets = os.networkInterfaces();
-        const interfaces = {}
+        const interfaces = {} as Record<string, Array<any>>
 
         for (const name of Object.keys(nets)) {
             for (const net of nets[name]) {
@@ -390,11 +390,11 @@ class Helpers {
 
     /**
     * Check if a particular string is a valid HTML code
-    * @param {string} str The string to check
+    * @param {string} string The string to check
     * @returns {boolean}
     * @deprecated Use `helpers.is.html(string)` instead. This will be removed in `v2`.
     */
-    isHTML(string): boolean {
+    isHTML(string: string): boolean {
         const regex = /<([A-Za-z][A-Za-z0-9]*)\b[^>]*>(.*?)<\/\1>/;
         return regex.test(string)
     }

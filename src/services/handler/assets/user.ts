@@ -3,31 +3,32 @@ import HyperCloudRequest from './request';
 import helpers from '../../../utils/helpers';
 
 class HyperCloudUser {
-    private readonly _preferences: UserPreferences;
-    private readonly _request: HyperCloudRequest;
+    readonly #_preferences: UserPreferences;
+    readonly #_request: HyperCloudRequest;
 
-    private readonly _data = {
+    readonly #_data = {
         id: null as unknown as string,
         loggedIn: false,
         role: 'Visitor' as UserRole
     }
-   
+
     constructor(request: HyperCloudRequest, options?: HyperCloudUserOptions) {
+        this.#_request = request;
         if (!helpers.is.undefined(options) && helpers.is.realObject(options)) {
             try {
                 if ('loggedIn' in options && options.loggedIn !== undefined) {
                     if (typeof options.loggedIn === 'boolean') {
-                        this._data.loggedIn = options.loggedIn;
+                        this.#_data.loggedIn = options.loggedIn;
                     } else {
                         throw new TypeError(`The loggedIn value must be a boolean, got ${typeof options.loggedIn}`)
                     }
                 }
 
-                if (this._data.loggedIn) {
+                if (this.#_data.loggedIn) {
                     if ('id' in options && options.id !== undefined) {
                         if (typeof options.id !== 'string') { throw new TypeError(`The user ID must be a string value, instead got ${typeof options.id}`) }
                         if (options.id.length === 0) { throw new RangeError(`The user ID cannot be an empty string`) }
-                        this._data.id = options.id;
+                        this.#_data.id = options.id;
                     } else {
                         throw `The user loggedIn status has been set to "true" but no user ID has been set`;
                     }
@@ -36,7 +37,7 @@ class HyperCloudUser {
                         if (typeof options.role === 'string') {
                             if (options.role === 'Visitor') { throw `The role cannot be set to "Visitor" when the "loggedIn" value is set to "true".` }
                             if (options.role === 'Admin' || options.role === 'Member') {
-                                this._data.role = options.role;
+                                this.#_data.role = options.role;
                             } else {
                                 throw `The provided user role (${options.role}) is not a valid one`
                             }
@@ -49,15 +50,15 @@ class HyperCloudUser {
                 }
             } catch (error) {
                 if (typeof error === 'string') { error = `HyperCloud User Error: ${error}` }
-                if (typeof error?.message === 'string') { error.message = `HyperCloud User Error: ${error.message}` }
+                if (error instanceof Error) { error.message = `HyperCloud User Error: ${error.message}` }
                 helpers.printConsole('Unable to set the HyperCloud user on server request:');
                 helpers.printConsole(error);
                 throw error;
             }
 
-            this._preferences = new UserPreferences(request, options.preferences);
+            this.#_preferences = new UserPreferences(request, options.preferences);
         } else {
-            this._preferences = new UserPreferences(request);
+            this.#_preferences = new UserPreferences(request);
         }
 
         return this;
@@ -67,38 +68,38 @@ class HyperCloudUser {
      * Get user ID
      * @returns {string}
     */
-    get id(): string { return this._data.id }
+    get id(): string { return this.#_data.id }
     /**
      * Get whether the user is loggedIn or not
      * @returns {boolean}
      */
-    get loggedIn(): boolean { return this._data.loggedIn }
+    get loggedIn(): boolean { return this.#_data.loggedIn }
     /**
      * The user role on this site
      * @returns {UserRole}
     */
-    get role(): UserRole { return this._data.role }
+    get role(): UserRole { return this.#_data.role }
     /**@returns {UserPreferences} */
-    get preferences(): UserPreferences { return this._preferences }
+    get preferences(): UserPreferences { return this.#_preferences }
 
     /**@private */
-    __toString = () => {
-        return JSON.stringify(this.__toJSON(), null, 4)
+    _toString = () => {
+        return JSON.stringify(this._toJSON(), null, 4)
     }
 
     /**@private */
-    __toJSON = () => {
+    _toJSON = () => {
         return {
             id: this.id,
             loggedIn: this.loggedIn,
             role: this.role,
-            preferences: this.preferences.__toJSON()
+            preferences: this.preferences._toJSON()
         }
     }
 }
 
 class UserPreferences {
-    private _data = {
+    #_data = {
         language: null as unknown as string,
         locale: null as unknown as string,
         currency: null as unknown as Currency,
@@ -112,12 +113,12 @@ class UserPreferences {
                     if (typeof options.language !== 'string') { throw new TypeError(`The user's preferred language has been set to a value of type ${typeof options.language} while only string values are accepted`) }
                     options.language = options.language.toLowerCase();
                     if (!request.server.supportedLanguages.includes(options.language)) { throw `The user's preferred language has been set to ${options.language}, which is not a supported language.` }
-                    this._data.language = options.language
+                    this.#_data.language = options.language
                 }
 
                 if ('locale' in options && options.locale !== undefined) {
                     if (helpers.validate.locale(options.locale)) {
-                        this._data.locale = options.locale;
+                        this.#_data.locale = options.locale;
                     } else {
                         throw `The user's preferred locale (${options.locale}) is not a valid one`;
                     }
@@ -125,7 +126,7 @@ class UserPreferences {
 
                 if ('currency' in options && options.currency !== undefined) {
                     if (helpers.validate.currency(options.currency)) {
-                        this._data.currency = options.currency.toUpperCase() as Currency;
+                        this.#_data.currency = options.currency.toUpperCase() as Currency;
                     } else {
                         throw `The user's preferred currency (${options.currency}) is not a valid one`
                     }
@@ -136,13 +137,13 @@ class UserPreferences {
 
                     switch (options.colorScheme?.toLowerCase()) {
                         case 'default':
-                            this._data.colorScheme = 'Default';
+                            this.#_data.colorScheme = 'Default';
                             break;
                         case 'dark':
-                            this._data.colorScheme = 'Dark';
+                            this.#_data.colorScheme = 'Dark';
                             break;
                         case 'light':
-                            this._data.colorScheme = 'Light';
+                            this.#_data.colorScheme = 'Light';
                             break;
                         default:
                             throw `The user's preferred colorScheme (${options.colorScheme}) is not a valid one`;
@@ -151,7 +152,7 @@ class UserPreferences {
             }
         } catch (error) {
             if (typeof error === 'string') { error = `User Preferences Error: ${error}` }
-            if (typeof error?.message === 'string') { error.message = `User Preferences Error: ${error.message}` }
+            if (error instanceof Error) { error.message = `User Preferences Error: ${error.message}` }
             helpers.printConsole('Unable to set user preferences on server request:');
             helpers.printConsole(error);
             throw error;
@@ -162,33 +163,33 @@ class UserPreferences {
      * The user's preferred language
      * @returns {string|null} The user preferred language or `null` if they don't have one
     */
-    get language(): string | null { return this._data.language }
+    get language(): string | null { return this.#_data.language }
 
     /**
      * The user's preferred locale or `null` if they don't have one
      * @returns {string|null}
      */
-    get locale(): string | null { return this._data.locale }
+    get locale(): string | null { return this.#_data.locale }
 
     /**
      * The user's preferred currency or `null` if they don't have one
      * @returns {Currency|null}
      */
-    get currency(): Currency | null { return this._data.currency }
+    get currency(): Currency | null { return this.#_data.currency }
 
     /**
      * The user's preferred color scheme
      * @returns {ColorScheme}
      */
-    get colorScheme(): ColorScheme { return this._data.colorScheme }
+    get colorScheme(): ColorScheme { return this.#_data.colorScheme }
 
     /**@private */
-    __toString = () => {
-        return JSON.stringify(this.__toJSON(), null, 4);
+    _toString = () => {
+        return JSON.stringify(this._toJSON(), null, 4);
     }
 
     /**@private */
-    __toJSON = () => {
+    _toJSON = () => {
         return {
             language: this.language,
             colorScheme: this.colorScheme,

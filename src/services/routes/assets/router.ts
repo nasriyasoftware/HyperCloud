@@ -8,38 +8,38 @@ import fs from 'fs';
 import path from 'path';
 
 class Router {
-    private _server: HyperCloudServer;
+    #_server: HyperCloudServer;
 
-    private _defaults = {
+    #_defaults = {
         caseSensitive: false,
         subDomain: '*'
     }
 
-    constructor(server: HyperCloudServer, options?: { caseSensitive?: boolean; subDomain?: string; }) {
-        this._server = server;
-        if (options && 'caseSensitive' in options && typeof options.caseSensitive === 'boolean') { this._defaults.caseSensitive = options.caseSensitive }
-        if (options && 'subDomain' in options && typeof options.subDomain === 'string') { this._defaults.subDomain = options.subDomain }
-    }
-
-    private _utils = Object.freeze({
+    #_utils = Object.freeze({
         /**Create a route based on a method */
         createRoute: (method: 'USE' | HttpMethod, path: string, handler: HyperCloudRequestHandler, options?: { caseSensitive?: boolean; subDomain?: string; }) => {
-            const caseSensitive = options && 'caseSensitive' in options ? options.caseSensitive : this._defaults.caseSensitive;
-            const subDomain = options && 'subDomain' in options ? options.subDomain : this._defaults.subDomain;
+            const caseSensitive = options && 'caseSensitive' in options ? options.caseSensitive : this.#_defaults.caseSensitive;
+            const subDomain = options && 'subDomain' in options ? options.subDomain : this.#_defaults.subDomain;
 
             const route = new Route({ path, handler, method, caseSensitive, subDomain });
-            this._server.__routesManager.add(route);
+            this.#_server._routesManager.add(route);
         },
         createStaticRoute: (root: string, options?: StaticRouteOptions) => {
-            const caseSensitive = options && 'caseSensitive' in options ? options.caseSensitive : this._defaults.caseSensitive;
-            const subDomain = options && 'subDomain' in options ? options.subDomain : this._defaults.subDomain;
+            const caseSensitive = options && 'caseSensitive' in options ? options.caseSensitive : this.#_defaults.caseSensitive;
+            const subDomain = options && 'subDomain' in options ? options.subDomain : this.#_defaults.subDomain;
             const path = options && 'path' in options ? options.path : '/';
             const dotfiles = options && 'dotfiles' in options ? options.dotfiles : 'ignore';
 
             const route = new StaticRoute(root, { path, subDomain, caseSensitive, dotfiles });
-            this._server.__routesManager.add(route);
+            this.#_server._routesManager.add(route);
         }
     })
+
+    constructor(server: HyperCloudServer, options?: { caseSensitive?: boolean; subDomain?: string; }) {
+        this.#_server = server;
+        if (options && 'caseSensitive' in options && typeof options.caseSensitive === 'boolean') { this.#_defaults.caseSensitive = options.caseSensitive }
+        if (options && 'subDomain' in options && typeof options.subDomain === 'string') { this.#_defaults.subDomain = options.subDomain }
+    }
 
     /**
      * Set your site's **favicon** by providing a path to a `favicon.ico` file.
@@ -51,7 +51,7 @@ class Router {
     favicon(faviconPath: string, eTag?: string) {
         if (typeof faviconPath !== 'string') { throw new TypeError(`The favicon path that you provided cannot be of type ${typeof faviconPath}, only pass a string as a value`) }
         const validity = helpers.checkPathAccessibility(faviconPath);
-        if (!validity.valid) { throw `The favicon path you provided (${faviconPath}) is not valid. Make sure it's accessible and does exist` }
+        if (validity.valid !== true) { throw `The favicon path you provided (${faviconPath}) is not valid. Make sure it's accessible and does exist` }
 
         const stats = fs.statSync(faviconPath);
         if (!stats.isDirectory()) { throw `The favicon path you provided (${faviconPath}) is not a directory` }
@@ -74,7 +74,7 @@ class Router {
             }
         })
 
-        this._server.__routesManager.add(route);
+        this.#_server._routesManager.add(route);
     }
 
     /**
@@ -83,7 +83,7 @@ class Router {
      * @param {StaticRouteOptions} [options] static options
      */
     static(root: string, options?: StaticRouteOptions) {
-        this._utils.createStaticRoute(root, options);
+        this.#_utils.createStaticRoute(root, options);
     }
 
     /**
@@ -94,7 +94,7 @@ class Router {
      */
     use(path: string, handler: HyperCloudRequestHandler, options?: { caseSensitive?: boolean; subDomain?: string; }) {
         const method = 'USE';
-        this._utils.createRoute(method, path, handler, options);
+        this.#_utils.createRoute(method, path, handler, options);
     }
 
     /**
@@ -105,7 +105,7 @@ class Router {
      */
     get(path: string, handler: HyperCloudRequestHandler, options?: { caseSensitive?: boolean; subDomain?: string; }) {
         const method = 'GET';
-        this._utils.createRoute(method, path, handler, options);
+        this.#_utils.createRoute(method, path, handler, options);
     }
 
     /**
@@ -116,7 +116,7 @@ class Router {
      */
     post(path: string, handler: HyperCloudRequestHandler, options?: { caseSensitive?: boolean; subDomain?: string; }) {
         const method = 'POST';
-        this._utils.createRoute(method, path, handler, options);
+        this.#_utils.createRoute(method, path, handler, options);
     }
 
     /**
@@ -127,7 +127,7 @@ class Router {
      */
     put(path: string, handler: HyperCloudRequestHandler, options?: { caseSensitive?: boolean; subDomain?: string; }) {
         const method = 'PUT';
-        this._utils.createRoute(method, path, handler, options);
+        this.#_utils.createRoute(method, path, handler, options);
     }
 
     /**
@@ -138,7 +138,7 @@ class Router {
      */
     delete(path: string, handler: HyperCloudRequestHandler, options?: { caseSensitive?: boolean; subDomain?: string; }) {
         const method = 'DELETE';
-        this._utils.createRoute(method, path, handler, options);
+        this.#_utils.createRoute(method, path, handler, options);
     }
 
     /**
@@ -149,7 +149,7 @@ class Router {
      */
     patch(path: string, handler: HyperCloudRequestHandler, options?: { caseSensitive?: boolean; subDomain?: string; }) {
         const method = 'PATCH';
-        this._utils.createRoute(method, path, handler, options);
+        this.#_utils.createRoute(method, path, handler, options);
     }
 
     /**
@@ -160,7 +160,7 @@ class Router {
      */
     head(path: string, handler: HyperCloudRequestHandler, options?: { caseSensitive?: boolean; subDomain?: string; }) {
         const method = 'HEAD';
-        this._utils.createRoute(method, path, handler, options);
+        this.#_utils.createRoute(method, path, handler, options);
     }
 
     /**
@@ -171,7 +171,7 @@ class Router {
      */
     options(path: string, handler: HyperCloudRequestHandler, options?: { caseSensitive?: boolean; subDomain?: string; }) {
         const method = 'OPTIONS';
-        this._utils.createRoute(method, path, handler, options);
+        this.#_utils.createRoute(method, path, handler, options);
     }
 
     /**
@@ -182,7 +182,7 @@ class Router {
      */
     trace(path: string, handler: HyperCloudRequestHandler, options?: { caseSensitive?: boolean; subDomain?: string; }) {
         const method = 'TRACE';
-        this._utils.createRoute(method, path, handler, options);
+        this.#_utils.createRoute(method, path, handler, options);
     }
 
     /**
@@ -193,7 +193,7 @@ class Router {
      */
     connect(path: string, handler: HyperCloudRequestHandler, options?: { caseSensitive?: boolean; subDomain?: string; }) {
         const method = 'CONNECT';
-        this._utils.createRoute(method, path, handler, options);
+        this.#_utils.createRoute(method, path, handler, options);
     }
 }
 
