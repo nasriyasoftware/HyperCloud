@@ -12,6 +12,23 @@ import stream from 'stream';
 import net from 'net';
 import tls from 'tls';
 import { NotFoundResponseOptions, RenderingOptions, ForbiddenAndUnauthorizedOptions, ServerErrorOptions, RedirectCode, DownloadFileOptions, SendFileOptions, MimeType } from '../../../docs/docs';
+interface ResponseEndOptions {
+    data?: string | Uint8Array;
+    encoding?: BufferEncoding;
+    callback?: () => void;
+}
+interface WriteOptions {
+    chunk: string | Uint8Array;
+    encoding?: BufferEncoding;
+    callback?: (err: Error) => void;
+}
+type BufferEncoding = 'ascii' | 'utf8' | 'utf-8' | 'utf16le' | 'utf-16le' | 'ucs2' | 'ucs-2' | 'base64' | 'base64url' | 'latin1' | 'binary' | 'hex';
+type EventType = 'pipe' | 'unpipe' | 'close' | 'drain' | 'finish' | 'error';
+interface EventConfig {
+    event: EventType;
+    listener: EventCallback;
+}
+type EventCallback = (...args: any[]) => void;
 /**
  * TODO: Change all the server examples to use my own server class
  */
@@ -833,21 +850,4 @@ declare class HyperCloudResponse {
      */
     set _closed(value: true);
 }
-interface ResponseEndOptions {
-    data?: string | Uint8Array;
-    encoding?: BufferEncoding;
-    callback?: () => void;
-}
-interface WriteOptions {
-    chunk: string | Uint8Array;
-    encoding?: BufferEncoding;
-    callback?: (err: Error) => void;
-}
-type BufferEncoding = 'ascii' | 'utf8' | 'utf-8' | 'utf16le' | 'utf-16le' | 'ucs2' | 'ucs-2' | 'base64' | 'base64url' | 'latin1' | 'binary' | 'hex';
-type EventType = 'pipe' | 'unpipe' | 'close' | 'drain' | 'finish' | 'error';
-interface EventConfig {
-    event: EventType;
-    listener: EventCallback;
-}
-type EventCallback = (...args: any[]) => void;
 export default HyperCloudResponse;
