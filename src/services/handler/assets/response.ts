@@ -1578,8 +1578,6 @@ class HyperCloudResponse {
     }
 }
 
-export default HyperCloudResponse;
-
 interface ResponseEndOptions {
     data?: string | Uint8Array;
     encoding?: BufferEncoding;
@@ -1601,4 +1599,5 @@ interface EventConfig {
 }
 
 type EventCallback = (...args: any[]) => void;
-type EmptyCallback = () => void;
+
+export default HyperCloudResponse;

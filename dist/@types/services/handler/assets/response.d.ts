@@ -833,7 +833,6 @@ declare class HyperCloudResponse {
      */
     set _closed(value: true);
 }
-export default HyperCloudResponse;
 interface ResponseEndOptions {
     data?: string | Uint8Array;
     encoding?: BufferEncoding;
@@ -851,3 +850,4 @@ interface EventConfig {
     listener: EventCallback;
 }
 type EventCallback = (...args: any[]) => void;
+export default HyperCloudResponse;
