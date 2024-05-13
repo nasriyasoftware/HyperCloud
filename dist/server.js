@@ -329,7 +329,7 @@ class HyperCloudServer {
                 }
                 for (const name in options.handlers) {
                     const handlerName = name;
-                    this.setHandler(handlerName, options.handlers[handlerName]);
+                    this.handlers[handlerName].set(options.handlers[handlerName]);
                 }
             }
             if (!isFromFile) {
@@ -440,41 +440,108 @@ class HyperCloudServer {
     get _routesManager() { return this.#_routesManager; }
     /**@private */
     get _handlers() { return this.#_config.handlers; }
-    /**
-     * Define handlers for various scenarios
-     * @param {HyperCloudServerHandlers} name The name of the handler from the options or any other name
-     * @param {HyperCloudRequestHandler} handler A function to handle responses called by the system
-     * @throws {TypeError} If the `name` isn't a `string`.
-     * @throws {SyntaxError} If the `name` is an empty `string` or doesn't start with a letter.
-     * @throws {TypeError} If the `handler` isn't a `function`.
-     */
-    setHandler(name, handler) {
-        if (typeof name !== 'string') {
-            throw new TypeError(`The handler name must be a string but got ${typeof name}`);
-        }
-        if (name.length === 0) {
-            throw new SyntaxError(`The handler name cannot be empty`);
-        }
-        const letterRegex = /^[a-zA-Z]/;
-        if (!letterRegex.test(name)) {
-            throw new SyntaxError(`The handler name can only starts with an (a-z/A-Z) letter.`);
-        }
-        if (typeof handler !== 'function') {
-            throw new TypeError(`The provided handler isn't a function but a type of ${typeof handler}`);
-        }
-        const paramsNum = handler.length;
-        if (name === 'onHTTPError') {
-            if (paramsNum !== 4) {
-                throw new RangeError(`The provided onHTTPError handler has ${paramsNum} parameters. The expected number of parameters is 4; (request, response, next, error)`);
-            }
-        }
-        else {
-            if (paramsNum !== 3) {
-                throw new RangeError(`The provided handler has ${paramsNum} parameters. The expected number of parameters is 3`);
-            }
-        }
-        this.#_config.handlers[name] = handler;
-    }
+    handlers = Object.freeze({
+        notFound: {
+            set: (handler) => {
+                const handlerName = 'notFound';
+                if (typeof handler !== 'function') {
+                    throw new TypeError(`The provided handler isn't a function but a type of ${typeof handler}`);
+                }
+                const reqParams = 3;
+                const handlerParams = handler.length;
+                if (handlerParams !== reqParams) {
+                    throw new RangeError(`The provided handler has ${handlerParams} parameters. The expected number of parameters is ${reqParams}`);
+                }
+                this.#_config.handlers[handlerName] = handler;
+            },
+            get: () => this.#_config.handlers.notFound
+        },
+        serverError: {
+            set: (handler) => {
+                const handlerName = 'serverError';
+                if (typeof handler !== 'function') {
+                    throw new TypeError(`The provided handler isn't a function but a type of ${typeof handler}`);
+                }
+                const reqParams = 3;
+                const handlerParams = handler.length;
+                if (handlerParams !== reqParams) {
+                    throw new RangeError(`The provided handler has ${handlerParams} parameters. The expected number of parameters is ${reqParams}`);
+                }
+                this.#_config.handlers[handlerName] = handler;
+            },
+            get: () => this.#_config.handlers.serverError
+        }, unauthorized: {
+            set: (handler) => {
+                const handlerName = 'unauthorized';
+                if (typeof handler !== 'function') {
+                    throw new TypeError(`The provided handler isn't a function but a type of ${typeof handler}`);
+                }
+                const reqParams = 3;
+                const handlerParams = handler.length;
+                if (handlerParams !== reqParams) {
+                    throw new RangeError(`The provided handler has ${handlerParams} parameters. The expected number of parameters is ${reqParams}`);
+                }
+                this.#_config.handlers[handlerName] = handler;
+            },
+            get: () => this.#_config.handlers.unauthorized
+        }, forbidden: {
+            set: (handler) => {
+                const handlerName = 'forbidden';
+                if (typeof handler !== 'function') {
+                    throw new TypeError(`The provided handler isn't a function but a type of ${typeof handler}`);
+                }
+                const reqParams = 3;
+                const handlerParams = handler.length;
+                if (handlerParams !== reqParams) {
+                    throw new RangeError(`The provided handler has ${handlerParams} parameters. The expected number of parameters is ${reqParams}`);
+                }
+                this.#_config.handlers[handlerName] = handler;
+            },
+            get: () => this.#_config.handlers.forbidden
+        }, userSessions: {
+            set: (handler) => {
+                const handlerName = 'userSessions';
+                if (typeof handler !== 'function') {
+                    throw new TypeError(`The provided handler isn't a function but a type of ${typeof handler}`);
+                }
+                const reqParams = 3;
+                const handlerParams = handler.length;
+                if (handlerParams !== reqParams) {
+                    throw new RangeError(`The provided handler has ${handlerParams} parameters. The expected number of parameters is ${reqParams}`);
+                }
+                this.#_config.handlers[handlerName] = handler;
+            },
+            get: () => this.#_config.handlers.userSessions
+        }, logger: {
+            set: (handler) => {
+                const handlerName = 'logger';
+                if (typeof handler !== 'function') {
+                    throw new TypeError(`The provided handler isn't a function but a type of ${typeof handler}`);
+                }
+                const reqParams = 3;
+                const handlerParams = handler.length;
+                if (handlerParams !== reqParams) {
+                    throw new RangeError(`The provided handler has ${handlerParams} parameters. The expected number of parameters is ${reqParams}`);
+                }
+                this.#_config.handlers[handlerName] = handler;
+            },
+            get: () => this.#_config.handlers.logger
+        }, onHTTPError: {
+            set: (handler) => {
+                const handlerName = 'onHTTPError';
+                if (typeof handler !== 'function') {
+                    throw new TypeError(`The provided handler isn't a function but a type of ${typeof handler}`);
+                }
+                const reqParams = 4;
+                const handlerParams = handler.length;
+                if (handlerParams !== reqParams) {
+                    throw new RangeError(`The provided handler has ${handlerParams} parameters. The expected number of parameters is ${reqParams}`);
+                }
+                this.#_config.handlers[handlerName] = handler;
+            },
+            get: () => this.#_config.handlers.onHTTPError
+        },
+    });
     /**
      * Increase productivity by spreading routes into multiple files. All
      * you need to do is to `export` the created server into the file that

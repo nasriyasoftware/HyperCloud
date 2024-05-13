@@ -39,6 +39,7 @@ class HyperCloudResponse {
     #_status = Object.seal({
         closed: false
     });
+    #_next = undefined;
     constructor(server, req, res) {
         this.#_server = server;
         this.#_req = req;
@@ -71,10 +72,10 @@ class HyperCloudResponse {
              * @param {NotFoundResponseOptions} [options] Rendering options
              */
             notFound: (options) => {
-                if (typeof this.#_server._handlers.notFound === 'function') {
+                if (typeof this.#_server.handlers.notFound.get() === 'function') {
                     try {
                         // Run the user defined handler for not-found resources
-                        this.#_server._handlers.notFound();
+                        this.#_server.handlers.notFound.get()(this.#_req, this, this._next);
                     }
                     catch (error) {
                         this.pages.serverError({ error: error });
@@ -130,10 +131,10 @@ class HyperCloudResponse {
              * @param {ForbiddenAndUnauthorizedOptions} [options]
              */
             unauthorized: (options) => {
-                if (typeof this.#_server._handlers.unauthorized === 'function') {
+                if (typeof this.#_server.handlers.unauthorized.get() === 'function') {
                     try {
                         // Run the user defined handler for not-found resources
-                        this.#_server._handlers.unauthorized();
+                        this.#_server.handlers.unauthorized.get()(this.#_req, this, this._next);
                     }
                     catch (error) {
                         this.pages.serverError({ error: error });
@@ -202,10 +203,10 @@ class HyperCloudResponse {
              * @param {ForbiddenAndUnauthorizedOptions} options
              */
             forbidden: (options) => {
-                if (typeof this.#_server._handlers.forbidden === 'function') {
+                if (typeof this.#_server.handlers.forbidden.get() === 'function') {
                     try {
                         // Run the user defined handler for not-found resources
-                        this.#_server._handlers.forbidden();
+                        this.#_server.handlers.forbidden.get()(this.#_req, this, this._next);
                     }
                     catch (error) {
                         this.pages.serverError({ error: error });
@@ -273,10 +274,10 @@ class HyperCloudResponse {
                     helpers_1.default.printConsole(options.error);
                     helpers_1.default.printConsole(diver);
                 }
-                if (typeof this.#_server._handlers.serverError === 'function' && options?.bypassHandler !== true) {
+                if (typeof this.#_server.handlers.serverError.get() === 'function' && options?.bypassHandler !== true) {
                     try {
                         // Run the user defined handler for not-found resources
-                        this.#_server._handlers.serverError();
+                        this.#_server.handlers.serverError.get()(this.#_req, this, this._next);
                     }
                     catch (error) {
                         this.pages.serverError({ bypassHandler: true });
@@ -299,6 +300,16 @@ class HyperCloudResponse {
                 }
             }
         });
+    }
+    /**
+     * HyperCloud's next() function
+     * @private
+    */
+    get _next() { return this.#_next; }
+    set _next(value) {
+        if (typeof value === 'function') {
+            this.#_next = value;
+        }
     }
     /**
      * Redirect the client to a new location

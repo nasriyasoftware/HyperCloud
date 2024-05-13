@@ -34,10 +34,10 @@ class RequestRoutesManager {
 
         const newRouts: (Route | StaticRoute)[] = [];
         // Check if the user has a `userSessions` handler configured
-        if (typeof request.server._handlers.userSessions === 'function') {
+        if (typeof request.server.handlers.userSessions.get() === 'function') {
             newRouts.push(new Route({
                 path: '*', method: 'USE', handler: (request, response, next) => {
-                    return request.server._handlers.userSessions(request, response, next);
+                    return request.server.handlers.userSessions.get()(request, response, next);
                 }
             }))
         }
@@ -128,10 +128,10 @@ class RequestRoutesManager {
         }))
 
         // Check if the user has defined a logger handler or not;
-        if (typeof request.server._handlers.logger === 'function') {
+        if (typeof request.server.handlers.logger.get() === 'function') {
             newRouts.push(new Route({
                 path: '*', method: 'USE', handler: (request, response, next) => {
-                    return request.server._handlers.logger(request, response, next);
+                    return request.server.handlers.logger.get()(request, response, next);
                 }
             }))
         }
@@ -145,6 +145,7 @@ class RequestRoutesManager {
         const route = this.#_routes[this.#_currentIndex];
         if (route) {
             this.#_request.params = route instanceof Route && Object.keys(route.params).length > 0 ? route.params : {};
+            this.#_response._next = this.#_next;
             try {
                 route.handler(this.#_request, this.#_response, this.#_next);
             } catch (err) {
@@ -152,7 +153,7 @@ class RequestRoutesManager {
 
                 const errRoute = new Route({
                     path: route.path.join('/'), method: 'USE', handler: (request, response, next) => {
-                        const handler = this.#_request.server._handlers.onHTTPError
+                        const handler = this.#_request.server.handlers.onHTTPError.get()
                         if (typeof handler === 'function') {
                             try {
                                 return handler(request, response, next, routeError);

@@ -4,7 +4,7 @@ import path from 'path';
 
 import helpers from './utils/helpers';
 import SSLManager from './services/ssl/manager';
-import { HyperCloudInitFile, HyperCloudManagementOptions, HyperCloudRequestHandler, HyperCloudServerHandlers, OptionalProtocol, SecureServerOptions, ServerOptions } from './docs/docs';
+import { HyperCloudInitFile, HyperCloudManagementOptions, HyperCloudRequestErrorHandler, HyperCloudRequestHandler, HyperCloudServerHandlers, OptionalProtocol, SecureServerOptions, ServerOptions } from './docs/docs';
 
 import initializer from './services/handler/initializer';
 import HyperCloudResponse from './services/handler/assets/response';
@@ -44,7 +44,7 @@ class HyperCloudServer {
         trusted_proxies: [] as string[],
         locals: {} as Record<string, string>,
         cronJobs: {},
-        handlers: {} as Record<HyperCloudServerHandlers, HyperCloudRequestHandler>,
+        handlers: {} as Record<string, Function>,
         languages: { default: 'en', supported: ['en'] }
     }
 
@@ -306,7 +306,7 @@ class HyperCloudServer {
                 if (!helpers.is.realObject(options.handlers)) { throw `The options.handler was used with an invalid value. Expected an object but instead got ${typeof options.handlers}` }
                 for (const name in options.handlers) {
                     const handlerName = name as HyperCloudServerHandlers;
-                    this.setHandler(handlerName, options.handlers[handlerName])
+                    this.handlers[handlerName].set(options.handlers[handlerName])
                 }
             }
 
@@ -417,30 +417,80 @@ class HyperCloudServer {
     /**@private */
     get _handlers(): Record<string, Function> { return this.#_config.handlers }
 
-    /**
-     * Define handlers for various scenarios
-     * @param {HyperCloudServerHandlers} name The name of the handler from the options or any other name
-     * @param {HyperCloudRequestHandler} handler A function to handle responses called by the system
-     * @throws {TypeError} If the `name` isn't a `string`.
-     * @throws {SyntaxError} If the `name` is an empty `string` or doesn't start with a letter.
-     * @throws {TypeError} If the `handler` isn't a `function`.
-     */
-    setHandler(name: HyperCloudServerHandlers, handler: HyperCloudRequestHandler) {
-        if (typeof name !== 'string') { throw new TypeError(`The handler name must be a string but got ${typeof name}`) }
-        if (name.length === 0) { throw new SyntaxError(`The handler name cannot be empty`) }
-        const letterRegex = /^[a-zA-Z]/;
-        if (!letterRegex.test(name)) { throw new SyntaxError(`The handler name can only starts with an (a-z/A-Z) letter.`) }
-        if (typeof handler !== 'function') { throw new TypeError(`The provided handler isn't a function but a type of ${typeof handler}`) }
-        const paramsNum = handler.length;
-
-        if (name === 'onHTTPError') {
-            if (paramsNum !== 4) { throw new RangeError(`The provided onHTTPError handler has ${paramsNum} parameters. The expected number of parameters is 4; (request, response, next, error)`) }
-        } else {
-            if (paramsNum !== 3) { throw new RangeError(`The provided handler has ${paramsNum} parameters. The expected number of parameters is 3`) }
-        }
-
-        this.#_config.handlers[name] = handler;
-    }
+    readonly handlers = Object.freeze({
+        notFound: {
+            set: (handler: HyperCloudRequestHandler) => {
+                const handlerName = 'notFound';
+                if (typeof handler !== 'function') { throw new TypeError(`The provided handler isn't a function but a type of ${typeof handler}`) }
+                const reqParams = 3;
+                const handlerParams = handler.length;
+                if (handlerParams !== reqParams) { throw new RangeError(`The provided handler has ${handlerParams} parameters. The expected number of parameters is ${reqParams}`) }
+                this.#_config.handlers[handlerName] = handler;
+            },
+            get: () => this.#_config.handlers.notFound as HyperCloudRequestHandler
+        },
+        serverError: {
+            set: (handler: HyperCloudRequestHandler) => {
+                const handlerName = 'serverError';
+                if (typeof handler !== 'function') { throw new TypeError(`The provided handler isn't a function but a type of ${typeof handler}`) }
+                const reqParams = 3;
+                const handlerParams = handler.length;
+                if (handlerParams !== reqParams) { throw new RangeError(`The provided handler has ${handlerParams} parameters. The expected number of parameters is ${reqParams}`) }
+                this.#_config.handlers[handlerName] = handler;
+            },
+            get: () => this.#_config.handlers.serverError as HyperCloudRequestHandler
+        }, unauthorized: {
+            set: (handler: HyperCloudRequestHandler) => {
+                const handlerName = 'unauthorized';
+                if (typeof handler !== 'function') { throw new TypeError(`The provided handler isn't a function but a type of ${typeof handler}`) }
+                const reqParams = 3;
+                const handlerParams = handler.length;
+                if (handlerParams !== reqParams) { throw new RangeError(`The provided handler has ${handlerParams} parameters. The expected number of parameters is ${reqParams}`) }
+                this.#_config.handlers[handlerName] = handler;
+            },
+            get: () => this.#_config.handlers.unauthorized as HyperCloudRequestHandler
+        }, forbidden: {
+            set: (handler: HyperCloudRequestHandler) => {
+                const handlerName = 'forbidden';
+                if (typeof handler !== 'function') { throw new TypeError(`The provided handler isn't a function but a type of ${typeof handler}`) }
+                const reqParams = 3;
+                const handlerParams = handler.length;
+                if (handlerParams !== reqParams) { throw new RangeError(`The provided handler has ${handlerParams} parameters. The expected number of parameters is ${reqParams}`) }
+                this.#_config.handlers[handlerName] = handler;
+            },
+            get: () => this.#_config.handlers.forbidden as HyperCloudRequestHandler
+        }, userSessions: {
+            set: (handler: HyperCloudRequestHandler) => {
+                const handlerName = 'userSessions';
+                if (typeof handler !== 'function') { throw new TypeError(`The provided handler isn't a function but a type of ${typeof handler}`) }
+                const reqParams = 3;
+                const handlerParams = handler.length;
+                if (handlerParams !== reqParams) { throw new RangeError(`The provided handler has ${handlerParams} parameters. The expected number of parameters is ${reqParams}`) }
+                this.#_config.handlers[handlerName] = handler;
+            },
+            get: () => this.#_config.handlers.userSessions as HyperCloudRequestHandler
+        }, logger: {
+            set: (handler: HyperCloudRequestHandler) => {
+                const handlerName = 'logger';
+                if (typeof handler !== 'function') { throw new TypeError(`The provided handler isn't a function but a type of ${typeof handler}`) }
+                const reqParams = 3;
+                const handlerParams = handler.length;
+                if (handlerParams !== reqParams) { throw new RangeError(`The provided handler has ${handlerParams} parameters. The expected number of parameters is ${reqParams}`) }
+                this.#_config.handlers[handlerName] = handler;
+            },
+            get: () => this.#_config.handlers.logger as HyperCloudRequestHandler
+        }, onHTTPError: {
+            set: (handler: HyperCloudRequestErrorHandler) => {
+                const handlerName = 'onHTTPError';
+                if (typeof handler !== 'function') { throw new TypeError(`The provided handler isn't a function but a type of ${typeof handler}`) }
+                const reqParams = 4;
+                const handlerParams = handler.length;
+                if (handlerParams !== reqParams) { throw new RangeError(`The provided handler has ${handlerParams} parameters. The expected number of parameters is ${reqParams}`) }
+                this.#_config.handlers[handlerName] = handler;
+            },
+            get: () => this.#_config.handlers.onHTTPError as HyperCloudRequestErrorHandler
+        },
+    })
 
     /**
      * Increase productivity by spreading routes into multiple files. All

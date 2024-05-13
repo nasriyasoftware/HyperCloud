@@ -1,4 +1,4 @@
-import { HyperCloudInitFile, HyperCloudManagementOptions, HyperCloudRequestHandler, HyperCloudServerHandlers, OptionalProtocol, SecureServerOptions, ServerOptions } from './docs/docs';
+import { HyperCloudInitFile, HyperCloudManagementOptions, HyperCloudRequestErrorHandler, HyperCloudRequestHandler, OptionalProtocol, SecureServerOptions, ServerOptions } from './docs/docs';
 import RenderingManager from './services/viewEngine/manager';
 import RoutesManager from './services/routes/manager';
 import Router from './services/routes/assets/router';
@@ -30,15 +30,36 @@ declare class HyperCloudServer {
     get _routesManager(): RoutesManager;
     /**@private */
     get _handlers(): Record<string, Function>;
-    /**
-     * Define handlers for various scenarios
-     * @param {HyperCloudServerHandlers} name The name of the handler from the options or any other name
-     * @param {HyperCloudRequestHandler} handler A function to handle responses called by the system
-     * @throws {TypeError} If the `name` isn't a `string`.
-     * @throws {SyntaxError} If the `name` is an empty `string` or doesn't start with a letter.
-     * @throws {TypeError} If the `handler` isn't a `function`.
-     */
-    setHandler(name: HyperCloudServerHandlers, handler: HyperCloudRequestHandler): void;
+    readonly handlers: Readonly<{
+        notFound: {
+            set: (handler: HyperCloudRequestHandler) => void;
+            get: () => HyperCloudRequestHandler;
+        };
+        serverError: {
+            set: (handler: HyperCloudRequestHandler) => void;
+            get: () => HyperCloudRequestHandler;
+        };
+        unauthorized: {
+            set: (handler: HyperCloudRequestHandler) => void;
+            get: () => HyperCloudRequestHandler;
+        };
+        forbidden: {
+            set: (handler: HyperCloudRequestHandler) => void;
+            get: () => HyperCloudRequestHandler;
+        };
+        userSessions: {
+            set: (handler: HyperCloudRequestHandler) => void;
+            get: () => HyperCloudRequestHandler;
+        };
+        logger: {
+            set: (handler: HyperCloudRequestHandler) => void;
+            get: () => HyperCloudRequestHandler;
+        };
+        onHTTPError: {
+            set: (handler: HyperCloudRequestErrorHandler) => void;
+            get: () => HyperCloudRequestErrorHandler;
+        };
+    }>;
     /**
      * Increase productivity by spreading routes into multiple files. All
      * you need to do is to `export` the created server into the file that

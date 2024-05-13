@@ -11,7 +11,7 @@ import http2 from 'http2';
 import stream from 'stream';
 import net from 'net';
 import tls from 'tls';
-import { NotFoundResponseOptions, RenderingOptions, ForbiddenAndUnauthorizedOptions, ServerErrorOptions, RedirectCode, DownloadFileOptions, SendFileOptions, MimeType } from '../../../docs/docs';
+import { NotFoundResponseOptions, RenderingOptions, ForbiddenAndUnauthorizedOptions, ServerErrorOptions, RedirectCode, DownloadFileOptions, SendFileOptions, MimeType, NextFunction } from '../../../docs/docs';
 interface ResponseEndOptions {
     data?: string | Uint8Array;
     encoding?: BufferEncoding;
@@ -156,6 +156,12 @@ declare class HyperCloudResponse {
          */
         serverError: (options: ServerErrorOptions) => HyperCloudResponse | undefined;
     }>;
+    /**
+     * HyperCloud's next() function
+     * @private
+    */
+    get _next(): NextFunction;
+    set _next(value: NextFunction);
     /**
      * Redirect the client to a new location
      * @param {string} url A relative or full path URL.
