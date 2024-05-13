@@ -18,6 +18,28 @@ import tls from 'tls';
 import { NotFoundResponseOptions, RenderingOptions, ForbiddenAndUnauthorizedOptions, ServerErrorOptions, RedirectCode, DownloadFileOptions, SendFileOptions, MimeType, ExtensionData } from '../../../docs/docs';
 
 const extensions = !helpers.is.undefined(_extensions) ? _extensions : [] as unknown as ExtensionData[];
+
+interface ResponseEndOptions {
+    data?: string | Uint8Array;
+    encoding?: BufferEncoding;
+    callback?: () => void;
+}
+
+interface WriteOptions {
+    chunk: string | Uint8Array;
+    encoding?: BufferEncoding;
+    callback?: (err: Error) => void;
+}
+
+type BufferEncoding = 'ascii' | 'utf8' | 'utf-8' | 'utf16le' | 'utf-16le' | 'ucs2' | 'ucs-2' | 'base64' | 'base64url' | 'latin1' | 'binary' | 'hex';
+type EventType = 'pipe' | 'unpipe' | 'close' | 'drain' | 'finish' | 'error';
+
+interface EventConfig {
+    event: EventType;
+    listener: EventCallback;
+}
+
+type EventCallback = (...args: any[]) => void;
 /**
  * TODO: Change all the server examples to use my own server class
  */
@@ -1577,27 +1599,5 @@ class HyperCloudResponse {
         }
     }
 }
-
-interface ResponseEndOptions {
-    data?: string | Uint8Array;
-    encoding?: BufferEncoding;
-    callback?: () => void;
-}
-
-interface WriteOptions {
-    chunk: string | Uint8Array;
-    encoding?: BufferEncoding;
-    callback?: (err: Error) => void;
-}
-
-type BufferEncoding = 'ascii' | 'utf8' | 'utf-8' | 'utf16le' | 'utf-16le' | 'ucs2' | 'ucs-2' | 'base64' | 'base64url' | 'latin1' | 'binary' | 'hex';
-type EventType = 'pipe' | 'unpipe' | 'close' | 'drain' | 'finish' | 'error';
-
-interface EventConfig {
-    event: EventType;
-    listener: EventCallback;
-}
-
-type EventCallback = (...args: any[]) => void;
 
 export default HyperCloudResponse;
