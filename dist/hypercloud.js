@@ -97,4 +97,5 @@ class HyperCloud {
         console.log(`${new Date().toUTCString()}: Process took ${elapsedTimeInMilliseconds} milliseconds`);
     }
 }
-exports.default = new HyperCloud();
+const _instance = new HyperCloud();
+exports.default = _instance;

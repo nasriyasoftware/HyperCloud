@@ -40,5 +40,5 @@ declare class HyperCloud {
      */
     generateETags(root: string): Promise<void>;
 }
-declare const _default: HyperCloud;
-export default _default;
+declare const _instance: HyperCloud;
+export default _instance;
