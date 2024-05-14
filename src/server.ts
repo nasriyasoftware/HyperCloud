@@ -1,3 +1,4 @@
+import http from 'http';
 import http2 from 'http2';
 import fs from 'fs';
 import path from 'path';
@@ -17,7 +18,7 @@ import Router from './services/routes/assets/router';
 class HyperCloudServer {
     #_recievedReqNum = 0;
     readonly #_system = {
-        httpServer: undefined as http2.Http2Server | undefined,
+        httpServer: undefined as http.Server | undefined,
         httpsServer: undefined as http2.Http2SecureServer | undefined
     }
 
@@ -562,10 +563,10 @@ class HyperCloudServer {
 
                 this.#_system.httpsServer = http2.createSecureServer({ cert, key })
             } else {
-                this.#_system.httpServer = http2.createServer();
+                this.#_system.httpServer = http.createServer();
             }
 
-            const server: http2.Http2SecureServer | http2.Http2Server = (this.#_config.secure ? this.#_system.httpsServer : this.#_system.httpServer) as http2.Http2SecureServer | http2.Http2Server;
+            const server: http2.Http2SecureServer | http.Server = (this.#_config.secure ? this.#_system.httpsServer : this.#_system.httpServer) as http2.Http2SecureServer | http.Server;
             server.on('request', async (req, res) => {
                 /**A copy of the response to throw an error */
                 let resTemp: HyperCloudResponse = {} as unknown as HyperCloudResponse;

@@ -3,6 +3,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
+const http_1 = __importDefault(require("http"));
 const http2_1 = __importDefault(require("http2"));
 const fs_1 = __importDefault(require("fs"));
 const path_1 = __importDefault(require("path"));
@@ -612,7 +613,7 @@ class HyperCloudServer {
                 this.#_system.httpsServer = http2_1.default.createSecureServer({ cert, key });
             }
             else {
-                this.#_system.httpServer = http2_1.default.createServer();
+                this.#_system.httpServer = http_1.default.createServer();
             }
             const server = (this.#_config.secure ? this.#_system.httpsServer : this.#_system.httpServer);
             server.on('request', async (req, res) => {

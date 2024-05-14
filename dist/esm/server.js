@@ -1,3 +1,4 @@
+import http from 'http';
 import http2 from 'http2';
 import fs from 'fs';
 import path from 'path';
@@ -607,7 +608,7 @@ class HyperCloudServer {
                 this.#_system.httpsServer = http2.createSecureServer({ cert, key });
             }
             else {
-                this.#_system.httpServer = http2.createServer();
+                this.#_system.httpServer = http.createServer();
             }
             const server = (this.#_config.secure ? this.#_system.httpsServer : this.#_system.httpServer);
             server.on('request', async (req, res) => {
