@@ -2,16 +2,17 @@
   "name": "nasriya-hypercloud",
   "version": "1.0.0",
   "description": "Nasriya HyperCloud is a lightwight Node.js HTTP2 framework.",
-  "main": "dist/cjs/hypercloud.js",
-  "module": "dist/esm/hypercloud.js",
-  "types": "dist/@types/hypercloud.d.ts",
+  "main": "./dist/cjs/hypercloud.js",
+  "module": "./dist/esm/hypercloud.js",
+  "types": "./dist/@types/hypercloud.d.ts",
   "files": [
     "dist/**/*"
   ],
   "exports": {
     ".": {
       "import": "./dist/esm/hypercloud.js",
-      "require": "./dist/cjs/hypercloud.js"
+      "require": "./dist/cjs/hypercloud.js",
+      "types": "./dist/@types/hypercloud.d.ts"
     }
   },
   "scripts": {
