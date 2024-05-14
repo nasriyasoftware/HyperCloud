@@ -13,6 +13,3 @@ logs*/
 
 # Ignore folders with a specific pattern
 *_temp/
-
-main.js
-main.test.ts

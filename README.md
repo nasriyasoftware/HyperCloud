@@ -27,8 +27,14 @@ npm install nasriyasoftware/hypercloud
 ```
 
 #### 2. Importing
+Importing in **ES6** modules
 ```ts
 import hypercloud from 'nasriya-hypercloud';
+```
+
+Importing in **CommonJS (CJS)**
+```js
+const hypercloud = require('nasriya-hypercloud').default;
 ```
 
 #### 3. Creating & Initializing a server
