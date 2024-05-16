@@ -1,4 +1,6 @@
-import { HyperCloudInitFile, HyperCloudManagementOptions, HyperCloudRequestErrorHandler, HyperCloudRequestHandler, OptionalProtocol, SecureServerOptions, ServerOptions } from './docs/docs';
+/// <reference types="node" />
+import http2 from 'http2';
+import { HelmetConfigOptions, HyperCloudInitFile, HyperCloudManagementOptions, HyperCloudRequestErrorHandler, HyperCloudRequestHandler, OptionalProtocol, SecureServerOptions, ServerOptions } from './docs/docs';
 import RenderingManager from './services/viewEngine/manager';
 import RoutesManager from './services/routes/manager';
 import Router from './services/routes/assets/router';
@@ -61,6 +63,13 @@ declare class HyperCloudServer {
         };
     }>;
     /**
+     * A protection "helmet" module that serves as a middleware or multiple middlewares
+     * that you can use on your routes.
+     *
+     * You can customize the
+     */
+    helmet(options: HelmetConfigOptions): void;
+    /**
      * Increase productivity by spreading routes into multiple files. All
      * you need to do is to `export` the created server into the file that
      * you want to create routes on, then mount the routes on the `Router`.
@@ -111,8 +120,8 @@ declare class HyperCloudServer {
      * Start listening for incoming requests
      * @param protocol Specify the port number of the protocol for the server. Default: `443` for secure servers and `80` for plain HTTP ones. You can pass a callback too.
      * @param callback Pass a callback function to run when the server starts listening.
-     * @returns {Promise<void>}
+     * @returns {Promise<void|http2.Http2SecureServer>} If secure connection is configured, a `Promise<http2.Http2SecureServer>` will be returned, otherwise, a `Promise<void>` will be returned.
      */
-    listen(protocol?: OptionalProtocol): Promise<void>;
+    listen(protocol?: OptionalProtocol): Promise<void | http2.Http2SecureServer>;
 }
 export default HyperCloudServer;

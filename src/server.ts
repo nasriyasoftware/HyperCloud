@@ -5,7 +5,7 @@ import path from 'path';
 
 import helpers from './utils/helpers';
 import SSLManager from './services/ssl/manager';
-import { HyperCloudInitFile, HyperCloudManagementOptions, HyperCloudRequestErrorHandler, HyperCloudRequestHandler, HyperCloudServerHandlers, OptionalProtocol, SecureServerOptions, ServerOptions } from './docs/docs';
+import { HelmetConfigOptions, HyperCloudInitFile, HyperCloudManagementOptions, HyperCloudRequestErrorHandler, HyperCloudRequestHandler, HyperCloudServerHandlers, OptionalProtocol, SecureServerOptions, ServerOptions } from './docs/docs';
 
 import initializer from './services/handler/initializer';
 import HyperCloudResponse from './services/handler/assets/response';
@@ -13,6 +13,7 @@ import RenderingManager from './services/viewEngine/manager';
 import RoutesManager from './services/routes/manager';
 import RequestRoutesManager from './services/routes/assets/routesInitiator';
 import Router from './services/routes/assets/router';
+import HelmetManager from './services/helmet/manager';
 
 /**HyperCloud HTTP2 server */
 class HyperCloudServer {
@@ -24,6 +25,7 @@ class HyperCloudServer {
 
     readonly #_rendering: RenderingManager;
     readonly #_routesManager: RoutesManager;
+    readonly #_helmet: HelmetManager;
 
     readonly #_config = {
         secure: false,
@@ -125,6 +127,7 @@ class HyperCloudServer {
         this.#_rendering = new RenderingManager(this);
         this.#_rendering.addViews(path.resolve(path.join(__dirname, './services/pages')));
         this.#_routesManager = new RoutesManager();
+        this.#_helmet = new HelmetManager(this);
 
         try {
             if (helpers.is.undefined(userOptions)) { return }
@@ -490,8 +493,16 @@ class HyperCloudServer {
                 this.#_config.handlers[handlerName] = handler;
             },
             get: () => this.#_config.handlers.onHTTPError as HyperCloudRequestErrorHandler
-        },
+        }
     })
+
+    /**
+     * A protection "helmet" module that serves as a middleware or multiple middlewares
+     * that you can use on your routes.
+     * 
+     * You can customize the 
+     */
+    helmet(options: HelmetConfigOptions) { this.#_helmet.config(options) }
 
     /**
      * Increase productivity by spreading routes into multiple files. All
@@ -544,9 +555,9 @@ class HyperCloudServer {
      * Start listening for incoming requests
      * @param protocol Specify the port number of the protocol for the server. Default: `443` for secure servers and `80` for plain HTTP ones. You can pass a callback too.
      * @param callback Pass a callback function to run when the server starts listening.
-     * @returns {Promise<void>}
+     * @returns {Promise<void|http2.Http2SecureServer>} If secure connection is configured, a `Promise<http2.Http2SecureServer>` will be returned, otherwise, a `Promise<void>` will be returned.
      */
-    async listen(protocol?: OptionalProtocol): Promise<void> {
+    async listen(protocol?: OptionalProtocol): Promise<void | http2.Http2SecureServer> {
         try {
             if (this.#_config.secure) {
                 const { cert, key } = await (async () => {
@@ -612,30 +623,31 @@ class HyperCloudServer {
                 }
             })
 
-            return new Promise((resolve, reject) => {
-                const { port, callback } = (() => {
-                    if (helpers.is.undefined(protocol)) { return { port: this.#_config.secure ? 443 : 80, callback: undefined } }
+            const { port, callback } = (() => {
+                if (helpers.is.undefined(protocol)) { return { port: this.#_config.secure ? 443 : 80, callback: undefined } }
 
-                    if ('port' in protocol) {
-                        if (typeof protocol.port !== 'number') { throw `The port used in the protocol (${protocol.port}) should be a number, instead got ${typeof protocol.port}` }
-                        if (protocol.port <= 0) { throw `The port has been assigned an invalid value (${protocol.port}). Ports are numbers greater than zero` }
+                if ('port' in protocol) {
+                    if (typeof protocol.port !== 'number') { throw `The port used in the protocol (${protocol.port}) should be a number, instead got ${typeof protocol.port}` }
+                    if (protocol.port <= 0) { throw `The port has been assigned an invalid value (${protocol.port}). Ports are numbers greater than zero` }
 
-                        if ('callback' in protocol) {
-                            if (typeof protocol.callback !== 'function') { throw `The protocol.callback should be a callback function, instead got ${typeof protocol.callback}` }
-                            return { port: protocol.port, callback: protocol.callback };
-                        } else {
-                            return { port: protocol.port, callback: undefined }
-                        }
+                    if ('callback' in protocol) {
+                        if (typeof protocol.callback !== 'function') { throw `The protocol.callback should be a callback function, instead got ${typeof protocol.callback}` }
+                        return { port: protocol.port, callback: protocol.callback };
                     } else {
-                        return { port: this.#_config.secure ? 443 : 80, callback: undefined }
+                        return { port: protocol.port, callback: undefined }
                     }
-                })();
+                } else {
+                    return { port: this.#_config.secure ? 443 : 80, callback: undefined }
+                }
+            })();
 
-                server.listen(port, () => {
+            return new Promise((resolve, reject) => {
+                const res = server.listen(port, () => {
                     console.info(`HyperCloud Server is listening ${this.#_config.secure ? 'securely ' : ''}on port #${port}`);
                     callback?.();
-                    resolve();
                 })
+
+                if (this.#_config.secure) { resolve(res as http2.Http2SecureServer) } else { resolve() }
             })
         } catch (error) {
             if (typeof error === 'string') { error = `Unable to start listening: ${error}` }

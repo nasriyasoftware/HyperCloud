@@ -379,6 +379,9 @@ class Helpers {
          */
         undefined(arg) {
             return typeof arg === 'undefined';
+        },
+        integer(value) {
+            return typeof value === 'number' && isFinite(value) && Math.floor(value) === value;
         }
     };
     /**

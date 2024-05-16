@@ -146,7 +146,7 @@ class Helpers {
                 this.printConsole(`The cerbot path you provided (${certbotPath}) does not exist`);
             }
 
-            if (validity.errors.accessible!== true) {
+            if (validity.errors.accessible !== true) {
                 this.printConsole(`Certbot path error: You do not have permissions to read path: ${certbotPath}`)
             }
 
@@ -173,7 +173,7 @@ class Helpers {
                     this.printConsole(`The project path you provided (${projectPath}) does not exist`);
                 }
 
-                if (validity.errors.accessible!== true) {
+                if (validity.errors.accessible !== true) {
                     this.printConsole(`Project path path error: You do not have permissions to read path: ${projectPath}`)
                 }
 
@@ -384,6 +384,9 @@ class Helpers {
          */
         undefined(arg: any): arg is undefined {
             return typeof arg === 'undefined'
+        },
+        integer(value: any): boolean {
+            return typeof value === 'number' && isFinite(value) && Math.floor(value) === value;
         }
     }
 

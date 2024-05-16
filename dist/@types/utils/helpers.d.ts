@@ -134,6 +134,7 @@ declare class Helpers {
          * @returns {boolean}
          */
         undefined(arg: any): arg is undefined;
+        integer(value: any): boolean;
     };
     /**
     * Check if a particular string is a valid HTML code

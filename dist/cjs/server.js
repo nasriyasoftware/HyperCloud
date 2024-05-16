@@ -15,6 +15,7 @@ const manager_2 = __importDefault(require("./services/viewEngine/manager"));
 const manager_3 = __importDefault(require("./services/routes/manager"));
 const routesInitiator_1 = __importDefault(require("./services/routes/assets/routesInitiator"));
 const router_1 = __importDefault(require("./services/routes/assets/router"));
+const manager_4 = __importDefault(require("./services/helmet/manager"));
 /**HyperCloud HTTP2 server */
 class HyperCloudServer {
     #_recievedReqNum = 0;
@@ -24,6 +25,7 @@ class HyperCloudServer {
     };
     #_rendering;
     #_routesManager;
+    #_helmet;
     #_config = {
         secure: false,
         ssl: {
@@ -119,6 +121,7 @@ class HyperCloudServer {
         this.#_rendering = new manager_2.default(this);
         this.#_rendering.addViews(path_1.default.resolve(path_1.default.join(__dirname, './services/pages')));
         this.#_routesManager = new manager_3.default();
+        this.#_helmet = new manager_4.default(this);
         try {
             if (helpers_1.default.is.undefined(userOptions)) {
                 return;
@@ -541,8 +544,15 @@ class HyperCloudServer {
                 this.#_config.handlers[handlerName] = handler;
             },
             get: () => this.#_config.handlers.onHTTPError
-        },
+        }
     });
+    /**
+     * A protection "helmet" module that serves as a middleware or multiple middlewares
+     * that you can use on your routes.
+     *
+     * You can customize the
+     */
+    helmet(options) { this.#_helmet.config(options); }
     /**
      * Increase productivity by spreading routes into multiple files. All
      * you need to do is to `export` the created server into the file that
@@ -593,7 +603,7 @@ class HyperCloudServer {
      * Start listening for incoming requests
      * @param protocol Specify the port number of the protocol for the server. Default: `443` for secure servers and `80` for plain HTTP ones. You can pass a callback too.
      * @param callback Pass a callback function to run when the server starts listening.
-     * @returns {Promise<void>}
+     * @returns {Promise<void|http2.Http2SecureServer>} If secure connection is configured, a `Promise<http2.Http2SecureServer>` will be returned, otherwise, a `Promise<void>` will be returned.
      */
     async listen(protocol) {
         try {
@@ -662,37 +672,42 @@ class HyperCloudServer {
                     }
                 }
             });
-            return new Promise((resolve, reject) => {
-                const { port, callback } = (() => {
-                    if (helpers_1.default.is.undefined(protocol)) {
-                        return { port: this.#_config.secure ? 443 : 80, callback: undefined };
+            const { port, callback } = (() => {
+                if (helpers_1.default.is.undefined(protocol)) {
+                    return { port: this.#_config.secure ? 443 : 80, callback: undefined };
+                }
+                if ('port' in protocol) {
+                    if (typeof protocol.port !== 'number') {
+                        throw `The port used in the protocol (${protocol.port}) should be a number, instead got ${typeof protocol.port}`;
                     }
-                    if ('port' in protocol) {
-                        if (typeof protocol.port !== 'number') {
-                            throw `The port used in the protocol (${protocol.port}) should be a number, instead got ${typeof protocol.port}`;
+                    if (protocol.port <= 0) {
+                        throw `The port has been assigned an invalid value (${protocol.port}). Ports are numbers greater than zero`;
+                    }
+                    if ('callback' in protocol) {
+                        if (typeof protocol.callback !== 'function') {
+                            throw `The protocol.callback should be a callback function, instead got ${typeof protocol.callback}`;
                         }
-                        if (protocol.port <= 0) {
-                            throw `The port has been assigned an invalid value (${protocol.port}). Ports are numbers greater than zero`;
-                        }
-                        if ('callback' in protocol) {
-                            if (typeof protocol.callback !== 'function') {
-                                throw `The protocol.callback should be a callback function, instead got ${typeof protocol.callback}`;
-                            }
-                            return { port: protocol.port, callback: protocol.callback };
-                        }
-                        else {
-                            return { port: protocol.port, callback: undefined };
-                        }
+                        return { port: protocol.port, callback: protocol.callback };
                     }
                     else {
-                        return { port: this.#_config.secure ? 443 : 80, callback: undefined };
+                        return { port: protocol.port, callback: undefined };
                     }
-                })();
-                server.listen(port, () => {
+                }
+                else {
+                    return { port: this.#_config.secure ? 443 : 80, callback: undefined };
+                }
+            })();
+            return new Promise((resolve, reject) => {
+                const res = server.listen(port, () => {
                     console.info(`HyperCloud Server is listening ${this.#_config.secure ? 'securely ' : ''}on port #${port}`);
                     callback?.();
-                    resolve();
                 });
+                if (this.#_config.secure) {
+                    resolve(res);
+                }
+                else {
+                    resolve();
+                }
             });
         }
         catch (error) {

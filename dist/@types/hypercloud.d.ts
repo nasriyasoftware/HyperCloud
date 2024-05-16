@@ -9,12 +9,12 @@ declare class HyperCloud {
     */
     Server(userOptions?: SecureServerOptions | ServerOptions | HyperCloudInitFile, managementOptions?: HyperCloudManagementOptions): HyperCloudServer;
     get cronManager(): {
-        readonly "__#17@#_names": {
+        readonly "__#23@#_names": {
             name: string;
             type: "Recursive" | "SpecificTime";
         }[];
-        "__#17@#_tasks": Record<string, import("node-cron").ScheduledTask>;
-        "__#17@#_timeTasks": Record<string, import("node-schedule").Job>;
+        "__#23@#_tasks": Record<string, import("node-cron").ScheduledTask>;
+        "__#23@#_timeTasks": Record<string, import("node-schedule").Job>;
         schedule(cronExpression: string, task: Function, options?: import("nasriya-cron/src/docs/docs").ScheduleOptions): import("nasriya-cron/src/docs/docs").ScheduledTask;
         scheduleTime(time: string | number | Date, task: Function): import("nasriya-cron/src/docs/docs").ScheduledTimedTask;
         getTask(name: string): import("nasriya-cron/src/docs/docs").ScheduledTask | import("nasriya-cron/src/docs/docs").ScheduledTimedTask | null;

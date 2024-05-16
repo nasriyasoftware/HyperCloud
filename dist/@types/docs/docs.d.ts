@@ -29,6 +29,166 @@ export type HyperCloudServerHandlers = 'notFound' | 'serverError' | 'unauthorize
 export type Currency = 'AED' | 'AFN' | 'ALL' | 'AMD' | 'ANG' | 'AOA' | 'ARS' | 'AUD' | 'AWG' | 'AZN' | 'BAM' | 'BBD' | 'BDT' | 'BGN' | 'BHD' | 'BIF' | 'BMD' | 'BND' | 'BOB' | 'BRL' | 'BSD' | 'BTN' | 'BWP' | 'BYN' | 'BZD' | 'CAD' | 'CDF' | 'CHF' | 'CLP' | 'CNY' | 'COP' | 'CRC' | 'CUP' | 'CVE' | 'CZK' | 'DJF' | 'DKK' | 'DOP' | 'DZD' | 'EGP' | 'ERN' | 'ETB' | 'EUR' | 'FJD' | 'FKP' | 'FOK' | 'GBP' | 'GEL' | 'GGP' | 'GHS' | 'GIP' | 'GMD' | 'GNF' | 'GTQ' | 'GYD' | 'HKD' | 'HNL' | 'HRK' | 'HTG' | 'HUF' | 'IDR' | 'ILS' | 'IMP' | 'INR' | 'IQD' | 'IRR' | 'ISK' | 'JEP' | 'JMD' | 'JOD' | 'JPY' | 'KES' | 'KGS' | 'KHR' | 'KID' | 'KMF' | 'KRW' | 'KWD' | 'KYD' | 'KZT' | 'LAK' | 'LBP' | 'LKR' | 'LRD' | 'LSL' | 'LYD' | 'MAD' | 'MDL' | 'MGA' | 'MKD' | 'MMK' | 'MNT' | 'MOP' | 'MRU' | 'MUR' | 'MVR' | 'MWK' | 'MXN' | 'MYR' | 'MZN' | 'NAD' | 'NGN' | 'NIO' | 'NOK' | 'NPR' | 'NZD' | 'OMR' | 'PAB' | 'PEN' | 'PGK' | 'PHP' | 'PKR' | 'PLN' | 'PYG' | 'QAR' | 'RON' | 'RSD' | 'RUB' | 'RWF' | 'SAR' | 'SBD' | 'SCR' | 'SDG' | 'SEK' | 'SGD' | 'SHP' | 'SLL' | 'SOS' | 'SPL' | 'SRD' | 'STN' | 'SYP' | 'SZL' | 'THB' | 'TJS' | 'TMT' | 'TND' | 'TOP' | 'TRY' | 'TTD' | 'TVD' | 'TWD' | 'TZS' | 'UAH' | 'UGX' | 'USD' | 'UYU' | 'UZS' | 'VES' | 'VND' | 'VUV' | 'WST' | 'XAF' | 'XCD' | 'XOF' | 'XPF' | 'YER' | 'ZAR' | 'ZMW' | 'ZWD';
 /**These mime types are used when sending/receiving files */
 export type MimeType = "audio/aac" | "application/x-abiword" | "application/x-freearc" | "image/avif" | "video/x-msvideo" | "application/vnd.amazon.ebook" | "application/octet-stream" | "image/bmp" | "application/x-bzip" | "application/x-bzip2" | "application/x-cdf" | "application/x-csh" | "text/calendar" | "text/css" | "text/plain" | "text/csv" | "application/msword" | "application/vnd.openxmlformats-officedocument.wordprocessingml.document" | "application/vnd.ms-fontobject" | "application/epub+zip" | "application/gzip" | "image/gif" | "text/html" | "image/vnd.microsoft.icon" | "text/calendar" | "application/java-archive" | "image/jpeg" | "text/javascript" | "application/json" | "application/ld+json" | "audio/midi" | "audio/x-midi" | "audio/mpeg" | "video/mp4" | "video/mpeg" | "application/vnd.apple.installer+xml" | "application/vnd.oasis.opendocument.presentation" | "application/vnd.oasis.opendocument.spreadsheet" | "application/vnd.oasis.opendocument.text" | "audio/ogg" | "video/ogg" | "application/ogg" | "audio/opus" | "font/otf" | "image/png" | "application/pdf" | "application/x-httpd-php" | "application/vnd.ms-powerpoint" | "application/vnd.openxmlformats-officedocument.presentationml.presentation" | "application/vnd.rar" | "application/rtf" | "application/x-sh" | "image/svg+xml" | "application/x-tar" | "image/tiff";
+/** Main Helmet handler's options */
+export interface HelmetConfigOptions {
+    /** Content-Security-Policy options */
+    contentSecurityPolicy?: ContentSecurityPolicyOptions | false;
+    /** Cross-Origin-Embedder-Policy options */
+    crossOriginEmbedderPolicy?: CrossOriginEmbedderPolicyOptions | false;
+    /** Cross-Origin-Opener-Policy options */
+    crossOriginOpenerPolicy?: CrossOriginOpenerPolicyOptions | false;
+    /** Cross-Origin-Resource-Policy options */
+    crossOriginResourcePolicy?: CrossOriginResourcePolicyOptions | false;
+    /** Origin-Agent-Cluster options */
+    originAgentCluster?: '?1' | false;
+    /** Referrer-Policy options */
+    referrerPolicy?: ReferrerPolicyOptions | false;
+    /** Strict-Transport-Security options */
+    strictTransportSecurity?: StrictTransportSecurityOptions | false;
+    /** X-Content-Type-Options options */
+    xContentTypeOptions?: false;
+    /** X-DNS-Prefetch-Control options */
+    xDnsPrefetchControl?: DNSPrefetchControlOptions | false;
+    /** X-Download-Options options */
+    xDownloadOptions?: boolean;
+    /** X-Frame-Options options */
+    xFrameOptions?: XFrameOptionsOptions | false;
+    /** X-Permitted-Cross-Domain-Policies options */
+    xPermittedCrossDomainPolicies?: XPermittedCrossDomainPoliciesOptions | false;
+    /** X-Powered-By options */
+    xPoweredBy?: false;
+    /** X-XSS-Protection options */
+    xXssProtection?: false;
+}
+/** Enum for X-Permitted-Cross-Domain-Policies options */
+export declare enum XPermittedCrossDomainPoliciesOption {
+    NONE = "none",
+    MASTERONLY = "master-only",
+    BYCONTENTTYPE = "by-content-type",
+    ALL = "all"
+}
+/** Options for X-Permitted-Cross-Domain-Policies */
+export interface XPermittedCrossDomainPoliciesOptions {
+    /** The permitted policy value */
+    permittedPolicies: XPermittedCrossDomainPoliciesOption;
+}
+/** Enum for X-Frame-Options options */
+export declare enum XFrameOptionsOption {
+    DENY = "DENY",
+    SAMEORIGIN = "SAMEORIGIN",
+    ALLOWFROM = "ALLOW-FROM"
+}
+/** Options for X-Frame-Options */
+export interface XFrameOptionsOptions {
+    /** The action to be taken */
+    action: XFrameOptionsOption;
+    /** Optional URI for ALLOW-FROM action */
+    uri?: string;
+}
+/** Options for DNS Prefetch Control */
+export interface DNSPrefetchControlOptions {
+    /** Whether DNS prefetching is enabled */
+    enabled: boolean;
+}
+/** Options for Strict Transport Security */
+export interface StrictTransportSecurityOptions {
+    /** Max age value in seconds */
+    maxAge?: number;
+    /** Whether to include subdomains */
+    includeSubDomains?: boolean;
+    /** Whether to preload HSTS */
+    preload?: boolean;
+}
+/** Type for Referrer Policy options */
+export type ReferrerPolicyOption = "" | "no-referrer" | "no-referrer-when-downgrade" | "same-origin" | "origin" | "strict-origin" | "origin-when-cross-origin" | "strict-origin-when-cross-origin" | "unsafe-url" | string;
+/** Options for Referrer Policy */
+export interface ReferrerPolicyOptions {
+    /** The referrer policy value */
+    policy: ReferrerPolicyOption;
+}
+/** Type for Cross-Origin Resource Policy options */
+export type CrossOriginResourcePolicyOption = "same-origin" | "same-site" | "cross-origin" | string;
+/** Options for Cross-Origin Resource Policy */
+export interface CrossOriginResourcePolicyOptions {
+    /** The policy value */
+    policy: CrossOriginResourcePolicyOption;
+}
+/** Type for Cross-Origin Opener Policy options */
+export type CrossOriginOpenerPolicyOption = "same-origin" | "same-origin-allow-popups" | "unsafe-none" | string;
+/** Options for Cross-Origin Opener Policy */
+export interface CrossOriginOpenerPolicyOptions {
+    /** The policy value */
+    policy: CrossOriginOpenerPolicyOption;
+}
+/** Possible values for most Content Security Policy directives */
+export type ContentSecurityPolicyDirectiveValue = "'self'" | "'unsafe-inline'" | "'unsafe-eval'" | "'none'" | 'data:' | 'blob:' | 'mediastream:' | 'filesystem:' | 'https:' | 'http:' | string;
+export interface ContentSecurityPolicyDirectives {
+    [directive: string]: string[] | boolean | undefined | any;
+    /** Fallback for other directives. Usually set to 'self' to restrict to the same origin. */
+    defaultSrc?: ContentSecurityPolicyDirectiveValue[];
+    /** Specifies valid sources for JavaScript. */
+    scriptSrc?: ContentSecurityPolicyDirectiveValue[];
+    /** Specifies valid sources for CSS. */
+    styleSrc?: ContentSecurityPolicyDirectiveValue[];
+    /** Specifies valid sources for images. */
+    imgSrc?: ContentSecurityPolicyDirectiveValue[];
+    /** Specifies valid sources for fetch(), XMLHttpRequest, WebSocket, and EventSource connections. */
+    connectSrc?: ContentSecurityPolicyDirectiveValue[];
+    /** Specifies valid sources for fonts loaded using @font-face. */
+    fontSrc?: ContentSecurityPolicyDirectiveValue[];
+    /** Specifies valid sources for the <object>, <embed>, and <applet> elements. */
+    objectSrc?: ContentSecurityPolicyDirectiveValue[];
+    /** Specifies valid sources for loading media using the <audio> and <video> elements. */
+    mediaSrc?: ContentSecurityPolicyDirectiveValue[];
+    /** Specifies valid sources for nested browsing contexts loading using elements such as <frame> and <iframe>. */
+    frameSrc?: ContentSecurityPolicyDirectiveValue[];
+    /** Enables a sandbox for the requested resource, blocking certain actions like form submission, script execution, etc. */
+    sandbox?: ('allow-forms' | 'allow-modals' | 'allow-orientation-lock' | 'allow-pointer-lock' | 'allow-popups' | 'allow-popups-to-escape-sandbox' | 'allow-presentation' | 'allow-same-origin' | 'allow-scripts' | 'allow-top-navigation' | 'allow-top-navigation-by-user-activation')[];
+    /** Specifies a URI to which reports about policy violations should be sent. */
+    reportUri?: string[];
+    /** Specifies valid sources for web workers and nested browsing contexts loaded using elements such as <iframe> and <frame>. */
+    childSrc?: ContentSecurityPolicyDirectiveValue[];
+    /** Specifies valid endpoints for submitting forms. */
+    formAction?: ContentSecurityPolicyDirectiveValue[];
+    /** Specifies valid parents that may embed a page using <frame>, <iframe>, <object>, <embed>, or <applet>. */
+    frameAncestors?: ContentSecurityPolicyDirectiveValue[];
+    /** Specifies valid MIME types for plugins invoked by elements such as <object> and <embed>. */
+    pluginTypes?: string[];
+    /** Specifies valid sources for the <base> element. */
+    baseUri?: ContentSecurityPolicyDirectiveValue[];
+    /** Blocks all mixed content, preventing HTTP content from being loaded on HTTPS sites. */
+    blockAllMixedContent?: boolean;
+    /** Requires that all requests be sent over HTTPS. */
+    upgradeInsecureRequests?: boolean;
+    /** Specifies valid sources for web workers and shared workers. */
+    workerSrc?: ContentSecurityPolicyDirectiveValue[];
+    /** Specifies valid sources for the manifest. */
+    manifestSrc?: ContentSecurityPolicyDirectiveValue[];
+    /** Specifies valid sources to be prefetched or prerendered. */
+    prefetchSrc?: ContentSecurityPolicyDirectiveValue[];
+    /** Specifies valid sources for navigation. */
+    navigateTo?: ContentSecurityPolicyDirectiveValue[];
+    /** Specifies a reporting endpoint where the browser will send reports of CSP violations. */
+    reportTo?: string[];
+    /** Requires Trusted Types for specified script sources. */
+    requireTrustedTypesFor?: ('script')[];
+    /** Defines a policy for Trusted Types. */
+    trustedTypes?: {
+        /** The name of the Trusted Types policy. */
+        policyName: string;
+        /** Allows duplicate policy definitions. Default: `false` */
+        allowDuplicates?: boolean;
+    };
+}
+export type CrossOriginEmbedderPolicyOption = 'none' | 'require-corp' | 'unsafe-none' | "credentialless" | string;
+export interface CrossOriginEmbedderPolicyOptions {
+    policy?: CrossOriginEmbedderPolicyOption;
+}
+export interface ContentSecurityPolicyOptions {
+    /** Whether to use default directives or not. Default: `false` */
+    useDefaults?: boolean;
+    directives: ContentSecurityPolicyDirectives;
+}
 export interface ExtensionData {
     /**The actual extension. e.g. (.png, .mp4) */
     extension: string;
