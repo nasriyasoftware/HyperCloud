@@ -68,7 +68,6 @@ class HelmetManager {
      * @param options Helmet configuration options
      */
     config(options) {
-        console.log(options);
         const notUndefined = !helpers.is.undefined(options);
         const isRealObject = helpers.is.realObject(options);
         // #1: Content-Security-Policy
@@ -183,7 +182,6 @@ class HelmetManager {
     }
     /**This method updates the handler that is used in every request */
     #_updateHandler() {
-        console.log(this.#_values);
         const handler = (req, res, next) => {
             try {
                 // #1: Content-Security-Policy

@@ -77,7 +77,6 @@ class HelmetManager {
      * @param options Helmet configuration options
      */
     config(options?: HelmetConfigOptions) {
-        console.log(options);
         const notUndefined = !helpers.is.undefined(options);
         const isRealObject = helpers.is.realObject(options);
 
@@ -192,7 +191,6 @@ class HelmetManager {
 
     /**This method updates the handler that is used in every request */
     #_updateHandler() {
-        console.log(this.#_values);
         const handler: HyperCloudRequestHandler = (req, res, next) => {
             try {
                 // #1: Content-Security-Policy
