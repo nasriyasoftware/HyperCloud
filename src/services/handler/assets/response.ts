@@ -49,7 +49,7 @@ class HyperCloudResponse {
     readonly #_server: HyperCloudServer;
     readonly #_req: HyperCloudRequest;
     readonly #_res: http2.Http2ServerResponse;
-    readonly #_cookies: Cookies;   
+    readonly #_cookies: Cookies;
 
     readonly #_preservedHeaders = ['x-server', 'x-request-id']
     readonly #_encodings = Object.freeze([
@@ -77,8 +77,8 @@ class HyperCloudResponse {
         this.#_server = server;
         this.#_req = req;
         this.#_res = res;
-        this.#_cookies = new Cookies(this);        
-    }    
+        this.#_cookies = new Cookies(this);
+    }
 
     get pages() {
         return Object.freeze({
@@ -400,7 +400,7 @@ class HyperCloudResponse {
                     let maxAge = 0;
                     let immutable = false;
 
-                    if (!('maxAge' in options)) { throw new SyntaxError('The sendFile cache-control was enabled without providing the maxAge') }
+                    if (!('maxAge' in options)) { throw new SyntaxError('The render cache-control was enabled without providing the maxAge') }
                     if (!(typeof options.maxAge === 'number' || typeof options.maxAge === 'string')) { throw new TypeError(`The maxAge property should be either a number or string, but instead got ${typeof options.maxAge}`) }
 
                     if (typeof options.maxAge === 'number') {
@@ -452,7 +452,7 @@ class HyperCloudResponse {
     }
 
     /**
-     * Download a file using the `response.sendFile` method.
+     * Download a file using the `response.downloadFile` method.
      * @param {string} filePath The file path (relative/absolute). When providing a relative path, you must specify the `root` in the `options` argument
      * @param {DownloadFileOptions} options Options for sending the file
      * @returns {http2.Http2ServerResponse|undefined}
@@ -616,7 +616,7 @@ class HyperCloudResponse {
                 }
             }
 
-            if ('eTag' in options && options.eTag) {
+            if (options && 'eTag' in options && options.eTag) {
                 if (typeof options.eTag !== 'string') { throw new TypeError(`The "eTag" option in response.sendFile expected a string value but got ${typeof options.eTag}`) }
                 this.setHeader('etag', options.eTag);
             }
@@ -624,8 +624,7 @@ class HyperCloudResponse {
             // Preparing the mime-type
             const exts = fileName.split('.').filter(i => i.length > 0);
             const extension = `.${exts[exts.length - 1]}`;
-            const mime = extensions.find(i => i.extension === extension)?.mime as string;
-
+            const mime = extensions.find(i => i.extension.includes(extension))?.mime as string;
 
             // Check if the download option is triggered or not
             if (options && 'download' in options) {

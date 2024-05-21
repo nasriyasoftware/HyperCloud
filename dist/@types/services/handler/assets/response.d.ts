@@ -176,7 +176,7 @@ declare class HyperCloudResponse {
      */
     render(name: string, options: RenderingOptions): HyperCloudResponse;
     /**
-     * Download a file using the `response.sendFile` method.
+     * Download a file using the `response.downloadFile` method.
      * @param {string} filePath The file path (relative/absolute). When providing a relative path, you must specify the `root` in the `options` argument
      * @param {DownloadFileOptions} options Options for sending the file
      * @returns {http2.Http2ServerResponse|undefined}
