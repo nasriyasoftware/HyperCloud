@@ -24,12 +24,21 @@ class RequestRoutesManager {
         this.#_routes = routes;
         this.#_request = request;
         this.#_response = response;
+        console.log(`Is Helmet handler defined? ${typeof request.server._handlers.helmet === 'function' ? true : false}`);
         const newRouts = [];
-        // Check if the user has a `userSessions` handler configured
-        if (typeof request.server.handlers.userSessions.get() === 'function') {
+        // Add a helmet handler if it exist
+        if (typeof request.server._handlers.helmet === 'function') {
             newRouts.push(new Route({
                 path: '*', method: 'USE', handler: (request, response, next) => {
-                    return request.server.handlers.userSessions.get()(request, response, next);
+                    return request.server._handlers.helmet(request, response, next);
+                }
+            }));
+        }
+        // Check if the user has a `userSessions` handler configured
+        if (typeof request.server._handlers.userSessions === 'function') {
+            newRouts.push(new Route({
+                path: '*', method: 'USE', handler: (request, response, next) => {
+                    return request.server._handlers.userSessions(request, response, next);
                 }
             }));
         }
@@ -108,10 +117,10 @@ class RequestRoutesManager {
             }
         }));
         // Check if the user has defined a logger handler or not;
-        if (typeof request.server.handlers.logger.get() === 'function') {
+        if (typeof request.server._handlers.logger === 'function') {
             newRouts.push(new Route({
                 path: '*', method: 'USE', handler: (request, response, next) => {
-                    return request.server.handlers.logger.get()(request, response, next);
+                    return request.server._handlers.logger(request, response, next);
                 }
             }));
         }
@@ -131,7 +140,7 @@ class RequestRoutesManager {
                 const routeError = new HTTPError({ message: err instanceof Error ? err.message : `An error has occurred in one of your routes`, error: err, request: this.#_request._toJSON(), route });
                 const errRoute = new Route({
                     path: route.path.join('/'), method: 'USE', handler: (request, response, next) => {
-                        const handler = this.#_request.server.handlers.onHTTPError.get();
+                        const handler = this.#_request.server._handlers.onHTTPError;
                         if (typeof handler === 'function') {
                             try {
                                 return handler(request, response, next, routeError);

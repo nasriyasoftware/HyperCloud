@@ -33,34 +33,13 @@ declare class HyperCloudServer {
     /**@private */
     get _handlers(): Record<string, Function>;
     readonly handlers: Readonly<{
-        notFound: {
-            set: (handler: HyperCloudRequestHandler) => void;
-            get: () => HyperCloudRequestHandler;
-        };
-        serverError: {
-            set: (handler: HyperCloudRequestHandler) => void;
-            get: () => HyperCloudRequestHandler;
-        };
-        unauthorized: {
-            set: (handler: HyperCloudRequestHandler) => void;
-            get: () => HyperCloudRequestHandler;
-        };
-        forbidden: {
-            set: (handler: HyperCloudRequestHandler) => void;
-            get: () => HyperCloudRequestHandler;
-        };
-        userSessions: {
-            set: (handler: HyperCloudRequestHandler) => void;
-            get: () => HyperCloudRequestHandler;
-        };
-        logger: {
-            set: (handler: HyperCloudRequestHandler) => void;
-            get: () => HyperCloudRequestHandler;
-        };
-        onHTTPError: {
-            set: (handler: HyperCloudRequestErrorHandler) => void;
-            get: () => HyperCloudRequestErrorHandler;
-        };
+        notFound: (handler: HyperCloudRequestHandler) => void;
+        serverError: (handler: HyperCloudRequestHandler) => void;
+        unauthorized: (handler: HyperCloudRequestHandler) => void;
+        forbidden: (handler: HyperCloudRequestHandler) => void;
+        userSessions: (handler: HyperCloudRequestHandler) => void;
+        logger: (handler: HyperCloudRequestHandler) => void;
+        onHTTPError: (handler: HyperCloudRequestErrorHandler) => void;
     }>;
     /**
      * A protection "helmet" module that serves as a middleware or multiple middlewares

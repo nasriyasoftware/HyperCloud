@@ -72,10 +72,10 @@ class HyperCloudResponse {
              * @param {NotFoundResponseOptions} [options] Rendering options
              */
             notFound: (options) => {
-                if (typeof this.#_server.handlers.notFound.get() === 'function') {
+                if (typeof this.#_server._handlers.notFound === 'function') {
                     try {
                         // Run the user defined handler for not-found resources
-                        this.#_server.handlers.notFound.get()(this.#_req, this, this._next);
+                        this.#_server._handlers.notFound(this.#_req, this, this._next);
                     }
                     catch (error) {
                         this.pages.serverError({ error: error });
@@ -131,10 +131,10 @@ class HyperCloudResponse {
              * @param {ForbiddenAndUnauthorizedOptions} [options]
              */
             unauthorized: (options) => {
-                if (typeof this.#_server.handlers.unauthorized.get() === 'function') {
+                if (typeof this.#_server._handlers.unauthorized === 'function') {
                     try {
                         // Run the user defined handler for not-found resources
-                        this.#_server.handlers.unauthorized.get()(this.#_req, this, this._next);
+                        this.#_server._handlers.unauthorized(this.#_req, this, this._next);
                     }
                     catch (error) {
                         this.pages.serverError({ error: error });
@@ -203,10 +203,10 @@ class HyperCloudResponse {
              * @param {ForbiddenAndUnauthorizedOptions} options
              */
             forbidden: (options) => {
-                if (typeof this.#_server.handlers.forbidden.get() === 'function') {
+                if (typeof this.#_server._handlers.forbidden === 'function') {
                     try {
                         // Run the user defined handler for not-found resources
-                        this.#_server.handlers.forbidden.get()(this.#_req, this, this._next);
+                        this.#_server._handlers.forbidden(this.#_req, this, this._next);
                     }
                     catch (error) {
                         this.pages.serverError({ error: error });
@@ -274,10 +274,10 @@ class HyperCloudResponse {
                     helpers_1.default.printConsole(options.error);
                     helpers_1.default.printConsole(diver);
                 }
-                if (typeof this.#_server.handlers.serverError.get() === 'function' && options?.bypassHandler !== true) {
+                if (typeof this.#_server._handlers.serverError === 'function' && options?.bypassHandler !== true) {
                     try {
                         // Run the user defined handler for not-found resources
-                        this.#_server.handlers.serverError.get()(this.#_req, this, this._next);
+                        this.#_server._handlers.serverError(this.#_req, this, this._next);
                     }
                     catch (error) {
                         this.pages.serverError({ bypassHandler: true });

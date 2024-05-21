@@ -68,6 +68,7 @@ class HelmetManager {
      * @param options Helmet configuration options
      */
     config(options) {
+        helpers.printConsole(options);
         const notUndefined = !helpers.is.undefined(options);
         const isRealObject = helpers.is.realObject(options);
         // #1: Content-Security-Policy
@@ -183,61 +184,69 @@ class HelmetManager {
     /**This method updates the handler that is used in every request */
     #_updateHandler() {
         const handler = (req, res, next) => {
-            // #1: Content-Security-Policy
-            res.setHeader('Content-Security-Policy', this.#_values.contentSecurityPolicy);
-            // #2: Cross-Origin-Embedder-Policy
-            if (this.#_values.crossOriginEmbedderPolicy) {
-                res.setHeader("Cross-Origin-Embedder-Policy", this.#_values.crossOriginEmbedderPolicy);
+            helpers.printConsole(this.#_values);
+            try {
+                // #1: Content-Security-Policy
+                res.setHeader('Content-Security-Policy', this.#_values.contentSecurityPolicy);
+                // #2: Cross-Origin-Embedder-Policy
+                if (this.#_values.crossOriginEmbedderPolicy) {
+                    res.setHeader("Cross-Origin-Embedder-Policy", this.#_values.crossOriginEmbedderPolicy);
+                }
+                // #3: CrossOriginOpenerPolicy
+                if (this.#_values.crossOriginOpenerPolicy) {
+                    res.setHeader("Cross-Origin-Opener-Policy", this.#_values.crossOriginOpenerPolicy);
+                }
+                // #4: Cross-Origin-Resource-Policy
+                if (this.#_values.crossOriginResourcePolicy) {
+                    res.setHeader("Cross-Origin-Resource-Policy", this.#_values.crossOriginResourcePolicy);
+                }
+                // #5: Origin-Agent-Cluster
+                if (this.#_values.crossOriginResourcePolicy) {
+                    res.setHeader("Origin-Agent-Cluster", this.#_values.crossOriginResourcePolicy);
+                }
+                // #6: Referrer-Policy
+                if (this.#_values.referrerPolicy) {
+                    res.setHeader("Referrer-Policy", this.#_values.referrerPolicy);
+                }
+                // #7: Strict-Transport-Security
+                if (this.#_values.strictTransportSecurity) {
+                    res.setHeader("Strict-Transport-Security", this.#_values.strictTransportSecurity);
+                }
+                // #8: X-Content-Type-Options
+                if (this.#_values.xContentTypeOptions) {
+                    res.setHeader("X-Content-Type-Options", this.#_values.xContentTypeOptions);
+                }
+                // #9: X-DNS-Prefetch-Control
+                if (this.#_values.xDnsPrefetchControl) {
+                    res.setHeader("X-DNS-Prefetch-Control", this.#_values.xDnsPrefetchControl);
+                }
+                // #10: X-Download-Options
+                if (this.#_values.xDownloadOptions) {
+                    res.setHeader("X-Download-Options", this.#_values.xDownloadOptions);
+                }
+                // #11: X-Frame-Options
+                if (this.#_values.xFrameOptions) {
+                    res.setHeader("X-Frame-Options", this.#_values.xFrameOptions);
+                }
+                // #12: X-Permitted-Cross-Domain-Policies
+                if (this.#_values.xPermittedCrossDomainPolicies) {
+                    res.setHeader("X-Permitted-Cross-Domain-Policies", this.#_values.xPermittedCrossDomainPolicies);
+                }
+                // #13: X-Powered-By
+                if (this.#_values.xPoweredBy) {
+                    res.removeHeader("X-Powered-By");
+                }
+                // #14: X-XSS-Protection
+                if (this.#_values.xXssProtection) {
+                    res.setHeader("X-XSS-Protection", '0');
+                }
             }
-            // #3: CrossOriginOpenerPolicy
-            if (this.#_values.crossOriginOpenerPolicy) {
-                res.setHeader("Cross-Origin-Opener-Policy", this.#_values.crossOriginOpenerPolicy);
+            catch (error) {
+                console.error(error);
             }
-            // #4: Cross-Origin-Resource-Policy
-            if (this.#_values.crossOriginResourcePolicy) {
-                res.setHeader("Cross-Origin-Resource-Policy", this.#_values.crossOriginResourcePolicy);
+            finally {
+                next();
             }
-            // #5: Origin-Agent-Cluster
-            if (this.#_values.crossOriginResourcePolicy) {
-                res.setHeader("Origin-Agent-Cluster", this.#_values.crossOriginResourcePolicy);
-            }
-            // #6: Referrer-Policy
-            if (this.#_values.referrerPolicy) {
-                res.setHeader("Referrer-Policy", this.#_values.referrerPolicy);
-            }
-            // #7: Strict-Transport-Security
-            if (this.#_values.strictTransportSecurity) {
-                res.setHeader("Strict-Transport-Security", this.#_values.strictTransportSecurity);
-            }
-            // #8: X-Content-Type-Options
-            if (this.#_values.xContentTypeOptions) {
-                res.setHeader("X-Content-Type-Options", this.#_values.xContentTypeOptions);
-            }
-            // #9: X-DNS-Prefetch-Control
-            if (this.#_values.xDnsPrefetchControl) {
-                res.setHeader("X-DNS-Prefetch-Control", this.#_values.xDnsPrefetchControl);
-            }
-            // #10: X-Download-Options
-            if (this.#_values.xDownloadOptions) {
-                res.setHeader("X-Download-Options", this.#_values.xDownloadOptions);
-            }
-            // #11: X-Frame-Options
-            if (this.#_values.xFrameOptions) {
-                res.setHeader("X-Frame-Options", this.#_values.xFrameOptions);
-            }
-            // #12: X-Permitted-Cross-Domain-Policies
-            if (this.#_values.xPermittedCrossDomainPolicies) {
-                res.setHeader("X-Permitted-Cross-Domain-Policies", this.#_values.xPermittedCrossDomainPolicies);
-            }
-            // #13: X-Powered-By
-            if (this.#_values.xPoweredBy) {
-                res.removeHeader("X-Powered-By");
-            }
-            // #14: X-XSS-Protection
-            if (this.#_values.xXssProtection) {
-                res.setHeader("X-XSS-Protection", '0');
-            }
-            next();
         };
         this.#_server._handlers.helmet = handler;
     }
