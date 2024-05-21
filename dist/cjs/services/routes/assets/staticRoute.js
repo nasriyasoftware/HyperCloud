@@ -83,7 +83,7 @@ class StaticRoute {
                     return response.status(500).end({ data: `Internal server error (500).\n\nIf you're a visitor please wait a few minutes.` });
                 }
                 // Remove the initial path (the virtual path) and keep the root path
-                const reqPath = request.path;
+                const reqPath = request.path.slice(this.#_configs.path.length, request.path.length);
                 for (let i = 0; i < reqPath.length; i++) {
                     const pathSegment = reqPath[i];
                     const isLast = i + 1 >= reqPath.length;
