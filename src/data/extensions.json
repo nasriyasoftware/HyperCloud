@@ -1,5 +1,10 @@
 [
     {
+        "extension": ".webp",
+        "description": "Web Picture",
+        "mime": "image/webp"
+    },
+    {
         "extension": ".aac",
         "description": "AAC audio",
         "mime": "audio/aac"
