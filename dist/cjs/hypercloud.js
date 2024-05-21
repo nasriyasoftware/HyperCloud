@@ -3,19 +3,13 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.HyperCloudRequest = exports.HyperCloudResponse = exports.HyperCloudServer = void 0;
 const server_1 = __importDefault(require("./server"));
-exports.HyperCloudServer = server_1.default;
 const helpers_1 = __importDefault(require("./utils/helpers"));
 const nasriya_dns_1 = __importDefault(require("nasriya-dns"));
 const nasriya_cron_1 = __importDefault(require("nasriya-cron"));
 const fs_1 = __importDefault(require("fs"));
 const path_1 = __importDefault(require("path"));
 const process_1 = __importDefault(require("process"));
-const response_1 = __importDefault(require("./services/handler/assets/response"));
-exports.HyperCloudResponse = response_1.default;
-const request_1 = __importDefault(require("./services/handler/assets/request"));
-exports.HyperCloudRequest = request_1.default;
 process_1.default.env.HYPERCLOUD_SERVER_VERBOSE = 'FALSE';
 class HyperCloud {
     #_servers = [];

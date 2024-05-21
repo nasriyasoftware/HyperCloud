@@ -45,7 +45,7 @@ type EventCallback = (...args: any[]) => void;
  */
 
 /**This class is used internallly, not by the user */
-class HyperCloudResponse {
+export class HyperCloudResponse {
     readonly #_server: HyperCloudServer;
     readonly #_req: HyperCloudRequest;
     readonly #_res: http2.Http2ServerResponse;

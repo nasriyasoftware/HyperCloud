@@ -4,7 +4,7 @@ import helpers from '../../../utils/helpers';
 import HyperCloudUser from './user';
 
 /**This class is used internallly, not by the user */
-class HyperCloudRequest {
+export class HyperCloudRequest {
     readonly #_request: InitializedRequest;
     readonly #_req: http2.Http2ServerRequest;
     #_params = {} as Record<string, string>;
