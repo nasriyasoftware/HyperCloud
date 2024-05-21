@@ -1,7 +1,12 @@
 {
     "extends": "./tsconfig.json",
     "compilerOptions": {
-        "module": "ES6",
+        "module": "ESNext",
         "outDir": "./dist/esm"
-    }
+    },
+    "references": [
+        {
+            "path": "./tsconfig.json"
+        }
+    ]
 }

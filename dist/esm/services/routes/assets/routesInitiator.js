@@ -24,7 +24,6 @@ class RequestRoutesManager {
         this.#_routes = routes;
         this.#_request = request;
         this.#_response = response;
-        console.log(`Is Helmet handler defined? ${typeof request.server._handlers.helmet === 'function' ? true : false}`);
         const newRouts = [];
         // Add a helmet handler if it exist
         if (typeof request.server._handlers.helmet === 'function') {
