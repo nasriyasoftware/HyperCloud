@@ -13,3 +13,5 @@ logs*/
 
 # Ignore folders with a specific pattern
 *_temp/
+
+rateLimiter
