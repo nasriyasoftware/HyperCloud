@@ -25,7 +25,8 @@ class Router {
         createStaticRoute: (root, options) => {
             const caseSensitive = options && 'caseSensitive' in options ? options.caseSensitive : this.#_defaults.caseSensitive;
             const subDomain = options && 'subDomain' in options ? options.subDomain : this.#_defaults.subDomain;
-            const path = options && 'path' in options ? options.path : '/';
+            const userPath = options && 'path' in options ? options.path : '/';
+            const path = userPath.startsWith('/') ? userPath : `/${userPath}`;
             const dotfiles = options && 'dotfiles' in options ? options.dotfiles : 'ignore';
             const route = new staticRoute_1.default(root, { path, subDomain, caseSensitive, dotfiles });
             this.#_server._routesManager.add(route);
