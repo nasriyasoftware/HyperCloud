@@ -72,28 +72,48 @@ class HelmetManager {
         const isRealObject = helpers.is.realObject(options);
         // #1: Content-Security-Policy
         if (notUndefined && isRealObject && 'contentSecurityPolicy' in options) {
-            this.#_values.contentSecurityPolicy = ContentSecurityPolicy.validate(options.contentSecurityPolicy);
+            if (options.contentSecurityPolicy === false) {
+                this.#_values.contentSecurityPolicy = '';
+            }
+            else {
+                this.#_values.contentSecurityPolicy = ContentSecurityPolicy.validate(options.contentSecurityPolicy);
+            }
         }
         else {
             this.#_values.contentSecurityPolicy = this.#_defaults.values.contentSecurityPolicy;
         }
         // #2: Cross-Origin-Embedder-Policy
         if (notUndefined && isRealObject && 'crossOriginEmbedderPolicy' in options) {
-            this.#_values.crossOriginEmbedderPolicy = CrossOriginEmbedderPolicy.validate(options.crossOriginEmbedderPolicy) || '';
+            if (options.crossOriginEmbedderPolicy === false) {
+                this.#_values.crossOriginEmbedderPolicy = '';
+            }
+            else {
+                this.#_values.crossOriginEmbedderPolicy = CrossOriginEmbedderPolicy.validate(options.crossOriginEmbedderPolicy) || '';
+            }
         }
         else {
             this.#_values.crossOriginEmbedderPolicy = this.#_defaults.values.crossOriginEmbedderPolicy;
         }
         // #3: ross-Origin-Opener-Policy
         if (notUndefined && isRealObject && 'crossOriginOpenerPolicy' in options) {
-            this.#_values.crossOriginOpenerPolicy = CrossOriginOpenerPolicy.validate(options.crossOriginOpenerPolicy) || '';
+            if (options.crossOriginOpenerPolicy === false) {
+                this.#_values.crossOriginOpenerPolicy = '';
+            }
+            else {
+                this.#_values.crossOriginOpenerPolicy = CrossOriginOpenerPolicy.validate(options.crossOriginOpenerPolicy) || '';
+            }
         }
         else {
             this.#_values.crossOriginOpenerPolicy = this.#_defaults.values.crossOriginOpenerPolicy;
         }
         // #4: Cross-Origin-Resource-Policy
         if (notUndefined && isRealObject && 'crossOriginResourcePolicy' in options) {
-            this.#_values.crossOriginResourcePolicy = CrossOriginResourcePolicy.validate(options.crossOriginResourcePolicy) || '';
+            if (options.crossOriginResourcePolicy === false) {
+                this.#_values.crossOriginResourcePolicy = '';
+            }
+            else {
+                this.#_values.crossOriginResourcePolicy = CrossOriginResourcePolicy.validate(options.crossOriginResourcePolicy) || '';
+            }
         }
         else {
             this.#_values.crossOriginResourcePolicy = this.#_defaults.values.crossOriginResourcePolicy;
@@ -112,14 +132,24 @@ class HelmetManager {
         }
         // #6: Referrer-Policy
         if (notUndefined && isRealObject && 'referrerPolicy' in options) {
-            this.#_values.referrerPolicy = ReferrerPolicy.validate(options.referrerPolicy) || '';
+            if (options.referrerPolicy === false) {
+                this.#_values.referrerPolicy = '';
+            }
+            else {
+                this.#_values.referrerPolicy = ReferrerPolicy.validate(options.referrerPolicy) || '';
+            }
         }
         else {
             this.#_values.referrerPolicy = this.#_defaults.values.referrerPolicy;
         }
         // #7: Strict-Transport-Security
         if (notUndefined && isRealObject && 'strictTransportSecurity' in options) {
-            this.#_values.strictTransportSecurity = StrictTransportSecurity.validate(options.strictTransportSecurity) || '';
+            if (options.strictTransportSecurity === false) {
+                this.#_values.strictTransportSecurity = '';
+            }
+            else {
+                this.#_values.strictTransportSecurity = StrictTransportSecurity.validate(options.strictTransportSecurity) || '';
+            }
         }
         else {
             this.#_values.strictTransportSecurity = this.#_defaults.values.strictTransportSecurity;
@@ -185,7 +215,9 @@ class HelmetManager {
         const handler = (req, res, next) => {
             try {
                 // #1: Content-Security-Policy
-                res.setHeader('Content-Security-Policy', this.#_values.contentSecurityPolicy);
+                if (this.#_values.contentSecurityPolicy) {
+                    res.setHeader('Content-Security-Policy', this.#_values.contentSecurityPolicy);
+                }
                 // #2: Cross-Origin-Embedder-Policy
                 if (this.#_values.crossOriginEmbedderPolicy) {
                     res.setHeader("Cross-Origin-Embedder-Policy", this.#_values.crossOriginEmbedderPolicy);
