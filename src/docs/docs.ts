@@ -1,8 +1,8 @@
 import http2 from 'http2';
 import http from 'http';
 import SSLManager from '../services/ssl/manager';
-import HyperCloudRequest from '../../src/services/handler/assets/request';
-import HyperCloudResponse from '../../src/services/handler/assets/response';
+import HyperCloudRequest from '../services/handler/assets/request';
+import HyperCloudResponse from '../services/handler/assets/response';
 import HyperCloudServer from '../server';
 import HTTPError from '../utils/errors/HTTPError';
 
