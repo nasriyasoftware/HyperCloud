@@ -12,10 +12,14 @@ export type UserRole = 'Admin' | 'Member' | 'Visitor';
 export type RedirectCode = 300 | 301 | 302 | 303 | 304 | 307 | 308;
 /** View engine type */
 export type ViewEngine = 'ejs' | 'nhc';
+/**A `request` object for handlers */
+export type Request = InstanceType<typeof HyperCloudRequest>;
+/**A `response` object for handlers */
+export type Response = InstanceType<typeof HyperCloudResponse>;
 /** Handler for HyperCloud requests */
-export type HyperCloudRequestHandler = (request: HyperCloudRequest, response: HyperCloudResponse, next: NextFunction) => void;
+export type HyperCloudRequestHandler = (request: Request, response: Response, next: NextFunction) => void;
 /** Handler for handling HyperCloud requests' errors */
-export type HyperCloudRequestErrorHandler = (request: HyperCloudRequest, response: HyperCloudResponse, next: NextFunction, error: Error | HTTPError) => void;
+export type HyperCloudRequestErrorHandler = (request: Request, response: Response, next: NextFunction, error: Error | HTTPError) => void;
 /**HyperCloud's `next()` function */
 export type NextFunction = () => void;
 /**Represents various HTTP request methods. */
