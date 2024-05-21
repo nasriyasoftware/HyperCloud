@@ -138,7 +138,6 @@ class StaticRoute {
                         }
                         const filePath = path.join(folder, file.name);
                         return response.sendFile(filePath, {
-                            root: this.#_root,
                             lastModified: true,
                             acceptRanges: true,
                             cacheControl: true,
@@ -149,7 +148,6 @@ class StaticRoute {
                         continue;
                     }
                 }
-                console.log('calling last next');
                 next();
             }
             catch (error) {
