@@ -9,8 +9,7 @@
         "skipLibCheck": true,
         "strict": true,
         "forceConsistentCasingInFileNames": true,
-        "resolveJsonModule": true,
-        "composite": true
+        "resolveJsonModule": true
     },
     "include": [
         "src/**/*.ts",
