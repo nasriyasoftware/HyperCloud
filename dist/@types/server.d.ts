@@ -4,6 +4,7 @@ import { HelmetConfigOptions, HyperCloudInitFile, HyperCloudManagementOptions, H
 import RenderingManager from './services/viewEngine/manager';
 import RoutesManager from './services/routes/manager';
 import Router from './services/routes/assets/router';
+import RateLimitingManager from './services/rateLimiter/rateLimiter';
 /**HyperCloud HTTP2 server */
 declare class HyperCloudServer {
     #private;
@@ -27,9 +28,10 @@ declare class HyperCloudServer {
      */
     get locals(): Record<string, string>;
     set locals(value: Record<string, string>);
-    get rendering(): RenderingManager;
+    readonly rateLimiter: RateLimitingManager;
+    readonly rendering: RenderingManager;
     /**@private */
-    get _routesManager(): RoutesManager;
+    readonly _routesManager: RoutesManager;
     /**@private */
     get _handlers(): Record<string, Function>;
     readonly handlers: Readonly<{

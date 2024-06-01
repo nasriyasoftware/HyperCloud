@@ -3,7 +3,7 @@ import path from 'path';
 import fs from 'fs';
 /**
  * This class is used inside a {@link HyperCloudServer} as
- * `{@link HyperCloudServer.rendering}`
+ * `{@link HyperCloudServer["rendering"]}`
  */
 class RenderingManager {
     #_server;

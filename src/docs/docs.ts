@@ -65,6 +65,47 @@ export type MimeType =
     | "application/vnd.rar" | "application/rtf" | "application/x-sh" | "image/svg+xml"
     | "application/x-tar" | "image/tiff";
 
+export interface RateLimitAuthOptions {
+    /**The value to check against the rules. */
+    value: string | number;
+    /**An array of rule names and their priorities. */
+    rules: ({ priority?: number, name: string })[];
+    /**When set to `true`, all rules must pass; otherwise, at least one must pass. Default: `false` */
+    strict?: boolean;
+    /**The rule scope. Default: `global` */
+    scope?: 'global' | string;
+}
+
+export interface RateLimitRule {
+    /**A scope where the record will be searched for. Default: `global` */
+    scope: 'global' | string;
+    /**The name of the rule. E.g. `ipAddress`, `premiumSubscribers`. */
+    name: string;
+    /**The time (in nilleseconds) to wait before allowing requests again */
+    cooldown: number;
+    rate: {
+        /**The period in milliseconds */
+        windowMs: number;
+        /**The number of allowed requests in the specified `period` */
+        maxRequests: number;
+    };
+}
+
+export interface RateLimitRuleOptions {
+    /**A scope where the record will be searched for. Default: `global` */
+    scope?: 'global' | string;
+    /**The name this rule will be based on. E.g. `ipAddress`, `premiumSubscribers`. */
+    name: string;
+    /**The time (in nilleseconds) to wait before allowing requests again */
+    cooldown: number;
+    rate: {
+        /**The period in milliseconds */
+        windowMs: number;
+        /**The number of allowed requests in the specified `period` */
+        maxRequests: number;
+    };
+}
+
 /** Main Helmet handler's options */
 export interface HelmetConfigOptions {
     /** Content-Security-Policy options */

@@ -9,15 +9,10 @@ declare class HyperCloud {
     */
     Server(userOptions?: SecureServerOptions | ServerOptions | HyperCloudInitFile, managementOptions?: HyperCloudManagementOptions): HyperCloudServer;
     get cronManager(): {
-        readonly "__#23@#_names": {
-            name: string;
-            type: "Recursive" | "SpecificTime";
-        }[];
-        "__#23@#_tasks": Record<string, import("node-cron").ScheduledTask>;
-        "__#23@#_timeTasks": Record<string, import("node-schedule").Job>;
-        schedule(cronExpression: string, task: Function, options?: import("nasriya-cron/src/docs/docs").ScheduleOptions): import("nasriya-cron/src/docs/docs").ScheduledTask;
-        scheduleTime(time: string | number | Date, task: Function): import("nasriya-cron/src/docs/docs").ScheduledTimedTask;
-        getTask(name: string): import("nasriya-cron/src/docs/docs").ScheduledTask | import("nasriya-cron/src/docs/docs").ScheduledTimedTask | null;
+        "__#25@#private": any;
+        schedule(cronExpression: string, task: Function, options?: import("nasriya-cron/dist/@types/docs/docs").ScheduleOptions | undefined): import("nasriya-cron/dist/@types/docs/docs").ScheduledTask;
+        scheduleTime(time: string | number | Date, task: Function): import("nasriya-cron/dist/@types/docs/docs").ScheduledTimedTask;
+        getTask(name: string): import("nasriya-cron/dist/@types/docs/docs").ScheduledTask | import("nasriya-cron/dist/@types/docs/docs").ScheduledTimedTask | null;
         readonly tasks: Object;
         readonly time: typeof import("cron-time-generator").CronTime;
     };
@@ -25,8 +20,8 @@ declare class HyperCloud {
         readonly helpers: Readonly<{
             getPublicIP: () => Promise<string>;
         }>;
-        cloudflare(apiToken: string): import("nasriya-dns/src/providers/cloudflare/cloudflare").default;
-        duckdns(apiToken: string): import("nasriya-dns/src/providers/duckdns/duckdns").default;
+        cloudflare(apiToken: string): import("nasriya-dns/dist/@types/providers/cloudflare/cloudflare").default;
+        duckdns(apiToken: string): import("nasriya-dns/dist/@types/providers/duckdns/duckdns").default;
     };
     get verbose(): boolean;
     /**

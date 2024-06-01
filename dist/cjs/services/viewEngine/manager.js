@@ -8,7 +8,7 @@ const path_1 = __importDefault(require("path"));
 const fs_1 = __importDefault(require("fs"));
 /**
  * This class is used inside a {@link HyperCloudServer} as
- * `{@link HyperCloudServer.rendering}`
+ * `{@link HyperCloudServer["rendering"]}`
  */
 class RenderingManager {
     #_server;

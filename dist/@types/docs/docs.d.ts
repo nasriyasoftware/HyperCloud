@@ -33,6 +33,47 @@ export type HyperCloudServerHandlers = 'notFound' | 'serverError' | 'unauthorize
 export type Currency = 'AED' | 'AFN' | 'ALL' | 'AMD' | 'ANG' | 'AOA' | 'ARS' | 'AUD' | 'AWG' | 'AZN' | 'BAM' | 'BBD' | 'BDT' | 'BGN' | 'BHD' | 'BIF' | 'BMD' | 'BND' | 'BOB' | 'BRL' | 'BSD' | 'BTN' | 'BWP' | 'BYN' | 'BZD' | 'CAD' | 'CDF' | 'CHF' | 'CLP' | 'CNY' | 'COP' | 'CRC' | 'CUP' | 'CVE' | 'CZK' | 'DJF' | 'DKK' | 'DOP' | 'DZD' | 'EGP' | 'ERN' | 'ETB' | 'EUR' | 'FJD' | 'FKP' | 'FOK' | 'GBP' | 'GEL' | 'GGP' | 'GHS' | 'GIP' | 'GMD' | 'GNF' | 'GTQ' | 'GYD' | 'HKD' | 'HNL' | 'HRK' | 'HTG' | 'HUF' | 'IDR' | 'ILS' | 'IMP' | 'INR' | 'IQD' | 'IRR' | 'ISK' | 'JEP' | 'JMD' | 'JOD' | 'JPY' | 'KES' | 'KGS' | 'KHR' | 'KID' | 'KMF' | 'KRW' | 'KWD' | 'KYD' | 'KZT' | 'LAK' | 'LBP' | 'LKR' | 'LRD' | 'LSL' | 'LYD' | 'MAD' | 'MDL' | 'MGA' | 'MKD' | 'MMK' | 'MNT' | 'MOP' | 'MRU' | 'MUR' | 'MVR' | 'MWK' | 'MXN' | 'MYR' | 'MZN' | 'NAD' | 'NGN' | 'NIO' | 'NOK' | 'NPR' | 'NZD' | 'OMR' | 'PAB' | 'PEN' | 'PGK' | 'PHP' | 'PKR' | 'PLN' | 'PYG' | 'QAR' | 'RON' | 'RSD' | 'RUB' | 'RWF' | 'SAR' | 'SBD' | 'SCR' | 'SDG' | 'SEK' | 'SGD' | 'SHP' | 'SLL' | 'SOS' | 'SPL' | 'SRD' | 'STN' | 'SYP' | 'SZL' | 'THB' | 'TJS' | 'TMT' | 'TND' | 'TOP' | 'TRY' | 'TTD' | 'TVD' | 'TWD' | 'TZS' | 'UAH' | 'UGX' | 'USD' | 'UYU' | 'UZS' | 'VES' | 'VND' | 'VUV' | 'WST' | 'XAF' | 'XCD' | 'XOF' | 'XPF' | 'YER' | 'ZAR' | 'ZMW' | 'ZWD';
 /**These mime types are used when sending/receiving files */
 export type MimeType = "audio/aac" | "application/x-abiword" | "application/x-freearc" | "image/avif" | "video/x-msvideo" | "application/vnd.amazon.ebook" | "application/octet-stream" | "image/bmp" | "application/x-bzip" | "application/x-bzip2" | "application/x-cdf" | "application/x-csh" | "text/calendar" | "text/css" | "text/plain" | "text/csv" | "application/msword" | "application/vnd.openxmlformats-officedocument.wordprocessingml.document" | "application/vnd.ms-fontobject" | "application/epub+zip" | "application/gzip" | "image/gif" | "text/html" | "image/vnd.microsoft.icon" | "text/calendar" | "application/java-archive" | "image/jpeg" | "text/javascript" | "application/json" | "application/ld+json" | "audio/midi" | "audio/x-midi" | "audio/mpeg" | "video/mp4" | "video/mpeg" | "application/vnd.apple.installer+xml" | "application/vnd.oasis.opendocument.presentation" | "application/vnd.oasis.opendocument.spreadsheet" | "application/vnd.oasis.opendocument.text" | "audio/ogg" | "video/ogg" | "application/ogg" | "audio/opus" | "font/otf" | "image/png" | "application/pdf" | "application/x-httpd-php" | "application/vnd.ms-powerpoint" | "application/vnd.openxmlformats-officedocument.presentationml.presentation" | "application/vnd.rar" | "application/rtf" | "application/x-sh" | "image/svg+xml" | "application/x-tar" | "image/tiff";
+export interface RateLimitAuthOptions {
+    /**The value to check against the rules. */
+    value: string | number;
+    /**An array of rule names and their priorities. */
+    rules: ({
+        priority?: number;
+        name: string;
+    })[];
+    /**When set to `true`, all rules must pass; otherwise, at least one must pass. Default: `false` */
+    strict?: boolean;
+    /**The rule scope. Default: `global` */
+    scope?: 'global' | string;
+}
+export interface RateLimitRule {
+    /**A scope where the record will be searched for. Default: `global` */
+    scope: 'global' | string;
+    /**The name of the rule. E.g. `ipAddress`, `premiumSubscribers`. */
+    name: string;
+    /**The time (in nilleseconds) to wait before allowing requests again */
+    cooldown: number;
+    rate: {
+        /**The period in milliseconds */
+        windowMs: number;
+        /**The number of allowed requests in the specified `period` */
+        maxRequests: number;
+    };
+}
+export interface RateLimitRuleOptions {
+    /**A scope where the record will be searched for. Default: `global` */
+    scope?: 'global' | string;
+    /**The name this rule will be based on. E.g. `ipAddress`, `premiumSubscribers`. */
+    name: string;
+    /**The time (in nilleseconds) to wait before allowing requests again */
+    cooldown: number;
+    rate: {
+        /**The period in milliseconds */
+        windowMs: number;
+        /**The number of allowed requests in the specified `period` */
+        maxRequests: number;
+    };
+}
 /** Main Helmet handler's options */
 export interface HelmetConfigOptions {
     /** Content-Security-Policy options */

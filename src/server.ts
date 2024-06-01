@@ -14,6 +14,7 @@ import RoutesManager from './services/routes/manager';
 import RequestRoutesManager from './services/routes/assets/routesInitiator';
 import Router from './services/routes/assets/router';
 import HelmetManager from './services/helmet/manager';
+import RateLimitingManager from './services/rateLimiter/rateLimiter';
 
 /**HyperCloud HTTP2 server */
 class HyperCloudServer {
@@ -23,8 +24,6 @@ class HyperCloudServer {
         httpsServer: undefined as http2.Http2SecureServer | undefined
     }
 
-    readonly #_rendering: RenderingManager;
-    readonly #_routesManager: RoutesManager;
     readonly #_helmet: HelmetManager;
 
     readonly #_config = {
@@ -124,10 +123,11 @@ class HyperCloudServer {
     })
 
     constructor(userOptions?: SecureServerOptions | ServerOptions | HyperCloudInitFile, addOpt?: HyperCloudManagementOptions) {
-        this.#_rendering = new RenderingManager(this);
-        this.#_rendering.addViews(path.resolve(path.join(__dirname, './services/pages')));
-        this.#_routesManager = new RoutesManager();
+        this.rendering = new RenderingManager(this);
+        this.rendering.addViews(path.resolve(path.join(__dirname, './services/pages')));
+        this._routesManager = new RoutesManager();
         this.#_helmet = new HelmetManager(this);
+        this.rateLimiter = new RateLimitingManager(this);
 
         try {
             if (helpers.is.undefined(userOptions)) { return }
@@ -415,9 +415,10 @@ class HyperCloudServer {
         }
     }
 
-    get rendering() { return this.#_rendering }
+    public readonly rateLimiter: RateLimitingManager;
+    public readonly rendering: RenderingManager;
     /**@private */
-    get _routesManager() { return this.#_routesManager }
+    public readonly _routesManager: RoutesManager;
     /**@private */
     get _handlers(): Record<string, Function> { return this.#_config.handlers }
 
@@ -578,7 +579,7 @@ class HyperCloudServer {
                     res.setHeader('X-Server', 'Nasriya HyperCloud');
                     res.setHeader('X-Request-ID', request_id);
 
-                    const matchedRoutes = this.#_routesManager.match(request);
+                    const matchedRoutes = this._routesManager.match(request);
                     if (matchedRoutes.length > 0) {
                         new RequestRoutesManager(matchedRoutes, request, response);
                     } else {

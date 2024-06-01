@@ -16,6 +16,7 @@ const manager_3 = __importDefault(require("./services/routes/manager"));
 const routesInitiator_1 = __importDefault(require("./services/routes/assets/routesInitiator"));
 const router_1 = __importDefault(require("./services/routes/assets/router"));
 const manager_4 = __importDefault(require("./services/helmet/manager"));
+const rateLimiter_1 = __importDefault(require("./services/rateLimiter/rateLimiter"));
 /**HyperCloud HTTP2 server */
 class HyperCloudServer {
     #_recievedReqNum = 0;
@@ -23,8 +24,6 @@ class HyperCloudServer {
         httpServer: undefined,
         httpsServer: undefined
     };
-    #_rendering;
-    #_routesManager;
     #_helmet;
     #_config = {
         secure: false,
@@ -118,10 +117,11 @@ class HyperCloudServer {
         }
     });
     constructor(userOptions, addOpt) {
-        this.#_rendering = new manager_2.default(this);
-        this.#_rendering.addViews(path_1.default.resolve(path_1.default.join(__dirname, './services/pages')));
-        this.#_routesManager = new manager_3.default();
+        this.rendering = new manager_2.default(this);
+        this.rendering.addViews(path_1.default.resolve(path_1.default.join(__dirname, './services/pages')));
+        this._routesManager = new manager_3.default();
         this.#_helmet = new manager_4.default(this);
+        this.rateLimiter = new rateLimiter_1.default(this);
         try {
             if (helpers_1.default.is.undefined(userOptions)) {
                 return;
@@ -439,9 +439,10 @@ class HyperCloudServer {
             throw new TypeError(`The "server.locals" property expected an object with key:value pairs, but instead got ${typeof value}`);
         }
     }
-    get rendering() { return this.#_rendering; }
+    rateLimiter;
+    rendering;
     /**@private */
-    get _routesManager() { return this.#_routesManager; }
+    _routesManager;
     /**@private */
     get _handlers() { return this.#_config.handlers; }
     handlers = Object.freeze({
@@ -625,7 +626,7 @@ class HyperCloudServer {
                     res.setHeader('X-Frame-Options', 'DENY');
                     res.setHeader('X-Server', 'Nasriya HyperCloud');
                     res.setHeader('X-Request-ID', request_id);
-                    const matchedRoutes = this.#_routesManager.match(request);
+                    const matchedRoutes = this._routesManager.match(request);
                     if (matchedRoutes.length > 0) {
                         new routesInitiator_1.default(matchedRoutes, request, response);
                     }

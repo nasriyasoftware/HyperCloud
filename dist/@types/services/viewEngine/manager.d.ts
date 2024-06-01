@@ -2,7 +2,7 @@ import { ViewEngine } from '../../docs/docs';
 import HyperCloudServer from '../../server';
 /**
  * This class is used inside a {@link HyperCloudServer} as
- * `{@link HyperCloudServer.rendering}`
+ * `{@link HyperCloudServer["rendering"]}`
  */
 declare class RenderingManager {
     #private;

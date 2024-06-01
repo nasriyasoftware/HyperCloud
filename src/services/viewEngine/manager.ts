@@ -7,7 +7,7 @@ import HyperCloudServer from '../../server';
 
 /**
  * This class is used inside a {@link HyperCloudServer} as
- * `{@link HyperCloudServer.rendering}`
+ * `{@link HyperCloudServer["rendering"]}`
  */
 class RenderingManager {
     readonly #_server: HyperCloudServer;
