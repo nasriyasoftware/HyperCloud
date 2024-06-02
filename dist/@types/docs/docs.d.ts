@@ -74,6 +74,18 @@ export interface RateLimitRuleOptions {
         maxRequests: number;
     };
 }
+export interface RateLimiterAuthorizedHit {
+    authorized: true;
+    /**The number of hits in the the  */
+    hits: number;
+    hitsRemaining: number;
+    lastHitTimestamp: number;
+}
+export interface RateLimiterUnauthorizedHit {
+    authorized: false;
+    /**A timestamp after which the requests may be accepted  */
+    retryAfter: number;
+}
 /** Main Helmet handler's options */
 export interface HelmetConfigOptions {
     /** Content-Security-Policy options */

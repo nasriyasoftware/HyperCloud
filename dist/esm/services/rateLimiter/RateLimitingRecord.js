@@ -3,7 +3,7 @@ class RateLimitingRecord {
     #_value;
     #_timestamps = [];
     #_lastHitTimestamp = 0;
-    #_hits = this.#_timestamps.length;
+    #_totalHits = 0;
     constructor(rule, value) {
         this.#_rule = rule;
         this.#_value = value;
@@ -11,17 +11,31 @@ class RateLimitingRecord {
     hit() {
         const currentTime = Date.now();
         this.#_timestamps = this.#_timestamps.filter(timestamp => currentTime - timestamp < this.#_rule.rate.windowMs);
-        this.#_hits = this.#_timestamps.length;
         if (this.#_timestamps.length >= this.#_rule.rate.maxRequests) {
-            return { authorized: false, retryAfter: this.#_lastHitTimestamp + this.#_rule.cooldown - Date.now() };
+            return { authorized: false, retryAfter: this.#_lastHitTimestamp + this.#_rule.cooldown };
         }
         this.#_lastHitTimestamp = currentTime;
         this.#_timestamps.push(currentTime);
-        return { authorized: true };
+        this.#_totalHits++;
+        return {
+            authorized: true,
+            hits: this.hits,
+            hitsRemaining: this.hitsRemaining,
+            lastHitTimestamp: this.lastHitTimestamp
+        };
     }
-    get hits() { return this.#_timestamps.length; }
-    get hitsRemaining() { return this.#_rule.rate.maxRequests - this.#_hits; }
+    /**The number of hits in the time window */
+    get hits() {
+        const currentTime = Date.now();
+        return this.#_timestamps.filter(timestamp => currentTime - timestamp < this.#_rule.rate.windowMs).length;
+    }
+    /**The remaining allowed hits */
+    get hitsRemaining() { return this.#_rule.rate.maxRequests - this.hits; }
+    /**The timestamp of the last allowed hit */
     get lastHitTimestamp() { return this.#_lastHitTimestamp; }
+    /**The number of hits this record recieved since the start of the server */
+    get totalHits() { return this.#_totalHits; }
+    /**The value of which the record is being measured by */
     get value() { return this.#_value; }
 }
 export default RateLimitingRecord;

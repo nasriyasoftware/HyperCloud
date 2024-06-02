@@ -111,7 +111,7 @@ class RateLimitingManager {
                     record = new RateLimitingRecord(ruleDetails, recordKey);
                     this.#_records.set(recordKey, record);
                 }
-                
+
                 // Check if the request violates the rate limit rule
                 const hitResult = record.hit();
                 if (hitResult.authorized) {
@@ -174,7 +174,7 @@ class RateLimitingManager {
                 if (authRes.authorized) { return next() }
 
                 response.setHeader('Retry-After', Date.now() - authRes.retryAfter)
-                response.status(429).json({ code: 429, message: 'Too many requests' })
+                response.status(429).json({ code: 429, ...authRes })
             }
 
             return handler;

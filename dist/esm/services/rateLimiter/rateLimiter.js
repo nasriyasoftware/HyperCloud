@@ -176,7 +176,7 @@ class RateLimitingManager {
                     return next();
                 }
                 response.setHeader('Retry-After', Date.now() - authRes.retryAfter);
-                response.status(429).json({ code: 429, message: 'Too many requests' });
+                response.status(429).json({ code: 429, ...authRes });
             };
             return handler;
         }
