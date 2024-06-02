@@ -85,7 +85,6 @@ class RateLimitingManager {
     /**
      * Authorizes a request based on defined rate limit rules.
      * @param {RateLimitAuthOptions} options - The authorization options.
-     * @returns {{ authorized: true } | { authorized: false, retryAt: number }} - Returns true if the request is authorized, false otherwise.
      * @throws {TypeError} If the options object is not valid.
      */
     authorize(options) {
@@ -103,8 +102,8 @@ class RateLimitingManager {
         });
         validRules.sort((ruleA, ruleB) => ruleA.priority - ruleB.priority);
         const strict = typeof options?.strict === 'boolean' ? options.strict : false;
+        const passedRules = [];
         const failedRules = [];
-        let atLeastOneRulePassed = false;
         for (const rule of validRules) {
             const ruleKey = `${options.scope || 'global'}:${rule.name}`;
             const ruleDetails = this.#_rules.get(ruleKey);
@@ -119,7 +118,7 @@ class RateLimitingManager {
                 // Check if the request violates the rate limit rule
                 const hitResult = record.hit();
                 if (hitResult.authorized) {
-                    atLeastOneRulePassed = true;
+                    passedRules.push({ rule: ruleDetails, hitResult, priority: rule.priority });
                 }
                 else {
                     failedRules.push({ rule: ruleDetails, retryAfter: hitResult.retryAfter });
@@ -129,15 +128,16 @@ class RateLimitingManager {
                 }
             }
         }
-        if (!strict && atLeastOneRulePassed) {
-            return { authorized: true };
+        passedRules.sort((ruleA, ruleB) => ruleA.priority - ruleB.priority);
+        if (!strict && passedRules.length > 0) {
+            return passedRules[0].hitResult;
         }
         if (failedRules.length > 0) {
             const latestRetryAfter = Math.max(...failedRules.map(f => f.retryAfter));
             return { authorized: false, retryAfter: latestRetryAfter };
         }
         // Request does not violate any rate limit rules
-        return { authorized: true };
+        return passedRules[0].hitResult;
     }
     /**Create basic rate limiting handlers */
     limitBy = {
@@ -148,17 +148,17 @@ class RateLimitingManager {
          *
          * **Example:**
          * ```js
-         * // Create a simple handler
-         * const ipLimiter = server.rateLimiter.limitBy.ipAddress(100);
+         * // Limit by IP address, and show an error 'Page' when the limit is exceeded.
+         * const ipLimiter = server.rateLimiter.limitBy.ipAddress(100, 'Page');
          *
          * // Mount the handler on a router
          * router.use('*', ipLimiter);
          * ```
          * @param reqPerMin The number of requests per minute per IP address. Default: `100`/m
-         * @param responeType The type of response to return. Default: `JSON`
+         * @param responseType The type of response to return. Default: `JSON`
          * @returns {HyperCloudRequestHandler}
          */
-        ipAddress: (reqPerMin = 100, responeType = 'JSON') => {
+        ipAddress: (reqPerMin = 100, responseType = 'JSON') => {
             const rule = this.defineRule({
                 name: `basic-limiter_ipAddress_${Math.floor(Math.random() * 100000)}`,
                 cooldown: 5 * 60 * 1000,
@@ -173,13 +173,74 @@ class RateLimitingManager {
                     rules: [{ name: rule.name, priority: 1 }]
                 });
                 if (authRes.authorized) {
-                    return next();
+                    next();
                 }
-                response.setHeader('Retry-After', Date.now() - authRes.retryAfter);
-                response.status(429).json({ code: 429, ...authRes });
+                else {
+                    response.setHeader('Retry-After', authRes.retryAfter).status(429);
+                    if (responseType === 'JSON') {
+                        response.json({ code: 429, ...authRes });
+                    }
+                    if (responseType === 'Page') {
+                        response.end({
+                            data: `
+                                    <html>
+                                    <head>
+                                        <title>Too Many Requests - 429</title>
+                                    </head>
+                                    <body style="font-family:Arial;display:flex;flex-direction:column;align-items:center;justify-content:center;">
+                                        <h1 style="color:red;">Error: 429 - Too Many Requests</h1>
+                                        <p>Slow down buddy, you're overloading the server</p>
+                                    </body>
+                                    </html>
+                        
+                            `
+                        });
+                    }
+                }
             };
             return handler;
         }
     };
+    /**
+     * Setup your server's main Limiter.
+     *
+     * Notes:
+     * - You must define at least one rule using the {@link defineRule} method before creating your handler
+     * - If you want to setup multiple rules, you can use the `priority` property.
+     * - The main rate limiter workes *after* all the `static` routes.
+     *
+     * **Example:**
+     * ```js
+     * // Set different rate limits based on user role
+     * rateLimiter.defineRule({ name: 'visitor_ipAddress', cooldown: 5000, rate: { windowMs: 1 * 60 * 1000, maxRequests: 5 } })
+     * rateLimiter.defineRule({ name: 'member_ipAddress', cooldown: 5000, rate: { windowMs: 1 * 60 * 1000, maxRequests: 10 } })
+     *
+     * rateLimiter.mainLimiter((request, response, next) => {
+     *     if (request.user.role === 'Visitor' || request.user.role === 'Member') {
+     *         const authRes = rateLimiter.authorize({
+     *             value: request.ip,
+     *             rules: [{ name: `${request.user.role.toLowerCase()}_ipAddress`, priority: 1 }]
+     *         })
+     *
+     *         if (authRes.authorized) {
+     *             next();
+     *         } else {
+     *             response.status(429).setHeader('Retry-After', authRes.retryAfter);
+     *             response.json({ code: 429, ...authRes });
+     *         }
+     *     } else {
+     *         // If admin, do not limit at all
+     *         next();
+     *     }
+     * })
+     * ```
+     * @param handler The rate limiting handler you want to use
+     */
+    mainLimiter(handler) {
+        if (typeof handler !== 'function') {
+            throw new SyntaxError(`The main`);
+        }
+        this.#_server._handlers['mainRateLimiter'] = handler;
+    }
 }
 export default RateLimitingManager;

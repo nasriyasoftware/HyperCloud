@@ -28,10 +28,11 @@ class RequestRoutesManager {
     }
 
     constructor(routes: (Route | StaticRoute)[], request: HyperCloudRequest, response: HyperCloudResponse) {
-        this.#_routes = routes;
+        const staticRoutes = routes.filter(r => r instanceof StaticRoute);
+        const dynamicRoutes = routes.filter(r => r instanceof Route);
         this.#_request = request;
         this.#_response = response;
-        
+
         const newRouts: (Route | StaticRoute)[] = [];
         // Add a helmet handler if it exist
         if (typeof request.server._handlers.helmet === 'function') {
@@ -145,7 +146,17 @@ class RequestRoutesManager {
             }))
         }
 
-        this.#_routes.unshift(...newRouts);
+        // Check if the main rate limiter is configured
+        if (typeof request.server._handlers.mainRateLimiter === 'function') {
+            staticRoutes.push(new Route({
+                path: '*', method: 'USE', handler: (request, response, next) => {
+                    if (request.path.length === 1 && request.path[0] === 'favicon.ico') { return next() }
+                    return request.server._handlers.mainRateLimiter(request, response, next);
+                }
+            }))
+        }
+
+        this.#_routes = [...newRouts, ...staticRoutes, ...dynamicRoutes];
         this.#_runNext();
     }
 

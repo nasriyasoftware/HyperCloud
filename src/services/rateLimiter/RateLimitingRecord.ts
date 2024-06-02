@@ -6,6 +6,7 @@ class RateLimitingRecord {
     #_timestamps: number[] = [];
     #_lastHitTimestamp = 0;
     #_totalHits = 0;
+    #_retryAfter = 0;
 
     constructor(rule: RateLimitRule, value: string | number) {
         this.#_rule = rule;
@@ -14,10 +15,16 @@ class RateLimitingRecord {
 
     hit(): RateLimiterAuthorizedHit | RateLimiterUnauthorizedHit {
         const currentTime = Date.now();
-        this.#_timestamps = this.#_timestamps.filter(timestamp => currentTime - timestamp < this.#_rule.rate.windowMs);
+        if (this.#_retryAfter > currentTime) {
+            return { authorized: false, retryAfter: this.#_retryAfter }
+        }
 
+        this.#_timestamps = this.#_timestamps.filter(timestamp => currentTime - timestamp < this.#_rule.rate.windowMs);
+        console.log(this.#_timestamps)
         if (this.#_timestamps.length >= this.#_rule.rate.maxRequests) {
-            return { authorized: false, retryAfter: this.#_lastHitTimestamp + this.#_rule.cooldown }
+            this.#_retryAfter = currentTime + this.#_rule.cooldown;
+            this.#_timestamps = [];
+            return { authorized: false, retryAfter: this.#_retryAfter }
         }
 
         this.#_lastHitTimestamp = currentTime;
@@ -26,16 +33,16 @@ class RateLimitingRecord {
 
         return {
             authorized: true,
-            hits: this.hits,
-            hitsRemaining: this.hitsRemaining,
-            lastHitTimestamp: this.lastHitTimestamp
+            hits: this.#_timestamps.length,
+            hitsRemaining: this.#_rule.rate.maxRequests - this.#_timestamps.length,
+            lastHitTimestamp: this.#_lastHitTimestamp
         }
     }
 
     /**The number of hits in the time window */
     get hits() {
         const currentTime = Date.now();
-        return this.#_timestamps.filter(timestamp => currentTime - timestamp < this.#_rule.rate.windowMs).length
+        return this.#_timestamps.filter(timestamp => currentTime - timestamp < this.#_rule.rate.windowMs).length;
     }
 
     /**The remaining allowed hits */

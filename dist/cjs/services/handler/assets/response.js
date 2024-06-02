@@ -779,14 +779,12 @@ class HyperCloudResponse {
      * response.json({ user: 'tj' });
      * response.status(500).json('oh noes!');
      * response.status(404).json('I dont have that');
-     * @param {object|Array} data
+     * @param data
      */
     json(data) {
-        if (!(Array.isArray(data) || (typeof data === 'object' && data !== null))) {
-            throw new TypeError("Invalid input. Expected either an object or an array.");
-        }
+        const chunk = Array.isArray(data) || helpers_1.default.is.realObject(data) ? JSON.stringify(data) : String(data);
         this.setHeader('Content-Type', 'application/json');
-        this.write({ chunk: JSON.stringify(data) });
+        this.write({ chunk });
         return this.end();
     }
     /**

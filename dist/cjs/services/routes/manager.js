@@ -122,7 +122,7 @@ class RoutesManager {
             if (route instanceof staticRoute_1.default) {
                 this.#_stack.static.push(route);
             }
-            this.#_stack.all.push(route);
+            this.#_stack.all = [...this.#_stack.static, ...this.#_stack.routes];
         }
         else {
             throw new TypeError(`Unable to add route to the routes stack: The provided route is not an instance of Route.`);

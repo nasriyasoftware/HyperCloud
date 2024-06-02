@@ -1,4 +1,5 @@
 import Route from './route';
+import StaticRoute from './staticRoute';
 import HTTPError from '../../../utils/errors/HTTPError';
 /**
  * Only one instance is allowed for each request.
@@ -21,7 +22,8 @@ class RequestRoutesManager {
         }
     };
     constructor(routes, request, response) {
-        this.#_routes = routes;
+        const staticRoutes = routes.filter(r => r instanceof StaticRoute);
+        const dynamicRoutes = routes.filter(r => r instanceof Route);
         this.#_request = request;
         this.#_response = response;
         const newRouts = [];
@@ -123,7 +125,18 @@ class RequestRoutesManager {
                 }
             }));
         }
-        this.#_routes.unshift(...newRouts);
+        // Check if the main rate limiter is configured
+        if (typeof request.server._handlers.mainRateLimiter === 'function') {
+            staticRoutes.push(new Route({
+                path: '*', method: 'USE', handler: (request, response, next) => {
+                    if (request.path.length === 1 && request.path[0] === 'favicon.ico') {
+                        return next();
+                    }
+                    return request.server._handlers.mainRateLimiter(request, response, next);
+                }
+            }));
+        }
+        this.#_routes = [...newRouts, ...staticRoutes, ...dynamicRoutes];
         this.#_runNext();
     }
     /**This method is only called by the server */

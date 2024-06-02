@@ -60,7 +60,7 @@ class Router {
         const content = fs.readdirSync(faviconPath, { withFileTypes: true });
         const file = content.find(i => i.isFile() && i.name.startsWith('favicon'));
         if (!file) { throw `The favicon path you provided (${faviconPath}) does not contain a favicon file` }
-
+        
         const route = new Route({
             path: '/favicon.ico',
             caseSensitive: true,

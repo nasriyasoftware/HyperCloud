@@ -217,9 +217,9 @@ declare class HyperCloudResponse {
      * response.json({ user: 'tj' });
      * response.status(500).json('oh noes!');
      * response.status(404).json('I dont have that');
-     * @param {object|Array} data
+     * @param data
      */
-    json(data: object | Array<any>): this;
+    json(data?: Record<string, any> | Array<any> | string | number): this;
     /**
      * When using implicit headers (not calling `response.writeHead()` explicitly),
      * this method controls the status code that will be sent to the client when
