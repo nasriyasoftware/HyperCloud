@@ -530,7 +530,7 @@ class HyperCloudServer {
      * A protection "helmet" module that serves as a middleware or multiple middlewares
      * that you can use on your routes.
      *
-     * You can customize the
+     * You can customize the behavior with options
      */
     helmet(options) { this.#_helmet.config(options); }
     /**

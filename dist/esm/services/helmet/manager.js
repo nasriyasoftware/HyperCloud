@@ -19,7 +19,7 @@ class HelmetManager {
             crossOriginResourcePolicy: 'same-origin',
             originAgentCluster: '?1',
             referrerPolicy: 'no-referrer',
-            strictTransportSecurity: 'max-age=123456; includeSubDomains',
+            strictTransportSecurity: 'max-age=31536000; includeSubDomains; preload',
             xContentTypeOptions: 'nosniff',
             xDnsPrefetchControl: 'off',
             xDownloadOptions: 'noopen',
@@ -94,7 +94,7 @@ class HelmetManager {
         else {
             this.#_values.crossOriginEmbedderPolicy = this.#_defaults.values.crossOriginEmbedderPolicy;
         }
-        // #3: ross-Origin-Opener-Policy
+        // #3: Cross-Origin-Opener-Policy
         if (notUndefined && isRealObject && 'crossOriginOpenerPolicy' in options) {
             if (options.crossOriginOpenerPolicy === false) {
                 this.#_values.crossOriginOpenerPolicy = '';
@@ -222,7 +222,7 @@ class HelmetManager {
                 if (this.#_values.crossOriginEmbedderPolicy) {
                     res.setHeader("Cross-Origin-Embedder-Policy", this.#_values.crossOriginEmbedderPolicy);
                 }
-                // #3: CrossOriginOpenerPolicy
+                // #3: Cross-Origin-Opener-Policy
                 if (this.#_values.crossOriginOpenerPolicy) {
                     res.setHeader("Cross-Origin-Opener-Policy", this.#_values.crossOriginOpenerPolicy);
                 }
@@ -231,7 +231,7 @@ class HelmetManager {
                     res.setHeader("Cross-Origin-Resource-Policy", this.#_values.crossOriginResourcePolicy);
                 }
                 // #5: Origin-Agent-Cluster
-                if (this.#_values.crossOriginResourcePolicy) {
+                if (this.#_values.originAgentCluster) {
                     res.setHeader("Origin-Agent-Cluster", this.#_values.crossOriginResourcePolicy);
                 }
                 // #6: Referrer-Policy

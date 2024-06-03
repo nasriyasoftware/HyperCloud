@@ -103,7 +103,7 @@ export interface HelmetConfigOptions {
     /** Strict-Transport-Security options */
     strictTransportSecurity?: StrictTransportSecurityOptions | false;
     /** X-Content-Type-Options options */
-    xContentTypeOptions?: false;
+    xContentTypeOptions?: 'nosniff' | false;
     /** X-DNS-Prefetch-Control options */
     xDnsPrefetchControl?: DNSPrefetchControlOptions | false;
     /** X-Download-Options options */
