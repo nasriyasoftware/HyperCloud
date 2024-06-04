@@ -31,7 +31,6 @@
     "@types/jest": "^29.5.12",
     "@types/ms": "^0.7.34",
     "@types/node": "^20.12.8",
-    "modularize-js": "github:nasriyasoftware/ModularizeJS",
     "nasriya-copyfiles": "github:nasriyasoftware/CopyFiles",
     "nasriya-modularizejs": "github:nasriyasoftware/ModularizeJS",
     "nodemon": "^3.0.3",
