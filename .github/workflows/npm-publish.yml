@@ -23,11 +23,11 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Debug - List project directory
-        run: ls -R
+      # - name: Debug - List project directory
+      #   run: ls -R
 
-      - name: Debug - List node_modules directory
-        run: ls -R node_modules
+      # - name: Debug - List node_modules directory
+      #   run: ls -R node_modules
 
       - name: Run tests
         run: npm test
@@ -35,4 +35,4 @@ jobs:
       - name: Publish package to npm
         run: npm publish --provenance --access public
         env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+          NODE_AUTH_TOKEN: ${{secrets.NPM_TOKEN}}
