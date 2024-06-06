@@ -18,6 +18,10 @@
   "publishConfig": {
     "provenance": true
   },
+  "repository": {
+    "type": "github",
+    "url": "https://github.com/nasriyasoftware/HyperCloud"
+  },
   "scripts": {
     "build": "npm run build:esm && npm run build:cjs && npm run rename && npm run copyFiles",
     "build:esm": "tsc --project tsconfig.esm.json",
