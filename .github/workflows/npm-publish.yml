@@ -2,13 +2,14 @@ name: Publish Package to npmjs
 on:
   release:
     types: [published]
+
 jobs:
   build:
-    runs-on: ubuntu-latest
     permissions:
       id-token: write
       contents: write
-      
+
+    runs-on: ubuntu-latest      
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -31,6 +32,9 @@ jobs:
 
       - name: Run tests
         run: npm test
+
+      - name: Build
+        run: npm run build
         
       - name: Publish package to npm
         run: npm publish --provenance --access public
