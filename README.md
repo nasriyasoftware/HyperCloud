@@ -26,7 +26,7 @@ Quickly run a `HyperCloud` server in **5** easy steps.
 
 #### 1. Installation
 ```shell
-npm install nasriyasoftware/hypercloud
+npm i @ahmadnasriya/hypercloud
 ```
 
 #### 2. Importing

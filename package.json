@@ -1,5 +1,5 @@
 {
-  "name": "hypercloud",
+  "name": "@ahmadnasriya/hypercloud",
   "version": "0.0.1",
   "description": "Nasriya HyperCloud is a lightwight Node.js HTTP2 framework.",
   "main": "./dist/cjs/hypercloud.cjs",
