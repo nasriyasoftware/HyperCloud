@@ -492,7 +492,7 @@ class HyperCloudServer {
      * **Example**:
      * ```ts
      * // Main file: main.js
-     * import hypercloud from 'nasriya-hypercloud';
+     * import hypercloud from '@nasriya/hypercloud';
      * const server = hypercloud.Server();
      * 
      * const router = server.Router();

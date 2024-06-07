@@ -26,18 +26,18 @@ Quickly run a `HyperCloud` server in **5** easy steps.
 
 #### 1. Installation
 ```shell
-npm i @ahmadnasriya/hypercloud
+npm i @nasriya/hypercloud
 ```
 
 #### 2. Importing
 Importing in **ES6** modules
 ```js
-import hypercloud from 'nasriya-hypercloud';
+import hypercloud from '@nasriya/hypercloud';
 ```
 
 Importing in **CommonJS** modules
 ```js
-const hypercloud = require('nasriya-hypercloud').default;
+const hypercloud = require('@nasriya/hypercloud').default;
 ```
 
 #### 3. Creating & Initializing a server
@@ -675,7 +675,7 @@ You can schedule [cron jobs](https://en.wikipedia.org/wiki/Cron) to run periodic
 To use the cron scheduler, you can access it on the main `hypercloud` instance:
 
 ```js
-import hypercloud from 'nasriya-hypercloud';
+import hypercloud from '@nasriya/hypercloud';
 const cronManager = hypercloud.cronManager;
 ```
 
@@ -696,7 +696,7 @@ const expression2 = cronManager.time.onSpecificDays(['Tue', 2]);
 To schedule tasks using a cron-expression, use the `schedule` method:
 
 ```js
-import hypercloud from 'nasriya-hypercloud';
+import hypercloud from '@nasriya/hypercloud';
 
 const task = hypercloud.cronManager.schedule('* * * * *', () => {
     console.log('A cron-job is running...');
@@ -722,7 +722,7 @@ To schedule one-time tasks use the `scheduleTime` method. The method takes two a
 2. `task`: a `Function`.
 
 ```js
-import hypercloud from 'nasriya-hypercloud';
+import hypercloud from '@nasriya/hypercloud';
 
 // Schedule a task to run after 10 minutes from now:
 const tenMins = 10 * 60 * 1000;
@@ -752,7 +752,7 @@ If your server is running behind a dynamic IP address you make use of **HyperClo
 Start by preparing the DNS manager and the new IP address:
 
 ```js
-import hypercloud from 'nasriya-hypercloud';
+import hypercloud from '@nasriya/hypercloud';
 const dnsManager = hypercloud.dnsManager;
 
 const public_ip = await dnsManager.helpers.getPublicIP();

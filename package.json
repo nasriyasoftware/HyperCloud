@@ -1,6 +1,6 @@
 {
-  "name": "@ahmadnasriya/hypercloud",
-  "version": "0.0.1",
+  "name": "@nasriya/hypercloud",
+  "version": "0.0.1-beta",
   "description": "Nasriya HyperCloud is a lightwight Node.js HTTP2 framework.",
   "main": "./dist/cjs/hypercloud.cjs",
   "module": "./dist/esm/hypercloud.mjs",
@@ -18,6 +18,13 @@
   "publishConfig": {
     "provenance": true
   },
+  "maintainers": [
+    {
+      "name": "Ahmad Nasriya",
+      "email": "ahmad@nasriya.net",
+      "url": "https://www.linkedin.com/in/ahmadnasriya/"
+    }
+  ],
   "repository": {
     "type": "github",
     "url": "https://github.com/nasriyasoftware/HyperCloud"

@@ -1163,7 +1163,7 @@ class HyperCloudResponse {
      * the headers passed to ```response.writeHead()``` given precedence.
      * 
      * ```js
-     * const hypercloud = require('nasriya-hypercloud');
+     * const hypercloud = require('@nasriya/hypercloud');
      * // Returns content-type = text/plain
      * const server = hypercloud.Server();
      * 
