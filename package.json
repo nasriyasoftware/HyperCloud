@@ -15,9 +15,6 @@
       "types": "./dist/@types/hypercloud.d.ts"
     }
   },
-  "publishConfig": {
-    "provenance": true
-  },
   "maintainers": [
     {
       "name": "Ahmad Nasriya",
