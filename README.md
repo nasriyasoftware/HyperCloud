@@ -633,7 +633,7 @@ server.handlers.logger((request: HyperCloudRequest, response: HyperCloudResponse
 You can also use another logging packages like [Logify](https://github.com/nasriyasoftware/Logify) to help you with logging.
 
 ```js
-import logify from 'nasriya-logify';
+import logify from '@nasriya/logify';
 
 server.handlers.logger(logify.middlewares.hypercloud);
 ```

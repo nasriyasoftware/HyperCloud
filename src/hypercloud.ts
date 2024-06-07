@@ -1,8 +1,8 @@
 import HyperCloudServer from './server';
 import { HyperCloudInitFile, HyperCloudManagementOptions, SecureServerOptions, ServerOptions } from './docs/docs';
 import helpers from './utils/helpers';
-import hypercloudDNS from 'nasriya-dns';
-import nasriyaCron from 'nasriya-cron';
+import hypercloudDNS from '@nasriya/dns';
+import nasriyaCron from '@nasriya/cron';
 
 import fs from 'fs';
 import path from 'path';
