@@ -27,11 +27,10 @@
     "url": "https://github.com/nasriyasoftware/HyperCloud"
   },
   "scripts": {
-    "build": "npm run build:esm && npm run build:cjs && npm run rename && npm run copyFiles",
+    "build": "npm run build:esm && npm run build:cjs && postbuild",
     "build:esm": "tsc --project tsconfig.esm.json",
     "build:cjs": "tsc --project tsconfig.cjs.json",
-    "rename": "mod-js",
-    "copyFiles": "ns-copySrc",
+    "postbuild-init": "postbuild-init",
     "test": "jest",
     "deepTest": "jest --coverage"
   },
@@ -39,19 +38,17 @@
   "author": "Nasriya Software, LLC.",
   "license": "Nasriya License",
   "devDependencies": {
+    "@nasriya/postbuild": "^1.0.1",
     "@types/jest": "^29.5.12",
     "@types/ms": "^0.7.34",
     "@types/node": "^20.12.8",
-    "nasriya-copyfiles": "github:nasriyasoftware/CopyFiles",
-    "nasriya-modularizejs": "github:nasriyasoftware/ModularizeJS",
-    "nodemon": "^3.0.3",
-    "ts-jest": "^29.1.2",
+    "ts-jest": "^29.1.4",
     "typescript": "^5.4.5"
   },
   "dependencies": {
-    "@nasriya/cron": "^1.0.0",
-    "@nasriya/dns": "^1.0.0",
-    "@nasriya/logify": "^1.0.0",
+    "@nasriya/cron": "^1.0.2",
+    "@nasriya/dns": "^1.0.5",
+    "@nasriya/logify": "^1.0.2",
     "ejs": "^3.1.10",
     "ms": "^2.1.3",
     "openssl-self-signed-certificate": "^1.1.6",

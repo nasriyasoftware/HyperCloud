@@ -1,4 +1,4 @@
-import hypercloud from '../hypercloud';
+import hypercloud from '../src/hypercloud';
 
 describe('Checking the main HyperCloud module', () => {
 
