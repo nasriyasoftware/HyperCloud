@@ -1,6 +1,6 @@
 {
   "name": "@nasriya/hypercloud",
-  "version": "0.0.2-beta",
+  "version": "0.0.3-beta",
   "description": "Nasriya HyperCloud is a lightwight Node.js HTTP2 framework.",
   "main": "./dist/cjs/hypercloud.js",
   "module": "./dist/esm/hypercloud.js",
@@ -46,7 +46,7 @@
     "typescript": "^5.4.5"
   },
   "dependencies": {
-    "@nasriya/cron": "^1.0.2",
+    "@nasriya/cron": "^1.0.3",
     "@nasriya/dns": "^1.0.5",
     "@nasriya/logify": "^1.0.2",
     "ejs": "^3.1.10",
