@@ -533,11 +533,11 @@ class HyperCloudServer {
 
     /**
      * Start listening for incoming requests
-     * @param protocol Specify the port number of the protocol for the server. Default: `443` for secure servers and `80` for plain HTTP ones. You can pass a callback too.
+     * @param port Specify the port number of the protocol for the server. Default: `443` for secure servers and `80` for plain HTTP ones.
      * @param callback Pass a callback function to run when the server starts listening.
      * @returns {Promise<void|http2.Http2SecureServer>} If secure connection is configured, a `Promise<http2.Http2SecureServer>` will be returned, otherwise, a `Promise<void>` will be returned.
      */
-    async listen(protocol?: OptionalProtocol): Promise<void | http2.Http2SecureServer> {
+    async listen(port: number, callback: Function): Promise<void | http2.Http2SecureServer> {
         try {
             if (this.#_config.secure) {
                 const { cert, key } = await (async () => {
@@ -552,7 +552,7 @@ class HyperCloudServer {
                     }
                 })()
 
-                this.#_system.httpsServer = http2.createSecureServer({ cert, key })
+                this.#_system.httpsServer = http2.createSecureServer({ cert, key, allowHTTP1: true })
             } else {
                 this.#_system.httpServer = http.createServer();
             }
@@ -603,23 +603,13 @@ class HyperCloudServer {
                 }
             })
 
-            const { port, callback } = (() => {
-                if (helpers.is.undefined(protocol)) { return { port: this.#_config.secure ? 443 : 80, callback: undefined } }
-
-                if ('port' in protocol) {
-                    if (typeof protocol.port !== 'number') { throw `The port used in the protocol (${protocol.port}) should be a number, instead got ${typeof protocol.port}` }
-                    if (protocol.port <= 0) { throw `The port has been assigned an invalid value (${protocol.port}). Ports are numbers greater than zero` }
-
-                    if ('callback' in protocol) {
-                        if (typeof protocol.callback !== 'function') { throw `The protocol.callback should be a callback function, instead got ${typeof protocol.callback}` }
-                        return { port: protocol.port, callback: protocol.callback };
-                    } else {
-                        return { port: protocol.port, callback: undefined }
-                    }
-                } else {
-                    return { port: this.#_config.secure ? 443 : 80, callback: undefined }
-                }
-            })();
+            if (port !== undefined) {
+                if (typeof port !== 'number') { throw `The port used in the protocol (${port}) should be a number, instead got ${typeof port}` }
+                if (port <= 0) { throw `The port has been assigned an invalid value (${port}). Ports are numbers greater than zero` }
+                if (callback !== undefined && typeof callback !== 'function') { throw `The protocol.callback should be a callback function, instead got ${typeof callback}` }
+            } else {
+                port = this.#_config.secure ? 443 : 80;
+            }
 
             return new Promise((resolve, reject) => {
                 const res = server.listen(port, () => {
