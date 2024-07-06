@@ -164,7 +164,7 @@ class SSLManager {
                 }
             },
             generateSelfSigned: async () => {
-                const selfSigned = require('openssl-self-signed-certificate');
+                const selfSigned: { key: Buffer, cert: Buffer } = await helpers.loadModule('openssl-self-signed-certificate');
                 return { key: selfSigned.key.toString('utf-8'), cert: selfSigned.cert.toString('utf-8') }
             },
             cleanUp: () => {
