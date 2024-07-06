@@ -1,5 +1,6 @@
 import HyperCloudResponse from '../handler/assets/response';
 import helpers from '../../utils/helpers';
+import ejs from 'ejs';
 
 class Renderer {
     readonly #_response: HyperCloudResponse;
@@ -43,7 +44,7 @@ class Renderer {
 
             try {
                 switch (viewEngine) {
-                    case 'ejs': engine = eval('require')('ejs');
+                    case 'ejs': engine = ejs;
                         break;
                 }
             } catch (error) {
