@@ -11,7 +11,7 @@ import initializer from './services/handler/initializer';
 import HyperCloudResponse from './services/handler/assets/response';
 // A temporary solution until SSR is ready
 import RenderingManager from './services/viewEngine/manager';
-// import RenderingManager from './services/renderer_new/manager';
+// import RenderingManager from './services/renderer/manager';
 import RoutesManager from './services/routes/manager';
 import RequestRoutesManager from './services/routes/assets/routesInitiator';
 import Router from './services/routes/assets/router';

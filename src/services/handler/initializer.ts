@@ -96,15 +96,16 @@ class Initializer {
                 }
 
                 // Read and accumulate the request body
+                let tempBody = '';
                 req.on('data', (chunk) => {
-                    request.body = request.body ? request.body : '' + chunk;
+                    tempBody += chunk;
                 });
 
                 const requestEnd = new Promise((resolve, reject) => {
                     try {
                         // When the entire request body has been received
                         req.on('end', () => {
-                            const { body, bodyType } = bodyParser(request.body, contentType);
+                            const { body, bodyType } = bodyParser(tempBody, contentType);
                             request.bodyType = bodyType;
                             if (body) { request.body = body }
                             resolve(undefined);

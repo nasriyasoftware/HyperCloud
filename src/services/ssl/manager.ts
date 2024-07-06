@@ -1,13 +1,14 @@
 import { promisify } from 'util';
-import { exec } from 'child_process';
-const execAsync = promisify(exec);
-
+import { exec, execFile } from 'child_process';
 import fs from 'fs';
 import path from 'path';
 import http from 'http';
 
 import { SSLOptions } from '../../docs/docs';
 import helpers from '../../utils/helpers';
+
+const execAsync = promisify(exec);
+const execFileAsync = promisify(execFile);
 
 // @ts-ignore
 const _dirname = typeof __dirname !== 'undefined' ? __dirname : helpers.getDirname(import.meta.url);
@@ -148,8 +149,14 @@ class SSLManager {
                 const batFilePath = this.#_cache.filesLocations.reqBatFile;
 
                 fs.writeFileSync(batFilePath, this.#_cache.bat_str.trim(), { encoding: 'utf8', flag: 'w' });
-                const openCom = this.#_utils.getFileOpenCommand(batFilePath);
-                await execAsync(openCom);
+                const batFileDir = path.dirname(batFilePath);
+                const batFileName = path.basename(batFilePath);
+                try {
+                    await execFileAsync(batFileName, { cwd: batFileDir });
+                } catch (error) {
+                    if (error instanceof Error) { error.message = `Error executing bat file: ${error.message}` }
+                    throw error;
+                }
 
                 return {
                     cert: fs.readFileSync(`C:\\Certbot\\live\\${d.certName}\\cert.pem`, { encoding: 'utf-8' }),

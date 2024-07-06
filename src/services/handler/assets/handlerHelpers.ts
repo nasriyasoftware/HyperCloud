@@ -1,6 +1,7 @@
 import { RequestBodyType } from '../../../docs/docs';
 import helpers from '../../../utils/helpers';
 import http2 from 'http2';
+import RequestBody from './requestBody';
 
 /**
  * Convert the query back to string
@@ -54,7 +55,7 @@ export function bodyParser(body: any, contentType: string): BodyParserResult {
     if (contentType.includes('application/json')) {
         try {
             const jsonData = JSON.parse(request.body);
-            request.body = jsonData;
+            request.body = new RequestBody().from(jsonData)         
             request.bodyType = 'json';
             return request;
         } catch (error) {
@@ -66,12 +67,13 @@ export function bodyParser(body: any, contentType: string): BodyParserResult {
     if (contentType.includes('application/x-www-form-urlencoded')) {
         // Parse the form data
         const sections = (request.body.split('&') as string[]).filter(i => i.length > 0);
-        request.body = {}
+        const body = new RequestBody();
         for (const section of sections) {
             const [key, value] = section.split('=');
-            request.body[key] = value;
+            body.set(key, value)
         }
 
+        request.body = body._toJSON();
         request.bodyType = 'json'
         return request;
     }
@@ -157,7 +159,7 @@ export function bodyParser(body: any, contentType: string): BodyParserResult {
             lastKey = null;
         }
 
-        request.body = body;
+        request.body = new RequestBody().from(body);
         request.bodyType = 'formData';
         return request;
     }
