@@ -308,7 +308,7 @@ class Helpers {
                     resolve(require(name));
                 } else {
                     // @ts-ignore
-                    import(name).then(mod => resolve(mod));
+                    import(name).then(mod => resolve('default' in mod) ? mod.default : mod);
                 }
             } catch (error) {
                 if (error instanceof Error) { error.message = `Unable to load module (${name}): ${error.message}` }
