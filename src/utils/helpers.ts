@@ -1,9 +1,47 @@
-import fs, { constants } from 'fs';
+import fs from 'fs';
 import crypto from 'crypto';
 import currencies from '../data/currencies.json';
-import { RandomOptions } from '../docs/docs';
+import { DeepReadonly, MimeType, RandomOptions } from '../docs/docs';
+import { fileURLToPath } from 'url';
+import { dirname } from 'path';
 
 class Helpers {
+    getDirname(metaUrl?: string): string {
+        if (typeof metaUrl === 'string') {
+            return typeof __dirname !== 'undefined' ? __dirname : dirname(fileURLToPath(metaUrl));
+        } else {
+            throw new Error(`Unable to get "direname". metaUrl should be string but instead got ${metaUrl}`)
+        }
+    }
+
+    /**
+     * Deep freeze an object or an array
+     * @param obj The object or array you want to freeze
+    */
+    deepFreeze<T>(obj: T): DeepReadonly<T> {
+        if (!this.is.freezable(obj)) { throw new Error(`${typeof obj} is not freezable`) }
+
+        if (Array.isArray(obj)) {
+            for (const item of obj) {
+                this.deepFreeze(item);
+            }
+
+            return Object.freeze(obj);
+        }
+
+        if (this.is.realObject(obj)) {
+            for (const key in obj) {
+                if (this.is.freezable(obj[key])) {
+                    // @ts-ignore
+                    obj[key] = this.deepFreeze(obj[key]);
+                }
+            }
+
+            return Object.freeze(obj);
+        }
+
+        return obj;
+    }
     /**Get the name if this package (project) from the `package.json` file */
     getProjectName(): string {
         // Read package.json file
@@ -194,7 +232,7 @@ class Helpers {
      *      }
      * }|{ valid: true }}
      */
-    checkPathAccessibility(path: string): {
+    checkPathAccessibility(path: fs.PathLike): {
         valid: false;
         errors: {
             isString: boolean;
@@ -214,7 +252,7 @@ class Helpers {
         if (!checks.exist) { return { valid: false, errors: checks } }
 
         try {
-            fs.accessSync(path, constants.R_OK | constants.W_OK);
+            fs.accessSync(path, fs.constants.R_OK | fs.constants.W_OK);
             checks.accessible = true;
         } catch (error) {
             { return { valid: false, errors: checks } }
@@ -352,6 +390,58 @@ class Helpers {
     }
 
     public readonly is = {
+        validMime: (mime: any): mime is MimeType => {
+            if (typeof mime !== 'string') { return false }
+            const mimes = ["audio/aac", "application/x-abiword", "application/x-freearc", "image/avif"
+                , "video/x-msvideo", "application/vnd.amazon.ebook", "application/octet-stream"
+                , "image/bmp", "application/x-bzip", "application/x-bzip2", "application/x-cdf"
+                , "application/x-csh", "text/calendar", "text/css", "text/plain", "text/csv", "application/msword"
+                , "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+                , "application/vnd.ms-fontobject", "application/epub+zip", "application/gzip"
+                , "image/gif", "text/html", "image/vnd.microsoft.icon", "text/calendar", "application/java-archive"
+                , "image/jpeg", "text/javascript", "application/json", "application/ld+json", "audio/midi"
+                , "audio/x-midi", "audio/mpeg", "video/mp4", "video/mpeg", "application/vnd.apple.installer+xml"
+                , "application/vnd.oasis.opendocument.presentation", "application/vnd.oasis.opendocument.spreadsheet"
+                , "application/vnd.oasis.opendocument.text", "audio/ogg", "video/ogg", "application/ogg"
+                , "audio/opus", "font/otf", "image/png", "application/pdf", "application/x-httpd-php"
+                , "application/vnd.ms-powerpoint", "application/vnd.openxmlformats-officedocument.presentationml.presentation"
+                , "application/vnd.rar", "application/rtf", "application/x-sh", "image/svg+xml"
+                , "application/x-tar", "image/tiff"]
+
+            return mimes.includes(mime);
+        },
+        validURL: (str: any) => {
+            try {
+                new URL(str);
+                return true;
+            } catch (_) {
+                return false;
+            }
+        },
+        esmMode: () => {
+            // @ts-ignore
+            return typeof import.meta !== 'undefined';
+        },
+        /**
+         * Check if a given value is `PathLike` or not.
+         * @param value The value you wanna check if it's path like or not
+         */
+        pathLike(value: any): value is fs.PathLike {
+            if (typeof value === 'string' || value instanceof Buffer) { return true }
+            try {
+                new URL(value);
+                return true;
+            } catch (error) {
+                return false;
+            }
+        },
+        /**
+         * Freeze a value to prevent it from being overwritten
+         * @param value The value you wanna check if it can be freezed or not
+         */
+        freezable(value: any) {
+            return this.realObject(value) || Array.isArray(Object);
+        },
         /**
         * Check if a particular string is a valid HTML code
         * @param {string} string The string to check

@@ -186,7 +186,7 @@ class HyperCloudResponse {
                             commands: {
                                 code: options?.locals?.commands?.code || 'ERROR CODE',
                                 description: options?.locals?.commands?.description || 'ERROR DESCRIPTION',
-                                cause: options?.locals?.commands?.cause || 'ERROR POSSIBLY CAUSED BY',
+                                cause: options?.locals?.commands?.cause || 'ERROR DESCRIPTION',
                                 allowed: options?.locals?.commands?.allowed || 'SOME PAGES ON THIS SERVER THAT YOU DO HAVE PERMISSION TO ACCESS',
                                 regards: options?.locals?.commands?.regards || 'HAVE A NICE DAY :-)'
                             },
@@ -468,7 +468,7 @@ class HyperCloudResponse {
      * @param {SendFileOptions} [options] Options for sending the file
      * @returns {http2.Http2ServerResponse|undefined}
      */
-    sendFile(filePath: string, options: SendFileOptions): http2.Http2ServerResponse | undefined {
+    sendFile(filePath: string, options?: SendFileOptions): http2.Http2ServerResponse | undefined {
         const root = process.cwd();
 
         try {

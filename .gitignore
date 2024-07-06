@@ -1,6 +1,7 @@
 # Ignore node_modules folder
 node_modules/
 .vscode/
+.history
 
 # Ignore build folder
 build/
@@ -16,3 +17,4 @@ logs*/
 
 dist
 **/renderer
+pages_ssr

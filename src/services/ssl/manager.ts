@@ -9,15 +9,18 @@ import http from 'http';
 import { SSLOptions } from '../../docs/docs';
 import helpers from '../../utils/helpers';
 
+// @ts-ignore
+const _dirname = typeof __dirname !== 'undefined' ? __dirname : helpers.getDirname(import.meta.url);
+
 class SSLManager {
     readonly #_defaults = Object.freeze({
         certbotPath: 'C:\\Program Files\\Certbot',
         certName: 'nasriyasoftware',
         filesLocations: {
-            certificatePath: path.resolve(path.join(__dirname, 'config')),
-            reqBatFile: path.resolve(path.join(__dirname, 'config/req_cert.bat')),
-            key: path.resolve(path.join(__dirname, 'config/privateKey.pem')),
-            cert: path.resolve(path.join(__dirname, 'config/cert.crt'))
+            certificatePath: path.resolve(path.join(_dirname, 'config')),
+            reqBatFile: path.resolve(path.join(_dirname, 'config/req_cert.bat')),
+            key: path.resolve(path.join(_dirname, 'config/privateKey.pem')),
+            cert: path.resolve(path.join(_dirname, 'config/cert.crt'))
         }
     })
 
@@ -43,10 +46,10 @@ class SSLManager {
         server: null as http.Server | null,
         port: 0,
         filesLocations: {
-            certificatePath: path.resolve(path.join(__dirname, 'config')),
-            reqBatFile: path.resolve(path.join(__dirname, 'config/req_cert.bat')),
-            key: path.resolve(path.join(__dirname, 'config/privateKey.pem')),
-            cert: path.resolve(path.join(__dirname, 'config/cert.crt'))
+            certificatePath: path.resolve(path.join(_dirname, 'config')),
+            reqBatFile: path.resolve(path.join(_dirname, 'config/req_cert.bat')),
+            key: path.resolve(path.join(_dirname, 'config/privateKey.pem')),
+            cert: path.resolve(path.join(_dirname, 'config/cert.crt'))
         }
     }
 

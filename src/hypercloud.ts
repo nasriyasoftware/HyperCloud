@@ -7,6 +7,7 @@ import nasriyaCron from '@nasriya/cron';
 import fs from 'fs';
 import path from 'path';
 import process from 'process';
+// export { PageDefinition } from './services/renderer/assets/PageDefinition';
 
 process.env.HYPERCLOUD_SERVER_VERBOSE = 'FALSE';
 

@@ -9,12 +9,17 @@ import { HelmetConfigOptions, HyperCloudInitFile, HyperCloudManagementOptions, H
 
 import initializer from './services/handler/initializer';
 import HyperCloudResponse from './services/handler/assets/response';
+// A temporary solution until SSR is ready
 import RenderingManager from './services/viewEngine/manager';
+// import RenderingManager from './services/renderer_new/manager';
 import RoutesManager from './services/routes/manager';
 import RequestRoutesManager from './services/routes/assets/routesInitiator';
 import Router from './services/routes/assets/router';
 import HelmetManager from './services/helmet/manager';
 import RateLimitingManager from './services/rateLimiter/rateLimiter';
+
+// @ts-ignore
+const _dirname = typeof __dirname !== 'undefined' ? __dirname : helpers.getDirname(import.meta.url);
 
 /**HyperCloud HTTP2 server */
 class HyperCloudServer {
@@ -47,7 +52,8 @@ class HyperCloudServer {
         locals: {} as Record<string, string>,
         cronJobs: {},
         handlers: {} as Record<string, Function>,
-        languages: { default: 'en', supported: ['en'] }
+        languages: { default: 'en', supported: ['en'] },
+        siteName: {} as Record<string, string>
     }
 
     readonly #_utils = Object.freeze({
@@ -124,7 +130,7 @@ class HyperCloudServer {
 
     constructor(userOptions?: SecureServerOptions | ServerOptions | HyperCloudInitFile, addOpt?: HyperCloudManagementOptions) {
         this.rendering = new RenderingManager(this);
-        this.rendering.addViews(path.resolve(path.join(__dirname, './services/pages')));
+        this.rendering.addViews(path.resolve(path.join(_dirname, './services/pages')));
         this._routesManager = new RoutesManager();
         this.#_helmet = new HelmetManager(this);
         this.rateLimiter = new RateLimitingManager(this);
@@ -348,6 +354,44 @@ class HyperCloudServer {
             throw new Error('Cannot initialize the server');
         }
     }
+
+    /**
+     * Set or get your site/brand name. This name is used
+     * for rendering pages and in other places
+    */
+    readonly siteName = {
+        /**
+         * Set your site's name
+         * @example
+         * server.siteName.set('Nasriya Software');          // Setting a name for the default language
+         * server.siteName.set('ناصرية سوفتوير', 'ar');     // Setting a name for the "ar" language
+         * @param name The name of your site or brand
+         * @param lang The language you want your site name to be associated with
+         */
+        set: (name: string, lang?: string) => {
+            if (!helpers.is.validString(name)) { throw new Error(`The site name must be a string, but instead got ${typeof name}`) }
+            if (lang === undefined) { lang = this.#_config.languages.default } else {
+                if (this.#_config.languages.supported.includes(lang)) {
+                    this.#_config.siteName[lang] = name;
+                } else {
+                    throw new Error(`The language you choose (${lang}) for your (${name}) site name is not supported. Make sure to first add "${lang}" to the supported languages`);
+                }
+            }
+        },
+        /**
+         * Get the name of your site/brand based on the language
+         * @example
+         * // Getting the name of the default language
+         * server.siteName.get();       // returns: "Nasriya Software"
+         * server.siteName.get('ar');   // returns: "ناصرية سوفتوير"
+         * @param lang The language your site name is associated with
+         */
+        get: (lang?: string) => {
+            if (lang === undefined) { lang = this.#_config.languages.default }
+            if (!this.#_config.languages.supported.includes(lang)) { throw new Error(`Unable to get the site name for the "${lang}" language because it's not a supported language`) }
+            return this.#_config.siteName[lang];
+        }
+    } as const
 
     get defaultLanguage() { return this.#_config.languages.default }
     /**
@@ -625,5 +669,4 @@ class HyperCloudServer {
         }
     }
 }
-
 export default HyperCloudServer;

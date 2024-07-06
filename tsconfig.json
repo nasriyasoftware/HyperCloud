@@ -1,5 +1,5 @@
 {
-    "compilerOptions": {
+    "compilerOptions": {        
         "target": "ES2022",
         "moduleResolution": "Node",
         "rootDir": "./src",

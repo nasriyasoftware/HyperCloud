@@ -27,7 +27,13 @@ export type HttpMethod = | 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH' | 'HEAD' 
 /**Represents the type of the request body. */
 export type RequestBodyType = 'text' | 'javascript' | 'json' | 'formData' | 'buffer' | 'graphql';
 export type HyperCloudServerHandlers = 'notFound' | 'serverError' | 'unauthorized' | 'forbidden' | 'userSessions' | 'logger' | 'onHTTPError';
+export type HttpEquivType = 'content-security-policy' | 'content-type' | 'default-style' | 'x-ua-compatible' | 'refresh';
+export type HTMLMetaName = 'application-name' | 'author' | 'description' | 'generator' | 'keywords' | 'referrer' | 'theme-color' | 'color-scheme' | 'viewport' | 'creator' | 'googlebot' | 'publisher' | 'robots' | (string & {});
 
+/**`DeepReadonly` means that the object or array is completely frozen */
+export type DeepReadonly<T> = {
+    readonly [P in keyof T]: DeepReadonly<T[P]>;
+};
 /**A currency code */
 export type Currency =
     | 'AED' | 'AFN' | 'ALL' | 'AMD' | 'ANG' | 'AOA' | 'ARS' | 'AUD' | 'AWG' | 'AZN'
@@ -64,6 +70,103 @@ export type MimeType =
     | "application/vnd.ms-powerpoint" | "application/vnd.openxmlformats-officedocument.presentationml.presentation"
     | "application/vnd.rar" | "application/rtf" | "application/x-sh" | "image/svg+xml"
     | "application/x-tar" | "image/tiff";
+
+export interface HTMLScriptTag {
+    /**
+     * Specifies that the script is downloaded in parallel to
+     * parsing the page, and executed as soon as it is
+     * available (before parsing completes) (only for 
+     * external scripts)
+    */
+    async?: boolean;
+    /**Sets the mode of the request to an HTTP CORS Request */
+    crossorigin?: 'anonymous' | 'use-credentials';
+    /**
+     * Specifies that the script is downloaded in parallel to
+     * parsing the page, and executed after the page has
+     * finished parsing (only for external scripts)
+     */
+    defer?: boolean;
+    /**
+     * Allows a browser to check the fetched script to ensure
+     * that the code is never loaded if the source has been
+     * manipulated
+     */
+    integrity?: string;
+    /**
+     * Specifies that the script should not be executed in
+     * browsers supporting ES2015 modules
+     */
+    nomodule?: boolean;
+    /**
+     * Specifies which referrer information to send when fetching a script
+     */
+    referrerpolicy?: ReferrerPolicyOption;
+    /**Specifies the URL of an external script file */
+    src: string;
+    /**Specifies the media type of the script */
+    type?: 'text/javascript';
+}
+
+export interface InternalScriptOptions extends Omit<InternalScriptRecord, 'scope'> { }
+export interface InternalScriptRecord extends Omit<HTMLScriptTag, 'src' | 'type' | 'integrity'>, FileAsset {
+    scope: 'Internal';
+    /**The path to the script file */
+    filePath: string;
+}
+
+export interface ExternalScriptOptions extends Omit<ExternalScriptRecord, 'scope'> { }
+export interface ExternalScriptRecord extends HTMLScriptTag {
+    scope: 'External';
+}
+
+export interface OnPageScriptOptions extends Omit<OnPageScriptRecord, 'scope'> { }
+export interface OnPageScriptRecord extends Pick<HTMLScriptTag, 'nomodule'> {
+    scope: 'OnPage';
+    /**The JavaScript code for in-place scripts (no imports). */
+    content?: string;
+}
+
+export type MetaTag = { name: string, content: string }
+
+export interface FileAsset {
+    /**The cached content of the file */
+    content?: string;
+    /**The absolute path to the path involved */
+    filePath: string;
+    eTag?: string;
+}
+
+export type ViewRenderingAsset = Required<Omit<FileAsset, 'eTag'>>;
+
+export interface RenderingAsset {
+    name: string;
+    view: ViewRenderingAsset;
+    css?: FileAsset;
+    js?: FileAsset;
+    locals: Record<string, FileAsset>
+}
+
+export type RenderingCacheAsset = 'css' | 'js' | 'json';
+
+export interface PageConstructorOpts extends RenderingAsset {
+
+}
+
+export interface InternalStylesheetRecord extends FileAsset {
+    scope: 'Internal';
+    fileName: string;
+    /**The content of the CSS file */
+    content?: string;
+}
+
+export interface ExternalStylesheetRecord {
+    scope: 'External',
+    /**The URL of the external CSS file */
+    url: URL;
+}
+
+export interface ComponentConstructorOpts extends RenderingAsset { }
 
 export interface RateLimitAuthOptions {
     /**The value to check against the rules. */
@@ -199,7 +302,6 @@ export interface StrictTransportSecurityOptions {
 
 /** Type for Referrer Policy options */
 export type ReferrerPolicyOption =
-    | ""
     | "no-referrer"
     | "no-referrer-when-downgrade"
     | "same-origin"
@@ -208,7 +310,7 @@ export type ReferrerPolicyOption =
     | "origin-when-cross-origin"
     | "strict-origin-when-cross-origin"
     | "unsafe-url"
-    | string; // Allow any other custom values
+    | (string & {});
 
 /** Options for Referrer Policy */
 export interface ReferrerPolicyOptions {
