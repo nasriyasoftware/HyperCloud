@@ -106,28 +106,33 @@ class HyperCloudResponse {
              * @param {NotFoundResponseOptions} [options] Rendering options
              */
             notFound: (options?: NotFoundResponseOptions) => {
-                if (typeof this.#_server._handlers.notFound === 'function') {
-                    try {
-                        // Run the user defined handler for not-found resources
-                        this.#_server._handlers.notFound(this.#_req, this, this._next);
-                    } catch (error) {
-                        this.pages.serverError({ error: error as Error });
-                    }
-                } else {
-                    const viewName = 'hypercloud_404';
-
-                    const renderOptions: RenderingOptions = {
-                        cacheControl: false,
-                        statusCode: 404,
-                        locals: {
-                            lang: options?.lang || this.#_req.language,
-                            title: options?.locals?.title || `404 - Page Not Found`,
-                            subtitle: options?.locals?.subtitle || 'Oops. Looks like you took a wrong turn.',
-                            homeBtnLabel: options?.locals?.home || 'HOME'
+                try {
+                    if (typeof this.#_server._handlers.notFound === 'function') {
+                        try {
+                            // Run the user defined handler for not-found resources
+                            this.#_server._handlers.notFound(this.#_req, this, this._next);
+                        } catch (error) {
+                            this.pages.serverError({ error: error as Error });
                         }
-                    }
+                    } else {
+                        const viewName = 'hypercloud_404';
 
-                    return this.render(viewName, renderOptions)
+                        const renderOptions: RenderingOptions = {
+                            cacheControl: false,
+                            statusCode: 404,
+                            locals: {
+                                lang: options?.lang || this.#_req.language,
+                                title: options?.locals?.title || `404 - Page Not Found`,
+                                subtitle: options?.locals?.subtitle || 'Oops. Looks like you took a wrong turn.',
+                                homeBtnLabel: options?.locals?.home || 'HOME'
+                            }
+                        }
+
+                        return this.render(viewName, renderOptions)
+                    }
+                } catch (error) {
+                    console.error(error);
+                    return this.pages.serverError();
                 }
             },
             /**
@@ -165,41 +170,46 @@ class HyperCloudResponse {
              * @param {ForbiddenAndUnauthorizedOptions} [options] 
              */
             unauthorized: (options?: ForbiddenAndUnauthorizedOptions) => {
-                if (typeof this.#_server._handlers.unauthorized === 'function') {
-                    try {
-                        // Run the user defined handler for not-found resources
-                        this.#_server._handlers.unauthorized(this.#_req, this, this._next);
-                    } catch (error) {
-                        this.pages.serverError({ error: error as Error });
-                    }
-                } else {
-                    const viewName = 'hypercloud_401_403';
+                try {
+                    if (typeof this.#_server._handlers.unauthorized === 'function') {
+                        try {
+                            // Run the user defined handler for not-found resources
+                            this.#_server._handlers.unauthorized(this.#_req, this, this._next);
+                        } catch (error) {
+                            this.pages.serverError({ error: error as Error });
+                        }
+                    } else {
+                        const viewName = 'hypercloud_401_403';
 
-                    /**@type {RenderingOptions} */
-                    const renderOptions: RenderingOptions = {
-                        cacheControl: false,
-                        statusCode: 401,
-                        locals: {
-                            lang: options?.lang || this.#_req.language,
-                            title: options?.locals?.title || 'Unauthorized',
-                            code: 401,
-                            commands: {
-                                code: options?.locals?.commands?.code || 'ERROR CODE',
-                                description: options?.locals?.commands?.description || 'ERROR DESCRIPTION',
-                                cause: options?.locals?.commands?.cause || 'ERROR DESCRIPTION',
-                                allowed: options?.locals?.commands?.allowed || 'SOME PAGES ON THIS SERVER THAT YOU DO HAVE PERMISSION TO ACCESS',
-                                regards: options?.locals?.commands?.regards || 'HAVE A NICE DAY :-)'
-                            },
-                            content: {
-                                code: options?.locals?.content?.code || 'HTTP 401 Unauthorized',
-                                description: options?.locals?.content?.description || 'Access Denied. You Do Not Have The Permission To Access This Page On This Server',
-                                cause: options?.locals?.content?.cause || 'execute access unauthorized, read access unauthorized, write access unauthorized, ssl required, ssl 128 required, ip address rejected, client certificate required, site access denied, too many users, invalid configuration, password change, mapper denied access, client certificate revoked, directory listing denied, client access licenses exceeded, client certificate is untrusted or invalid, client certificate has expired or is not yet valid, passport logon failed, source access denied, infinite depth is denied, too many requests from the same client ip',
-                                allowed: options?.locals?.content?.allowed || [{ label: 'Home', link: '/' }, { label: 'About Us', link: '/about' }, { label: 'Contact Us', link: '/support/contact' }],
+                        /**@type {RenderingOptions} */
+                        const renderOptions: RenderingOptions = {
+                            cacheControl: false,
+                            statusCode: 401,
+                            locals: {
+                                lang: options?.lang || this.#_req.language,
+                                title: options?.locals?.title || 'Unauthorized',
+                                code: 401,
+                                commands: {
+                                    code: options?.locals?.commands?.code || 'ERROR CODE',
+                                    description: options?.locals?.commands?.description || 'ERROR DESCRIPTION',
+                                    cause: options?.locals?.commands?.cause || 'ERROR DESCRIPTION',
+                                    allowed: options?.locals?.commands?.allowed || 'SOME PAGES ON THIS SERVER THAT YOU DO HAVE PERMISSION TO ACCESS',
+                                    regards: options?.locals?.commands?.regards || 'HAVE A NICE DAY :-)'
+                                },
+                                content: {
+                                    code: options?.locals?.content?.code || 'HTTP 401 Unauthorized',
+                                    description: options?.locals?.content?.description || 'Access Denied. You Do Not Have The Permission To Access This Page On This Server',
+                                    cause: options?.locals?.content?.cause || 'execute access unauthorized, read access unauthorized, write access unauthorized, ssl required, ssl 128 required, ip address rejected, client certificate required, site access denied, too many users, invalid configuration, password change, mapper denied access, client certificate revoked, directory listing denied, client access licenses exceeded, client certificate is untrusted or invalid, client certificate has expired or is not yet valid, passport logon failed, source access denied, infinite depth is denied, too many requests from the same client ip',
+                                    allowed: options?.locals?.content?.allowed || [{ label: 'Home', link: '/' }, { label: 'About Us', link: '/about' }, { label: 'Contact Us', link: '/support/contact' }],
+                                }
                             }
                         }
-                    }
 
-                    return this.render(viewName, renderOptions)
+                        return this.render(viewName, renderOptions)
+                    }
+                } catch (error) {
+                    console.error(error);
+                    return this.pages.serverError();
                 }
             },
             /**
@@ -237,41 +247,46 @@ class HyperCloudResponse {
              * @param {ForbiddenAndUnauthorizedOptions} options 
              */
             forbidden: (options: ForbiddenAndUnauthorizedOptions) => {
-                if (typeof this.#_server._handlers.forbidden === 'function') {
-                    try {
-                        // Run the user defined handler for not-found resources
-                        this.#_server._handlers.forbidden(this.#_req, this, this._next);
-                    } catch (error) {
-                        this.pages.serverError({ error: error as Error });
-                    }
-                } else {
-                    const viewName = 'hypercloud_401_403';
+                try {
+                    if (typeof this.#_server._handlers.forbidden === 'function') {
+                        try {
+                            // Run the user defined handler for not-found resources
+                            this.#_server._handlers.forbidden(this.#_req, this, this._next);
+                        } catch (error) {
+                            this.pages.serverError({ error: error as Error });
+                        }
+                    } else {
+                        const viewName = 'hypercloud_401_403';
 
-                    /**@type {RenderingOptions} */
-                    const renderOptions: RenderingOptions = {
-                        cacheControl: false,
-                        statusCode: 403,
-                        locals: {
-                            lang: options?.lang || this.#_req.language,
-                            title: options?.locals?.title || 'Forbidden',
-                            code: 403,
-                            commands: {
-                                code: options?.locals?.commands?.code || 'ERROR CODE',
-                                description: options?.locals?.commands?.description || 'ERROR DESCRIPTION',
-                                cause: options?.locals?.commands?.cause || 'ERROR POSSIBLY CAUSED BY',
-                                allowed: options?.locals?.commands?.allowed || 'SOME PAGES ON THIS SERVER THAT YOU DO HAVE PERMISSION TO ACCESS',
-                                regards: options?.locals?.commands?.regards || 'HAVE A NICE DAY :-)'
-                            },
-                            content: {
-                                code: options?.locals?.content?.code || 'HTTP 403 Forbidden',
-                                description: options?.locals?.content?.description || 'Access Denied. You Do Not Have The Permission To Access This Page On This Server',
-                                cause: options?.locals?.content?.cause || 'execute access forbidden, read access forbidden, write access forbidden, ssl required, ssl 128 required, ip address rejected, client certificate required, site access denied, too many users, invalid configuration, password change, mapper denied access, client certificate revoked, directory listing denied, client access licenses exceeded, client certificate is untrusted or invalid, client certificate has expired or is not yet valid, passport logon failed, source access denied, infinite depth is denied, too many requests from the same client ip',
-                                allowed: options?.locals?.content?.allowed || [{ label: 'Home', link: '/' }, { label: 'About Us', link: '/about' }, { label: 'Contact Us', link: '/support/contact' }],
+                        /**@type {RenderingOptions} */
+                        const renderOptions: RenderingOptions = {
+                            cacheControl: false,
+                            statusCode: 403,
+                            locals: {
+                                lang: options?.lang || this.#_req.language,
+                                title: options?.locals?.title || 'Forbidden',
+                                code: 403,
+                                commands: {
+                                    code: options?.locals?.commands?.code || 'ERROR CODE',
+                                    description: options?.locals?.commands?.description || 'ERROR DESCRIPTION',
+                                    cause: options?.locals?.commands?.cause || 'ERROR POSSIBLY CAUSED BY',
+                                    allowed: options?.locals?.commands?.allowed || 'SOME PAGES ON THIS SERVER THAT YOU DO HAVE PERMISSION TO ACCESS',
+                                    regards: options?.locals?.commands?.regards || 'HAVE A NICE DAY :-)'
+                                },
+                                content: {
+                                    code: options?.locals?.content?.code || 'HTTP 403 Forbidden',
+                                    description: options?.locals?.content?.description || 'Access Denied. You Do Not Have The Permission To Access This Page On This Server',
+                                    cause: options?.locals?.content?.cause || 'execute access forbidden, read access forbidden, write access forbidden, ssl required, ssl 128 required, ip address rejected, client certificate required, site access denied, too many users, invalid configuration, password change, mapper denied access, client certificate revoked, directory listing denied, client access licenses exceeded, client certificate is untrusted or invalid, client certificate has expired or is not yet valid, passport logon failed, source access denied, infinite depth is denied, too many requests from the same client ip',
+                                    allowed: options?.locals?.content?.allowed || [{ label: 'Home', link: '/' }, { label: 'About Us', link: '/about' }, { label: 'Contact Us', link: '/support/contact' }],
+                                }
                             }
                         }
-                    }
 
-                    return this.render(viewName, renderOptions);
+                        return this.render(viewName, renderOptions);
+                    }
+                } catch (error) {
+                    console.error(error);
+                    return this.pages.serverError();
                 }
             },
             /**
@@ -297,43 +312,49 @@ class HyperCloudResponse {
              * })
              * @param {ServerErrorOptions} options 
              */
-            serverError: (options: ServerErrorOptions) => {
-                if ('error' in options) {
-                    const dashLine = '#'.repeat(50);
-                    const diver = `${dashLine}\n${dashLine}`;
+            serverError: (options?: ServerErrorOptions) => {
+                try {
+                    if (options && 'error' in options) {
+                        const dashLine = '#'.repeat(50);
+                        const diver = `${dashLine}\n${dashLine}`;
 
-                    helpers.printConsole(diver);
-                    console.error(`A server error has occurred`);
-                    helpers.printConsole(`${new Date().toUTCString()} - Page Load Error - Request ID: ${this.#_req.id}`);
-                    helpers.printConsole(`Request:\n${this.#_req._toString()}`);
-                    helpers.printConsole(options.error);
-                    helpers.printConsole(diver);
-                }
-
-                if (typeof this.#_server._handlers.serverError === 'function' && options?.bypassHandler !== true) {
-                    try {
-                        // Run the user defined handler for not-found resources
-                        this.#_server._handlers.serverError(this.#_req, this, this._next);
-                    } catch (error) {
-                        this.pages.serverError({ bypassHandler: true });
+                        helpers.printConsole(diver);
+                        console.error(`A server error has occurred`);
+                        helpers.printConsole(`${new Date().toUTCString()} - Page Load Error - Request ID: ${this.#_req.id}`);
+                        helpers.printConsole(`Request:\n${this.#_req._toString()}`);
+                        helpers.printConsole(options.error);
+                        helpers.printConsole(diver);
                     }
-                } else {
-                    const viewName = 'hypercloud_500';
 
-                    /**@type {RenderingOptions} */
-                    const renderOptions: RenderingOptions = {
-                        cacheControl: false,
-                        statusCode: 500,
-                        locals: {
-                            lang: options?.lang || this.#_req.language,
-                            title: options?.locals?.title || 'Server Error',
-                            subtitle: options?.locals?.subtitle || 'Internal <code>Server&nbsp;error<span>!</span></code>',
-                            message: options?.locals?.message || `<p> We're sorry, but something went wrong on our end. Our team has been notified, and we're working to fix the issue as soon as possible. </p>\n<p>In the meantime, you can try refreshing the page or coming back later. If the problem persists, feel free to <a href="/contact-us">contact us</a> for further assistance.</p>\n<p>Thank you for your understanding.</p>`,
+                    if (typeof this.#_server._handlers.serverError === 'function' && options?.bypassHandler !== true) {
+                        try {
+                            // Run the user defined handler for not-found resources
+                            this.#_server._handlers.serverError(this.#_req, this, this._next);
+                        } catch (error) {
+                            this.pages.serverError({ bypassHandler: true });
                         }
-                    }
+                    } else {
+                        const viewName = 'hypercloud_500';
 
-                    return this.render(viewName, renderOptions);
+                        /**@type {RenderingOptions} */
+                        const renderOptions: RenderingOptions = {
+                            cacheControl: false,
+                            statusCode: 500,
+                            locals: {
+                                lang: options?.lang || this.#_req.language,
+                                title: options?.locals?.title || 'Server Error',
+                                subtitle: options?.locals?.subtitle || 'Internal <code>Server&nbsp;error<span>!</span></code>',
+                                message: options?.locals?.message || `<p> We're sorry, but something went wrong on our end. Our team has been notified, and we're working to fix the issue as soon as possible. </p>\n<p>In the meantime, you can try refreshing the page or coming back later. If the problem persists, feel free to <a href="/contact-us">contact us</a> for further assistance.</p>\n<p>Thank you for your understanding.</p>`,
+                            }
+                        }
+
+                        return this.render(viewName, renderOptions);
+                    }
+                } catch (error) {
+                    console.error(error);
+                    return this.status(500).json({ message: 'A serious server error has occurred. Please report this issue to the framework repo.' })
                 }
+
             }
         })
     }
