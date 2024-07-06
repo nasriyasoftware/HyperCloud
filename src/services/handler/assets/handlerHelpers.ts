@@ -176,8 +176,8 @@ export function bodyParser(body: any, contentType: string): BodyParserResult {
  * @param {string[]} [trusted_proxies] The trusted proxy IPs
  * @returns {string}
 */
-export function getClientIP(req: http2.Http2ServerRequest, trusted_proxies: string[]): string {
-    const local_ips = helpers.getLocalIPs();
+export async function getClientIP(req: http2.Http2ServerRequest, trusted_proxies: string[]): Promise<string> {
+    const local_ips = await helpers.getLocalIPs();
     trusted_proxies = [...new Set([...trusted_proxies, ...local_ips])];
     trusted_proxies.sort();
 

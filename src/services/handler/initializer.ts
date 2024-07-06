@@ -22,7 +22,7 @@ class Initializer {
         const request: InitializedRequest = Object.seal({
             server,
             id: null as unknown as string,
-            ip: getClientIP(req, options?.trusted_proxies || []),
+            ip: await getClientIP(req, options?.trusted_proxies || []),
             protocol: null as unknown as 'http' | 'https',
             host: null as unknown as string,
             subDomain: null as unknown as string,

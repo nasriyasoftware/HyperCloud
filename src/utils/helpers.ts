@@ -294,11 +294,35 @@ class Helpers {
     }
 
     /**
+     * Verify whether your Node.js process is running in CommonJS `cjs` or ECMAScript modules `esm`
+     * @returns {'commonjs'|'module'}
+     */
+    getNodeEnv(): 'commonjs' | 'module' {
+        return typeof module !== 'undefined' && module.exports ? 'commonjs' : 'module';
+    }
+
+    async loadModule(name: string) {
+        return new Promise<any>((resolve, reject) => {
+            try {
+                if (this.getNodeEnv() === 'commonjs') {
+                    resolve(require(name));
+                } else {
+                    // @ts-ignore
+                    import(name).then(mod => resolve(mod));
+                }
+            } catch (error) {
+                if (error instanceof Error) { error.message = `Unable to load module (${name}): ${error.message}` }
+                reject(error);
+            }
+        })
+    }
+
+    /**
      * Get the local IP address of the server
      * @returns {string[]} An array of local IPs
      */
-    getLocalIPs(): string[] {
-        const os = require('os');
+    async getLocalIPs(): Promise<string[]> {
+        const os = await this.loadModule('os');
         const nets = os.networkInterfaces();
         const interfaces = {} as Record<string, Array<any>>
 
@@ -479,7 +503,6 @@ class Helpers {
             return typeof value === 'number' && isFinite(value) && Math.floor(value) === value;
         }
     }
-
 
     /**
     * Check if a particular string is a valid HTML code
