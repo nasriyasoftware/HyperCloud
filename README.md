@@ -92,8 +92,8 @@ An HTTPS server with a local certificate and private keys:
 const server = hypercloud.Server({
     secure: true,
     ssl: {
-        cert: fs.readFileSync('path to cert', { encoding: 'utf-8' }),
-        key: fs.readFileSync('path to key', { encoding: 'utf-8' }), 
+        cert: fs.readFileSync('path/to/cert', { encoding: 'utf-8' }),
+        key: fs.readFileSync('path/to/key', { encoding: 'utf-8' }), 
     }
 });
 ```
@@ -116,7 +116,7 @@ router.use('/', (request, response, next) => {
 ##### Favicon
 Specify the website's `favicon` by passing the root directory that contains your `favicon`. Your `favicon` extension can be **.png** or **.ico**.
 
-Assuming that the `src` folder contains a your `favicon`:
+Assuming that the `src` folder contains your `favicon`:
 ```js
 router.favicon('./src');
 ```
@@ -143,7 +143,7 @@ router.use('/v1', (request, response, next) => {
     response.status(200).json({ message: 'API route works well' })
 }, {
     subDomain: 'api', // https://api.domain.com/v1
-    caseSensitive: true // Makes /home and /Home not the same
+    caseSensitive: true // Makes (/home) and (/Home) not the same
 })
 
 // Define a dynamic profile page
@@ -160,7 +160,7 @@ router.get('/u/<:profileId>', (request, response, next) => {
         }
     })
 }, {
-    caseSensitive: true // Makes /u/user and /u/User not the same
+    caseSensitive: true // Makes (/u/user) and (/u/User) not the same
 })
 ```
 
@@ -171,16 +171,16 @@ router.get('/u/<:profileId>', (request, response, next) => {
 To start listening for requests just call the `listen` method on the server.
 
 ```js
-server.listen(); // Prints ⇨ HyperCloud Server is listening on port #80
+server.listen();        // Prints ⇨ HyperCloud Server is listening on port #80
 // OR
-server.listen({ port: 5000 }); // Prints ⇨ HyperCloud Server is listening on port #5000
+server.listen(5000);    // Prints ⇨ HyperCloud Server is listening on port #5000
 ```
 
 For secure servers
 ```js
-server.listen(); // Prints ⇨ HyperCloud Server is listening securely on port #443
+server.listen();        // Prints ⇨ HyperCloud Server is listening securely on port #443
 // OR
-server.listen({ port: 8443 }); // Prints ⇨ HyperCloud Server is listening securely on port #8443
+server.listen(8443);    // Prints ⇨ HyperCloud Server is listening securely on port #8443
 ```
 
 Congratulations! Your server is now ready to handle requests.
@@ -190,10 +190,20 @@ ___
 HyperCloud has more featues and advanced configurations.
 
 <details>
+<summary>Enable Debugging</summary>
+
+#### Enable Debugging
+You can enable debugging to get more details about operations and errors.
+```js
+hypercloud.verbose = true;
+```
+</details>
+
+<details>
 <summary>Rate Limiter</summary>
 
 #### Rate Limiter
-Protect your websites against abusive usage by setting limits on how much users can access your site or consume your APIs. The rate limiter can help you prevent small [DDoS attacks](https://www.cloudflare.com/learning/ddos/what-is-a-ddos-attack/), but it's not meant for that purpose. We recommend using [Cloudflare](https://www.cloudflare.com/) to protect your resources from DDos attacks.
+Protect your websites against abusive usage by setting limits on how much users can access your site or consume your APIs. The rate limiter can help you prevent small [DDoS attacks](https://www.cloudflare.com/learning/ddos/what-is-a-ddos-attack/), but it's not meant for that purpose. We recommend using [Cloudflare](https://www.cloudflare.com/) to protect your resources from DDoS attacks.
 
 To access the rate limiter:
 ```js
@@ -236,7 +246,7 @@ const rateLimitHandler = (request, response, next) => {
 router.use('*', rateLimitHandler);
 ```
 
-Alternatively, you can use one of the built-in limiter.
+Alternatively, you can use one of the built-in limiters.
 ```js
 router.use('*', server.rateLimiter.limitBy.ipAddress(100));
 ```
@@ -247,7 +257,7 @@ This will act exactly the same as the previous method. You can also specify the 
 router.use('*', server.rateLimiter.limitBy.ipAddress(100, 'Page')); // Renders an error page
 ```
 
-Creating a rate limiter for each resource you want to protect can be exhausting and tedious, luckily, the rate limiter has main limiter that you can configure yourself, and will run before all the dynamic routes.
+Creating a rate limiter for each resource you want to protect can be exhausting and tedious, luckily, the rate limiter has a main limiter that you can configure yourself, and will run before all the dynamic routes.
 
 ```js
 server.rateLimiter.mainLimiter(server.rateLimiter.limitBy.ipAddress(100, 'Page'));
@@ -281,8 +291,8 @@ rateLimiter.mainLimiter((request, response, next) => {
 
 **Important**
 - This is an *in-memory* rate limiter and does **NOT** store the data anywhere else
-- Do not use in serverless deployments where we have multiple instances of your server or you'll endup with unexpected results.
-- In-memory storage is faster than persistant storage, if you require persitant storage please submit a feature request.
+- Do not use it in serverless deployments where you may have multiple instances of your server or you'll endup with unexpected results.
+- In-memory storage is faster than persistant storage. If you require persitant storage please submit a feature request.
 </details>
 
 <details>
@@ -297,16 +307,6 @@ server.helmet(); // This applies all the default configurations
 ```
 
 Learn how to customize the **Helmet** [here](https://github.com/nasriyasoftware/HyperCloud/blob/main/examples/helmet.md).
-</details>
-
-<details>
-<summary>Enable Debugging</summary>
-
-#### Enable Debugging
-You can enable debugging to get more details about operations and errors.
-```js
-hypercloud.verbose = true;
-```
 </details>
 
 <details>
