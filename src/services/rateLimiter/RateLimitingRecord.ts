@@ -20,7 +20,6 @@ class RateLimitingRecord {
         }
 
         this.#_timestamps = this.#_timestamps.filter(timestamp => currentTime - timestamp < this.#_rule.rate.windowMs);
-        console.log(this.#_timestamps)
         if (this.#_timestamps.length >= this.#_rule.rate.maxRequests) {
             this.#_retryAfter = currentTime + this.#_rule.cooldown;
             this.#_timestamps = [];

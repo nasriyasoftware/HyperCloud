@@ -65,48 +65,13 @@ class HyperCloudServer {
             read: (filePath: string): SecureServerOptions | ServerOptions => {
                 if (filePath === 'default') {
                     filePath = path.resolve('./config.json');
-                    const validity = helpers.checkPathAccessibility(filePath);
-                    if (validity.valid !== true) {
-                        if (validity.errors.exist !== true) {
-                            helpers.printConsole(`To use the default config file, you need to initialize the server manually and set the "saveConfig" property to (true) without specifying a "configPath".`)
-                            throw `No default configurations found.`;
-                        }
-
-                        if (validity.errors.accessible) {
-                            throw `You don't have enough permissions to access ${filePath}`;
-                        }
-                    }
-
-                    const fileStr = fs.readFileSync(filePath, { encoding: 'utf8' });
-                    try {
-                        const file = JSON.parse(fileStr);
-                        return file;
-                    } catch (error) {
-                        throw `The default configuration file is damaged, corrupteed, or not a valid JSON file.`
-                    }
                 }
 
-                if (typeof filePath !== 'string') { throw `The configuration path that you've passed is invalid. Expected a string but instead got ${typeof filePath}` }
-
-
-                const validity = helpers.checkPathAccessibility(filePath);
-                if (validity.valid !== true) {
-                    if (validity.errors.exist !== true) {
-                        helpers.printConsole(`To save your configurations, you need to initialize the server manually and set the "saveConfig" property to (true), then specify a path to store the configs using the "configPath" property.`);
-                        throw `Your configuration file was not found.`;
-                    }
-
-                    if (validity.errors.accessible) {
-                        throw `You don't have enough permissions to access ${filePath}`;
-                    }
-                }
-
-                const fileStr = fs.readFileSync(filePath, { encoding: 'utf8' });
                 try {
-                    const file = JSON.parse(fileStr);
-                    return file;
+                    return helpers.loadJSON(filePath) as unknown as SecureServerOptions | ServerOptions;
                 } catch (error) {
-                    throw `Your configuration file is damaged, corrupteed, or not a valid JSON file.`
+                    if (error instanceof Error) { error.message = `Unable to read server's config file: ${error.message}` }
+                    throw error
                 }
             },
             /**

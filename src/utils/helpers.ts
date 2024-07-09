@@ -1,11 +1,55 @@
 import fs from 'fs';
+import path from 'path';
 import crypto from 'crypto';
-import currencies from '../data/currencies.json';
 import { DeepReadonly, MimeType, RandomOptions } from '../docs/docs';
 import { fileURLToPath } from 'url';
 import { dirname } from 'path';
 
+// @ts-ignore
+const _dirname = typeof __dirname !== 'undefined' ? __dirname : helpers.getDirname(import.meta.url);
+
 class Helpers {
+    #_currencies: string[] = [];
+
+    constructor() {
+        this.#_currencies = this.loadJSON(path.resolve(_dirname, '../data/currencies.json')) as string[];
+    }
+
+    /**
+     * Load a `JSON` file
+     * @param filePath The absolute path of the `JSON` file
+     */
+    loadJSON(filePath: string): Record<string, any> | Array<any> {
+        try {
+            const validity = this.checkPathAccessibility(filePath);
+            if (!validity.valid) {
+                if (!validity.errors.isString) { throw new Error(`The filePath should be string, instead got ${typeof filePath}`) }
+                if (!validity.errors.exist) { throw new Error(`The path ${filePath} doesn't exist`) }
+                if (!validity.errors.accessible) { throw new Error(`You don't have enough permissions to access this path: ${filePath}`) }
+            }
+
+            if (!filePath.toLowerCase().endsWith('.json')) { throw new Error(`${path.basename(filePath)} is not a JSON file.`) }
+            const strContent = fs.readFileSync(filePath, { encoding: 'utf-8' });
+            
+            try {
+                const file = JSON.parse(strContent);
+                return file;
+            } catch (error) {
+                throw new Error(`The default configuration file is damaged, corrupteed, or not a valid JSON file.`);
+            }
+        } catch (error) {
+            if (error instanceof Error) { error.message = `Unable to load JSON file: ${error.message}` }
+            throw error;
+        }
+    }
+
+    /**
+     * This is equivilant to using `__dirname` in commonjs
+     * @example
+     * const _dirname = typeof __dirname !== 'undefined' ? __dirname : helpers.getDirname(import.meta.url);
+     * @param metaUrl 
+     * @returns 
+     */
     getDirname(metaUrl?: string): string {
         if (typeof metaUrl === 'string') {
             return typeof __dirname !== 'undefined' ? __dirname : dirname(fileURLToPath(metaUrl));
@@ -96,7 +140,7 @@ class Helpers {
         currency: (currency: string): boolean => {
             if (typeof currency === 'string') {
                 currency = currency.toUpperCase();
-                return currencies.includes(currency);
+                return this.#_currencies.includes(currency);
             } else {
                 return false;
             }
@@ -301,6 +345,12 @@ class Helpers {
         return typeof module !== 'undefined' && module.exports ? 'commonjs' : 'module';
     }
 
+    /**
+     * This method works the like `require` and `import`, it's used
+     * in dynamic imports.
+     * @param name The name of the module
+     * @returns 
+     */
     async loadModule(name: string) {
         return new Promise<any>((resolve, reject) => {
             try {

@@ -1,5 +1,4 @@
-import mimes from '../../../data/mimes.json';
-import _extensions from '../../../data/extensions.json';
+import path from 'path';
 import helpers from '../../../utils/helpers';
 import HyperCloudRequest from './request';
 import HyperCloudServer from '../../../server';
@@ -7,7 +6,6 @@ import Renderer from '../../viewEngine/renderer';
 import Cookies from './cookies';
 
 import fs from 'fs';
-import path from 'path';
 import ms from 'ms';
 
 // Type declarations
@@ -17,7 +15,11 @@ import net from 'net';
 import tls from 'tls';
 import { NotFoundResponseOptions, RenderingOptions, ForbiddenAndUnauthorizedOptions, ServerErrorOptions, RedirectCode, DownloadFileOptions, SendFileOptions, MimeType, ExtensionData, NextFunction } from '../../../docs/docs';
 
-const extensions = !helpers.is.undefined(_extensions) ? _extensions : [] as unknown as ExtensionData[];
+// @ts-ignore
+const _dirname = typeof __dirname !== 'undefined' ? __dirname : helpers.getDirname(import.meta.url);
+
+const mimes = helpers.loadJSON(path.resolve(_dirname, '../../../data/mimes.json'))
+const extensions = helpers.loadJSON(path.resolve(_dirname, '../../../data/mimes.json')) as unknown as ExtensionData[];
 
 interface ResponseEndOptions {
     data?: string | Uint8Array;

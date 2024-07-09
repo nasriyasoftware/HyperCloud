@@ -148,7 +148,7 @@ class RequestRoutesManager {
 
         // Check if the main rate limiter is configured
         if (typeof request.server._handlers.mainRateLimiter === 'function') {
-            staticRoutes.push(new Route({
+            dynamicRoutes.unshift(new Route({
                 path: '*', method: 'USE', handler: (request, response, next) => {
                     if (request.path.length === 1 && request.path[0] === 'favicon.ico') { return next() }
                     return request.server._handlers.mainRateLimiter(request, response, next);
