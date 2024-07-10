@@ -11,7 +11,7 @@ const execAsync = promisify(exec);
 const execFileAsync = promisify(execFile);
 
 // @ts-ignore
-const _dirname = typeof __dirname !== 'undefined' ? __dirname : helpers.getDirname(import.meta.url);
+const _dirname =  helpers.getDirname(import.meta.url);
 
 class SSLManager {
     readonly #_defaults = Object.freeze({

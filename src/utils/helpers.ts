@@ -6,7 +6,7 @@ import { fileURLToPath } from 'url';
 import { dirname } from 'path';
 
 // @ts-ignore
-const _dirname = typeof __dirname !== 'undefined' ? __dirname : helpers.getDirname(import.meta.url);
+const _dirname = dirname(fileURLToPath(metaUrl));
 
 class Helpers {
     #_currencies: string[] = [];
@@ -30,7 +30,7 @@ class Helpers {
 
             if (!filePath.toLowerCase().endsWith('.json')) { throw new Error(`${path.basename(filePath)} is not a JSON file.`) }
             const strContent = fs.readFileSync(filePath, { encoding: 'utf-8' });
-            
+
             try {
                 const file = JSON.parse(strContent);
                 return file;
@@ -46,15 +46,19 @@ class Helpers {
     /**
      * This is equivilant to using `__dirname` in commonjs
      * @example
-     * const _dirname = typeof __dirname !== 'undefined' ? __dirname : helpers.getDirname(import.meta.url);
+     * const _dirname =  helpers.getDirname(import.meta.url);
      * @param metaUrl 
      * @returns 
      */
     getDirname(metaUrl?: string): string {
-        if (typeof metaUrl === 'string') {
-            return typeof __dirname !== 'undefined' ? __dirname : dirname(fileURLToPath(metaUrl));
+        if (typeof __dirname !== 'undefined') {
+            return __dirname;
         } else {
-            throw new Error(`Unable to get "direname". metaUrl should be string but instead got ${metaUrl}`)
+            if (typeof metaUrl === 'string') {
+                return typeof __dirname !== 'undefined' ? __dirname : dirname(fileURLToPath(metaUrl));
+            } else {
+                throw new Error(`Unable to get "direname". metaUrl should be string but instead got ${metaUrl}`)
+            }
         }
     }
 
@@ -86,6 +90,7 @@ class Helpers {
 
         return obj;
     }
+
     /**Get the name if this package (project) from the `package.json` file */
     getProjectName(): string {
         // Read package.json file
@@ -95,6 +100,7 @@ class Helpers {
         // Extract project name
         return packageData.name;
     }
+    
     /**
      * Calculate the hash value if a file
      * @param {string} filePath The file path

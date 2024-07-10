@@ -19,7 +19,7 @@ import HelmetManager from './services/helmet/manager';
 import RateLimitingManager from './services/rateLimiter/rateLimiter';
 
 // @ts-ignore
-const _dirname = typeof __dirname !== 'undefined' ? __dirname : helpers.getDirname(import.meta.url);
+const _dirname =  helpers.getDirname(import.meta.url);
 
 /**HyperCloud HTTP2 server */
 class HyperCloudServer {
@@ -632,6 +632,23 @@ class HyperCloudServer {
             if (typeof error === 'string') { error = `Unable to start listening: ${error}` }
             throw error;
         }
+    }
+
+    /**
+     * Stops the server from accepting new connections and keeps existing connections.
+     * This method is asynchronous, the server is finally closed when all connections
+     * are ended and the server emits a `close` event. The optional callback will be
+     * called once the `close` event occurs. Unlike that event, it will be called with
+     * an Error as its only argument if the server was not open when it was closed.
+     * @param callback Called when the server is closed.
+     */
+    close(callback: (err?: Error) => void) {
+        const runninServer = this.#_system.httpServer ? 'http' : 'https';
+        const finalCallback = typeof callback === 'function' ? callback : (err?: Error) => console.info(`HyperCloud HTTP${runninServer === 'https' ? 's' : ''} Server is now closed.`);
+
+        if (this.#_system.httpServer) { this.#_system.httpServer.close(finalCallback) }
+        if (this.#_system.httpsServer) { this.#_system.httpsServer.close(finalCallback) }
+        return this;
     }
 }
 export default HyperCloudServer;

@@ -16,7 +16,7 @@ import tls from 'tls';
 import { NotFoundResponseOptions, RenderingOptions, ForbiddenAndUnauthorizedOptions, ServerErrorOptions, RedirectCode, DownloadFileOptions, SendFileOptions, MimeType, ExtensionData, NextFunction } from '../../../docs/docs';
 
 // @ts-ignore
-const _dirname = typeof __dirname !== 'undefined' ? __dirname : helpers.getDirname(import.meta.url);
+const _dirname =  helpers.getDirname(import.meta.url);
 
 const mimes = helpers.loadJSON(path.resolve(_dirname, '../../../data/mimes.json'))
 const extensions = helpers.loadJSON(path.resolve(_dirname, '../../../data/mimes.json')) as unknown as ExtensionData[];
