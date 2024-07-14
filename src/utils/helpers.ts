@@ -230,7 +230,7 @@ class Helpers {
                 const dirs = fs.readdirSync(projectPath);
                 return dirs.includes('package.json');
             } else {
-                if (validity.errors.notString ) {
+                if (validity.errors.notString) {
                     this.printConsole(`The project path should've been a string, but instead got ${typeof projectPath}`)
                     throw new Error(`The project path that was provided is invalid`)
                 }
@@ -259,12 +259,12 @@ class Helpers {
             doesntExist: boolean;
             notAccessible: boolean;
         };
-    } | { valid: true; } {        
+    } | { valid: true; } {
         const errors = Object.seal({
             notString: typeof path !== 'string',
             doesntExist: false,
             notAccessible: false
-        })        
+        })
 
         if (errors.notString) { return { valid: false, errors } }
 
@@ -335,13 +335,23 @@ class Helpers {
                     resolve('default' in mod ? mod.default : mod);
                 } else {
                     // @ts-ignore
-                    import(name).then(mod => resolve(mod));
+                    import(name).then(mod => resolve('default' in mod ? mod.default : mod));
                 }
             } catch (error) {
                 if (error instanceof Error) { error.message = `Unable to load module (${name}): ${error.message}` }
                 reject(error);
             }
         })
+    }
+
+    /**
+     * This method works the like `require` and `import`, it's used
+     * in dynamic imports. This is to import files
+     * @param filePath The absolute path of the file
+     * @returns 
+     */
+    async loadFileModule(filePath: string) {
+        return this.loadModule(`file://${filePath}`)
     }
 
     /**

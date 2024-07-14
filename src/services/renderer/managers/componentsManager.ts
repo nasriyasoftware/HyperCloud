@@ -17,7 +17,7 @@ class ComponentsManager {
             const folders = dirents.filter(i => !i.isFile());
 
             for (const file of files) {
-                const content = await helpers.loadModule(path.join(file.parentPath, file.name));
+                const content = await helpers.loadFileModule(path.join(file.parentPath, file.name));
                 if (!(content instanceof Component)) { continue }
                 const compName = content.name;
                 if (compName in this.#_storage) { throw new Error(`${compName} is already defined. Only unique Component names are allowed`) }

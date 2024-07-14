@@ -17,7 +17,7 @@ class PagesManager {
             const folders = dirents.filter(i => !i.isFile());
 
             for (const file of files) {
-                const content = await helpers.loadModule(path.join(file.parentPath, file.name));
+                const content = await helpers.loadFileModule(path.join(file.parentPath, file.name));
                 if (!(content instanceof Page)) { continue }
                 const pageName = content.name;
                 if (pageName in this.#_storage) { throw new Error(`${pageName} is already defined. Only unique Page names are allowed`) }

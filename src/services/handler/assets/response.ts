@@ -17,8 +17,8 @@ import { NotFoundResponseOptions, ForbiddenAndUnauthorizedOptions, ServerErrorOp
 
 const _dirname = __dirname;
 
-const mimes = JSON.parse(fs.readFileSync(path.resolve(_dirname, '../../../data/mimes.json'), { encoding: 'utf-8' })) as string[];
-const extensions = JSON.parse(fs.readFileSync(path.resolve(_dirname, '../../../data/extensions.json'), { encoding: 'utf-8' })) as unknown as ExtensionData[];
+const mimes = helpers.loadJSON(path.resolve(_dirname, '../../../data/mimes.json')) as string[];
+const extensions = helpers.loadJSON(path.resolve(_dirname, '../../../data/extensions.json')) as ExtensionData[];
 
 interface ResponseEndOptions {
     data?: string | Uint8Array;
