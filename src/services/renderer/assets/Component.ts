@@ -4,24 +4,24 @@ import fs from 'fs';
 import path from 'path';
 
 export class Component {
-    #_id = helpers.generateRandom(16, { includeSymbols: false });
+    readonly #_id = helpers.generateRandom(16, { includeSymbols: false });
     /**Component name */
-    #_name: string;
+    readonly #_name: string;
     /**The EJS template */
-    #_template: ViewRenderingAsset = { filePath: '', content: '' }
+    readonly #_template: ViewRenderingAsset = { filePath: '', content: '' }
 
     /**The component's stylesheet */
     #_stylesheet: InternalStylesheetRecord | undefined;
     /**The component's script */
     #_script: InternalScriptRecord | undefined;
     /**The template's default locals */
-    #_locals: Record<string, any> = { default: {} }
+    readonly #_locals: Record<string, any> = { default: {} }
 
     readonly #_cache = Object.seal({
         extensions: { css: false, js: false }
     })
 
-    #_helpers = {
+    readonly #_helpers = {
         checkPath: (pathToCheck: string, type: 'Template' | 'CSS' | 'JS') => {
             const validity = helpers.checkPathAccessibility(pathToCheck);
             if (!validity.valid) {
@@ -78,10 +78,10 @@ export class Component {
 
     /**
      * Create a new component
-     * @param data The component name
+     * @param name The component name
      */
-    constructor(data: ComponentConstructorOpts) {
-        this.#_name = data.name;
+    constructor(name: string) {
+        this.#_name = name;
     }
 
     readonly template = {

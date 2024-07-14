@@ -6,24 +6,24 @@ import path from 'path';
 export class Page {
     #_id = helpers.generateRandom(16, { includeSymbols: false });
     /**Page name (internally on the server) */
-    #_name: string;
+    readonly #_name: string;
     /**The EJS template */
-    #_template: ViewRenderingAsset = { filePath: '', content: '' }
+    readonly #_template: ViewRenderingAsset = { filePath: '', content: '' }
 
     #_title: Record<string, string> = { default: '' }
     #_description: Record<string, string> = { default: '' }
     /**The template's default locals */
-    #_locals: Record<string, any> = { default: {} }
+    readonly #_locals: Record<string, any> = { default: {} }
 
-    #_stylesheets: (InternalStylesheetRecord | ExternalStylesheetRecord)[] = [];
-    #_scripts: (InternalScriptRecord | ExternalScriptRecord | OnPageScriptRecord)[] = [];
-    #_metaTags = [] as ({ attributes: Record<string, string> })[];
+    readonly #_stylesheets: (InternalStylesheetRecord | ExternalStylesheetRecord)[] = [];
+    readonly #_scripts: (InternalScriptRecord | ExternalScriptRecord | OnPageScriptRecord)[] = [];
+    readonly #_metaTags = [] as ({ attributes: Record<string, string> })[];
 
     readonly #_cache = Object.seal({
         extensions: { css: false, js: false }
     })
 
-    #_helpers = {
+    readonly #_helpers = {
         checkPath: (pathToCheck: string, type: 'Template' | 'CSS' | 'JS') => {
             const validity = helpers.checkPathAccessibility(pathToCheck);
             if (!validity.valid) {
