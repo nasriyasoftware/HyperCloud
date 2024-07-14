@@ -36,7 +36,7 @@ class ComponentsManager {
      * Register your defined components so you can use them in your code
      * @param paths A `PathLike` or an array of `PathLike` directories containing your components. 
      */
-    register(paths: string | string[]) {
+    async register(paths: string | string[]) {
         if (!Array.isArray(paths)) { paths = [paths] }
         const errRes = { message: 'Invalid components\' paths detected. Read the error list', errors: [] as any[] }
 
@@ -44,7 +44,7 @@ class ComponentsManager {
         for (const viewsPath of paths) {
             const validity = helpers.checkPathAccessibility(viewsPath);
             if (validity.valid) {
-                this.#_helpers.register(viewsPath);
+                await this.#_helpers.register(viewsPath);
                 continue;
             }
 

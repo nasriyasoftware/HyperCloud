@@ -25,7 +25,7 @@ class RenderingManager {
     readonly #_siteName: Record<string, any> = { default: null }
     #_assetsBaseUrl = '/_assets/renderer';
 
-    #_helpers = {
+    readonly #_helpers = {
         sendStylesheet: (data: { stylesheet: InternalStylesheetRecord | undefined, isCached: boolean, type: 'Page' | 'Component' }, res: HyperCloudResponse) => {
             const { stylesheet, isCached, type } = data;
             if (stylesheet) {
