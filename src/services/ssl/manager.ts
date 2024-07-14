@@ -10,8 +10,7 @@ import helpers from '../../utils/helpers';
 const execAsync = promisify(exec);
 const execFileAsync = promisify(execFile);
 
-// @ts-ignore
-const _dirname =  helpers.getDirname(import.meta.url);
+const _dirname = __dirname;
 
 class SSLManager {
     readonly #_defaults = Object.freeze({
@@ -106,7 +105,7 @@ class SSLManager {
                     let num = 0;
                     // Creating and running a server at your port or port 80
                     this.#_cache.server = http.createServer(async (req, res) => {
-                        console.log(`Auth Request #${num++}`)
+                        helpers.printConsole(`Auth Request #${num++}`);
                         // Parse the URL to extract the challenge token
                         const urlParts = (req.url as string).split('/');
                         const challengeToken = urlParts[urlParts.length - 1];

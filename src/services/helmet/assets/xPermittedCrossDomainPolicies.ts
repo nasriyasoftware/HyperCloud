@@ -5,7 +5,7 @@ class XPermittedCrossDomainPolicies {
     static validate(options?: XPermittedCrossDomainPoliciesOptions | false) {
         if (options === false) { return null }
 
-        if (helpers.is.undefined(options) || !helpers.is.realObject(options) || !('permittedPolicies' in options)) {
+        if (helpers.is.undefined(options) || helpers.isNot.realObject(options) || !('permittedPolicies' in options)) {
             return 'none';
 
         }

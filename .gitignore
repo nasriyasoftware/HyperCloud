@@ -16,5 +16,3 @@ logs*/
 *_temp/
 
 dist
-**/renderer
-pages_ssr

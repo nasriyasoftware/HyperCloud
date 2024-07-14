@@ -1,7 +1,7 @@
 {
     "esmDir": "auto",
     "cjsDir": "auto",
-    "verbose": true,
+    "verbose": false,
     "copyFiles": {
         "from": "./src",
         "exclude": [

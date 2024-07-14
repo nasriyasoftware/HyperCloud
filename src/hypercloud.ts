@@ -1,13 +1,12 @@
 import HyperCloudServer from './server';
 import { HyperCloudInitFile, HyperCloudManagementOptions, SecureServerOptions, ServerOptions } from './docs/docs';
 import helpers from './utils/helpers';
-import hypercloudDNS from '@nasriya/dns';
-import nasriyaCron from '@nasriya/cron';
 
 import fs from 'fs';
 import path from 'path';
 import process from 'process';
-// export { PageDefinition } from './services/renderer/assets/PageDefinition';
+export { Page } from './services/renderer/assets/Page';
+export { Component } from './services/renderer/assets/Component';
 
 process.env.HYPERCLOUD_SERVER_VERBOSE = 'FALSE';
 
@@ -25,8 +24,6 @@ class HyperCloud {
         return server;
     }
 
-    get cronManager() { return nasriyaCron }
-    get dnsManager() { return hypercloudDNS }
     get verbose() { return process.env.HYPERCLOUD_SERVER_VERBOSE === 'TRUE' ? true : false }
     /**
      * Display extra debugging details in the console. Default is ```false```.
@@ -56,9 +53,9 @@ class HyperCloud {
         const validity = helpers.checkPathAccessibility(root);
         if (validity.valid !== true) {
             const errors = validity.errors;
-            if (errors.isString !== true) { throw `The root directory should be a string value, instead got ${typeof root}` }
-            if (errors.exist !== true) { throw `The provided root directory (${root}) doesn't exist.` }
-            if (errors.accessible !== true) { throw `Unable to access (${root}): read permission denied.` }
+            if (errors.notString) { throw new Error(`The root directory should be a string value, instead got ${typeof root}`) }
+            if (errors.doesntExist) { throw new Error(`The provided root directory (${root}) doesn't exist.`) }
+            if (errors.notAccessible) { throw new Error(`Unable to access (${root}): read permission denied.`) }
         }
 
         const processFolder = async (root: string) => {

@@ -29,6 +29,7 @@ export type RequestBodyType = 'text' | 'javascript' | 'json' | 'formData' | 'buf
 export type HyperCloudServerHandlers = 'notFound' | 'serverError' | 'unauthorized' | 'forbidden' | 'userSessions' | 'logger' | 'onHTTPError';
 export type HttpEquivType = 'content-security-policy' | 'content-type' | 'default-style' | 'x-ua-compatible' | 'refresh';
 export type HTMLMetaName = 'application-name' | 'author' | 'description' | 'generator' | 'keywords' | 'referrer' | 'theme-color' | 'color-scheme' | 'viewport' | 'creator' | 'googlebot' | 'publisher' | 'robots' | (string & {});
+export type PageRenderingCacheAsset = Exclude<RenderingCacheAsset, "json">;
 
 /**`DeepReadonly` means that the object or array is completely frozen */
 export type DeepReadonly<T> = {
@@ -108,11 +109,12 @@ export interface HTMLScriptTag {
     type?: 'text/javascript';
 }
 
-export interface InternalScriptOptions extends Omit<InternalScriptRecord, 'scope'> { }
+export interface InternalScriptOptions extends Omit<InternalScriptRecord, 'scope' | 'fileName'> { }
 export interface InternalScriptRecord extends Omit<HTMLScriptTag, 'src' | 'type' | 'integrity'>, FileAsset {
     scope: 'Internal';
     /**The path to the script file */
     filePath: string;
+    fileName: string;
 }
 
 export interface ExternalScriptOptions extends Omit<ExternalScriptRecord, 'scope'> { }
@@ -451,8 +453,7 @@ export interface HyperCloudUserOptions {
 
 /**Options for the `401` and `403` error pages */
 export interface ForbiddenAndUnauthorizedOptions {
-    lang: string;
-    locals: {
+    locals?: {
         title?: string;
         commands?: {
             code?: string;
@@ -475,10 +476,10 @@ export interface NotFoundResponseOptions {
     locals?: {
         title?: string;
         subtitle?: string;
-        home?: string;
+        homeBtnLabel?: string;
     };
-    lang?: string;
 }
+
 export interface StaticRouteOptions {
     /** The route path URL. */
     path: string;
@@ -522,9 +523,18 @@ export interface RouteOptions {
     caseSensitive?: boolean;
 }
 
-export interface RenderingOptions {
+export interface PageRenderingOptions {
+    title?: string;
+    description?: string;
+    keywords?: string | string[];
+    favicon?: string;
+    thumbnail?: string;
     /** Local variables to be used */
-    locals?: object;
+    locals?: Record<string, any>,
+    httpOptions?: RenderingOptions;
+}
+
+export interface RenderingOptions {
     /** A status code to send */
     statusCode?: number;
     /** Enable or disable setting `Cache-Control` response header. Default: `true`. */

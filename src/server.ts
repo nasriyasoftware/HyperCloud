@@ -9,17 +9,14 @@ import { HelmetConfigOptions, HyperCloudInitFile, HyperCloudManagementOptions, H
 
 import initializer from './services/handler/initializer';
 import HyperCloudResponse from './services/handler/assets/response';
-// A temporary solution until SSR is ready
-import RenderingManager from './services/viewEngine/manager';
-// import RenderingManager from './services/renderer/manager';
+import RenderingManager from './services/renderer/manager';
 import RoutesManager from './services/routes/manager';
 import RequestRoutesManager from './services/routes/assets/routesInitiator';
 import Router from './services/routes/assets/router';
 import HelmetManager from './services/helmet/manager';
 import RateLimitingManager from './services/rateLimiter/rateLimiter';
 
-// @ts-ignore
-const _dirname =  helpers.getDirname(import.meta.url);
+const _dirname = __dirname;
 
 /**HyperCloud HTTP2 server */
 class HyperCloudServer {
@@ -93,16 +90,15 @@ class HyperCloudServer {
         }
     })
 
-    constructor(userOptions?: SecureServerOptions | ServerOptions | HyperCloudInitFile, addOpt?: HyperCloudManagementOptions) {
-        this.rendering = new RenderingManager(this);
-        this.rendering.addViews(path.resolve(path.join(_dirname, './services/pages')));
+    constructor(userOptions?: SecureServerOptions | ServerOptions | HyperCloudInitFile, addOpt?: HyperCloudManagementOptions) {        
         this._routesManager = new RoutesManager();
         this.#_helmet = new HelmetManager(this);
         this.rateLimiter = new RateLimitingManager(this);
+        this.rendering = new RenderingManager(this);        
 
         try {
             if (helpers.is.undefined(userOptions)) { return }
-            if (!helpers.is.realObject(userOptions)) { throw `The server configuration is expecting an object, but instead got ${typeof userOptions}` }
+            if (helpers.isNot.realObject(userOptions)) { throw `The server configuration is expecting an object, but instead got ${typeof userOptions}` }
 
             let isFromFile = false;
             if ('path' in userOptions) {
@@ -122,12 +118,12 @@ class HyperCloudServer {
                     this.#_config.secure = true;
 
                     if ('ssl' in options) {
-                        if (helpers.is.undefined(options.ssl) || !helpers.is.realObject(options.ssl)) { throw `The SSL options used in server configurations ${config_src} is expectd to be an object, instead got ${options.ssl}` }
+                        if (helpers.is.undefined(options.ssl) || helpers.isNot.realObject(options.ssl)) { throw `The SSL options used in server configurations ${config_src} is expectd to be an object, instead got ${options.ssl}` }
 
                         switch (options.ssl.type) {
                             case 'credentials': {
                                 if ('credentials' in options) {
-                                    if (helpers.is.undefined(options.ssl.credentials) || !helpers.is.realObject(options.ssl.credentials)) { throw `The SSL "credentials" option is expecting an object, but instead got ${typeof options.ssl.credentials}` }
+                                    if (helpers.is.undefined(options.ssl.credentials) || helpers.isNot.realObject(options.ssl.credentials)) { throw `The SSL "credentials" option is expecting an object, but instead got ${typeof options.ssl.credentials}` }
 
                                     if ('cert' in options.ssl.credentials && 'key' in options.ssl.credentials) {
                                         if ('cert' in options.ssl.credentials) {
@@ -158,7 +154,7 @@ class HyperCloudServer {
                                 break;
 
                             case 'letsEncrypt': {
-                                if (helpers.is.undefined(options.ssl.letsEncrypt) || !helpers.is.realObject(options.ssl.letsEncrypt)) { throw `The SSL "letsEncrypt" option is expecting an object, but instead got ${typeof options.ssl.letsEncrypt}` }
+                                if (helpers.is.undefined(options.ssl.letsEncrypt) || helpers.isNot.realObject(options.ssl.letsEncrypt)) { throw `The SSL "letsEncrypt" option is expecting an object, but instead got ${typeof options.ssl.letsEncrypt}` }
 
                                 if ('email' in options.ssl.letsEncrypt && !helpers.is.undefined(options.ssl.letsEncrypt)) {
                                     if (!helpers.is.validString(options.ssl.letsEncrypt.email)) { throw `The options.ssl.letsEncrypt.email option in the configuration ${config_src} is expecting a string value, instead got ${typeof options.ssl.letsEncrypt.email}` }
@@ -204,9 +200,9 @@ class HyperCloudServer {
                             if (validity.valid === true) {
                                 this.#_config.ssl.storePath = options.ssl.storePath;
                             } else {
-                                if (validity.errors.isString !== true) { throw new TypeError(`Invalid "storePath" was provided. Expected a string but instead got ${typeof options.ssl.storePath}`) }
-                                if (validity.errors.exist !== true) { throw new Error(`The "storePath" that you've provided (${options.ssl.storePath}) doesn't exist`) }
-                                if (validity.errors.accessible !== true) { throw Error(`You don't have enough read permissions to access ${options.ssl.storePath}`) }
+                                if (validity.errors.notString) { throw new TypeError(`Invalid "storePath" was provided. Expected a string but instead got ${typeof options.ssl.storePath}`) }
+                                if (validity.errors.doesntExist) { throw new Error(`The "storePath" that you've provided (${options.ssl.storePath}) doesn't exist`) }
+                                if (validity.errors.notAccessible) { throw Error(`You don't have enough read permissions to access ${options.ssl.storePath}`) }
                             }
                         } else {
                             this.#_config.ssl.storePath = path.join(process.cwd(), 'SSL');
@@ -219,7 +215,7 @@ class HyperCloudServer {
             }
 
             if ('proxy' in options && !helpers.is.undefined(options.proxy)) {
-                if (!helpers.is.realObject(options.proxy)) { throw `The options.proxy expected a real object but instead got ${typeof options.proxy}` }
+                if (helpers.isNot.realObject(options.proxy)) { throw `The options.proxy expected a real object but instead got ${typeof options.proxy}` }
                 const validProxies: string[] = [];
 
                 if ('isLocal' in options.proxy && options.proxy.isLocal === true) {
@@ -262,7 +258,7 @@ class HyperCloudServer {
             }
 
             if ('languages' in options) {
-                if (helpers.is.undefined(options.languages) || !helpers.is.realObject(options.languages)) { throw `The options.languages option has been used with an invalid value. Expected an object but instead got ${typeof options.languages}` }
+                if (helpers.is.undefined(options.languages) || helpers.isNot.realObject(options.languages)) { throw `The options.languages option has been used with an invalid value. Expected an object but instead got ${typeof options.languages}` }
 
                 if ('supported' in options.languages && !helpers.is.undefined(options.languages.supported)) {
                     this.supportedLanguages = options.languages.supported;
@@ -278,7 +274,7 @@ class HyperCloudServer {
             }
 
             if ('handlers' in options && !helpers.is.undefined(options.handlers)) {
-                if (!helpers.is.realObject(options.handlers)) { throw `The options.handler was used with an invalid value. Expected an object but instead got ${typeof options.handlers}` }
+                if (helpers.isNot.realObject(options.handlers)) { throw `The options.handler was used with an invalid value. Expected an object but instead got ${typeof options.handlers}` }
                 for (const name in options.handlers) {
                     const handlerName = name as HyperCloudServerHandlers;
                     this.handlers[handlerName](options.handlers[handlerName])
@@ -620,6 +616,7 @@ class HyperCloudServer {
                 port = this.#_config.secure ? 443 : 80;
             }
 
+            await this.rendering.pages.register(path.resolve(path.join(_dirname, './services/pages')));
             return new Promise((resolve, reject) => {
                 const res = server.listen(port, () => {
                     console.info(`HyperCloud Server is listening ${this.#_config.secure ? 'securely ' : ''}on port #${port}`);

@@ -5,7 +5,7 @@ class XFrameOptions {
     static validate(options?: XFrameOptionsOptions | false) {
         if (options === false) { return null }
 
-        if (!options || !helpers.is.realObject(options) || !options.action) {
+        if (!options || helpers.isNot.realObject(options) || !options.action) {
             return 'DENY';
         }
 

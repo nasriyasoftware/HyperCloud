@@ -23,7 +23,7 @@ class RateLimitingManager {
      */
     defineRule(rule: RateLimitRuleOptions): RateLimitRule {
         if (helpers.is.undefined(rule)) { throw new SyntaxError(`The rule object of the 'defineRule()' method is missing`) }
-        if (!helpers.is.realObject(rule)) { throw new TypeError(`The 'defineRule()' method expects a rule object, but instead got ${typeof rule}`) }
+        if (helpers.isNot.realObject(rule)) { throw new TypeError(`The 'defineRule()' method expects a rule object, but instead got ${typeof rule}`) }
 
         if ('name' in rule) {
             if (!helpers.is.validString(rule.name)) { throw new TypeError(`The rule expected a string 'name', instead got ${typeof rule.name}`) }
@@ -84,7 +84,7 @@ class RateLimitingManager {
      */
     authorize(options: RateLimitAuthOptions): RateLimiterAuthorizedHit | RateLimiterUnauthorizedHit {
         if (helpers.is.undefined(options)) { throw new SyntaxError(`The 'authorize()' method expects an 'options' argument`) }
-        if (!helpers.is.realObject(options)) { throw new TypeError(`The 'authorize()' method of the rate limiter expects an object, instead got ${typeof options}`) }
+        if (helpers.isNot.realObject(options)) { throw new TypeError(`The 'authorize()' method of the rate limiter expects an object, instead got ${typeof options}`) }
 
         if (!Array.isArray(options.rules)) { throw new TypeError(`The 'authorize()' method expects an array of 'rules' names and priority`) }
         const validRules = options.rules.filter(rule => helpers.is.realObject(rule) && 'name' in rule).map(rule => {

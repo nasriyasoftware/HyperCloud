@@ -4,7 +4,7 @@ import helpers from "../../../utils/helpers";
 class DNSPrefetchControl {
     static validate(options?: DNSPrefetchControlOptions | false) {
         if (options === false) { return null }
-        if (!options || !helpers.is.realObject(options) || !('enabled' in options)) {
+        if (!options || helpers.isNot.realObject(options) || !('enabled' in options)) {
             return 'off';
         }
 

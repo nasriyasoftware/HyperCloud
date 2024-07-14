@@ -22,7 +22,7 @@ class ReferrerPolicy {
     static validate(options?: ReferrerPolicyOptions | false) {
         if (options === false) { return null }
 
-        if (!options || !helpers.is.realObject(options) || !options.policy) {
+        if (!options || helpers.isNot.realObject(options) || !options.policy) {
             return 'no-referrer';
         }
 

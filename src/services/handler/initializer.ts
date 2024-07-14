@@ -60,7 +60,6 @@ class Initializer {
         request.path = parsed.pathname.split('/').filter(i => i.length > 0);
         const parsedTldts = tldts.parse(request.href);
         request.domain = typeof parsedTldts.domain === 'string' ? parsedTldts.domain : request.ip;
-        // console.log(parsedTldts.domain, request.domain)
         request.subDomain = parsedTldts.subdomain || undefined;
 
         const contentLength = (() => {

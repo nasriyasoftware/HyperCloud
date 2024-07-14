@@ -51,9 +51,9 @@ class StaticRoute {
         const validity = helpers.checkPathAccessibility(root);
         if (validity.valid !== true) {
             const errors = validity.errors;
-            if (errors.isString !== true) { throw `The root directory should be a string value, instead got ${typeof root}` }
-            if (errors.exist !== true) { throw `The provided root directory (${root}) doesn't exist.` }
-            if (errors.accessible !== true) { throw `Unable to access (${root}): read permission denied.` }
+            if (errors.notString) { throw new Error(`The root directory should be a string value, instead got ${typeof root}`) }
+            if (errors.doesntExist) { throw new Error(`The provided root directory (${root}) doesn't exist.`) }
+            if (errors.notAccessible) { throw new Error(`Unable to access (${root}): read permission denied.`) }
         }
 
         this.#_root = root;
@@ -112,7 +112,6 @@ class StaticRoute {
                         if (eTagValidity.valid) {
                             const eTags = JSON.parse(fs.readFileSync(eTagsPath, { encoding: 'utf-8' }))
                             if (helpers.is.realObject(eTags)) {
-                                console.log(`eTag found: ${eTags[file.name]}`)
                                 if (file.name in eTags) { response.setHeader('etag', eTags[file.name]) }
                             }
                         }

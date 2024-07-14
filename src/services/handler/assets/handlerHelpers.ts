@@ -80,7 +80,6 @@ export function bodyParser(body: any, contentType: string): BodyParserResult {
 
     if (contentType.includes('application/octet-stream')) {
         request.bodyType = 'buffer';
-        console.log('Binary data:', request.body);
         // Handle binary data
         return request;
 
@@ -164,7 +163,6 @@ export function bodyParser(body: any, contentType: string): BodyParserResult {
         return request;
     }
 
-    console.log('Raw data:\n', request.body);
     // Handle other types of raw data
     request.bodyType = 'buffer';
     return request;

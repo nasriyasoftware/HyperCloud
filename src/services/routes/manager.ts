@@ -84,7 +84,6 @@ class RoutesManager {
                 response.valid = true; return response;
             },
             staticPath: (path: string[], route: StaticRoute) => {
-                // console.log({ path, rPath: route.path })
                 if (path.length === 0 || path.length < route.path.length) { return false }
 
                 if (route.path.length === 0) { return true }

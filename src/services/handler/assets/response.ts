@@ -2,7 +2,7 @@ import path from 'path';
 import helpers from '../../../utils/helpers';
 import HyperCloudRequest from './request';
 import HyperCloudServer from '../../../server';
-import Renderer from '../../viewEngine/renderer';
+import Renderer from '../../renderer/renderer';
 import Cookies from './cookies';
 
 import fs from 'fs';
@@ -13,13 +13,12 @@ import http2 from 'http2';
 import stream from 'stream';
 import net from 'net';
 import tls from 'tls';
-import { NotFoundResponseOptions, RenderingOptions, ForbiddenAndUnauthorizedOptions, ServerErrorOptions, RedirectCode, DownloadFileOptions, SendFileOptions, MimeType, ExtensionData, NextFunction } from '../../../docs/docs';
+import { NotFoundResponseOptions, ForbiddenAndUnauthorizedOptions, ServerErrorOptions, RedirectCode, DownloadFileOptions, SendFileOptions, MimeType, ExtensionData, NextFunction, PageRenderingOptions } from '../../../docs/docs';
 
-// @ts-ignore
-const _dirname =  helpers.getDirname(import.meta.url);
+const _dirname = __dirname;
 
-const mimes = helpers.loadJSON(path.resolve(_dirname, '../../../data/mimes.json'))
-const extensions = helpers.loadJSON(path.resolve(_dirname, '../../../data/mimes.json')) as unknown as ExtensionData[];
+const mimes = JSON.parse(fs.readFileSync(path.resolve(_dirname, '../../../data/mimes.json'), { encoding: 'utf-8' })) as string[];
+const extensions = JSON.parse(fs.readFileSync(path.resolve(_dirname, '../../../data/extensions.json'), { encoding: 'utf-8' })) as unknown as ExtensionData[];
 
 interface ResponseEndOptions {
     data?: string | Uint8Array;
@@ -92,7 +91,6 @@ class HyperCloudResponse {
              * @example
              * // Use the default 404 page
              * response.pages.notFound({
-             *      lang: 'en',
              *      title: '404 - Not Found',
              *      subtitle: 'This page cannot be found',
              *      home: 'Home'
@@ -118,19 +116,22 @@ class HyperCloudResponse {
                         }
                     } else {
                         const viewName = 'hypercloud_404';
+                        const page = this.server.rendering.pages.storage[viewName];
+                        const locals = page.locals.get(this.req.language) as Record<string, any>;
 
-                        const renderOptions: RenderingOptions = {
-                            cacheControl: false,
-                            statusCode: 404,
+                        const renderOptions: PageRenderingOptions = {
                             locals: {
-                                lang: options?.lang || this.#_req.language,
-                                title: options?.locals?.title || `404 - Page Not Found`,
-                                subtitle: options?.locals?.subtitle || 'Oops. Looks like you took a wrong turn.',
-                                homeBtnLabel: options?.locals?.home || 'HOME'
+                                title: helpers.is.validString(options?.locals?.title) ? options?.locals?.title : locals.title,
+                                subtitle: helpers.is.validString(options?.locals?.subtitle) ? options?.locals?.subtitle : locals.subtitle,
+                                homeBtnLabel: helpers.is.validString(options?.locals?.homeBtnLabel) ? options?.locals?.homeBtnLabel : locals.homeBtnLabel
+                            },
+                            httpOptions: {
+                                cacheControl: false,
+                                statusCode: 404,
                             }
                         }
 
-                        return this.render(viewName, renderOptions)
+                        return this.render(viewName, renderOptions);
                     }
                 } catch (error) {
                     console.error(error);
@@ -145,9 +146,8 @@ class HyperCloudResponse {
              * @example
              * // Use the default 401 page
              * response.pages.unauthorized({
-             *      lang: 'en',
              *      title: '401 - Unauthorized',
-             *      commands: {*
+             *      commands: {
              *          code: 'ERROR CODE',
              *          description: 'ERROR DESCRIPTION',
              *          cause: 'ERROR POSSIBLY CAUSED BY',
@@ -181,29 +181,32 @@ class HyperCloudResponse {
                             this.pages.serverError({ error: error as Error });
                         }
                     } else {
-                        const viewName = 'hypercloud_401_403';
+                        const viewName = 'hypercloud_401';
+                        const page = this.server.rendering.pages.storage[viewName];
+                        const locals = page.locals.get(this.req.language) as Record<string, any>;
 
-                        /**@type {RenderingOptions} */
-                        const renderOptions: RenderingOptions = {
-                            cacheControl: false,
-                            statusCode: 401,
+                        const renderOptions: PageRenderingOptions = {
                             locals: {
-                                lang: options?.lang || this.#_req.language,
-                                title: options?.locals?.title || 'Unauthorized',
-                                code: 401,
+                                title: helpers.is.validString(options?.locals?.title) ? options?.locals?.title : locals.title,
+                                code: locals.code,
+                                description: locals.description,
                                 commands: {
-                                    code: options?.locals?.commands?.code || 'ERROR CODE',
-                                    description: options?.locals?.commands?.description || 'ERROR DESCRIPTION',
-                                    cause: options?.locals?.commands?.cause || 'ERROR DESCRIPTION',
-                                    allowed: options?.locals?.commands?.allowed || 'SOME PAGES ON THIS SERVER THAT YOU DO HAVE PERMISSION TO ACCESS',
-                                    regards: options?.locals?.commands?.regards || 'HAVE A NICE DAY :-)'
+                                    code: helpers.is.validString(options?.locals?.commands?.code) ? options?.locals?.commands?.code : locals.commands.code,
+                                    description: helpers.is.validString(options?.locals?.commands?.description) ? options?.locals?.commands?.description : locals.commands.description,
+                                    cause: helpers.is.validString(options?.locals?.commands?.cause) ? options?.locals?.commands?.cause : locals.commands.cause,
+                                    allowed: helpers.is.validString(options?.locals?.commands?.allowed) ? options?.locals?.commands?.allowed : locals.commands.allowed,
+                                    regards: helpers.is.validString(options?.locals?.commands?.regards) ? options?.locals?.commands?.regards : locals.commands.regards,
                                 },
                                 content: {
-                                    code: options?.locals?.content?.code || 'HTTP 401 Unauthorized',
-                                    description: options?.locals?.content?.description || 'Access Denied. You Do Not Have The Permission To Access This Page On This Server',
-                                    cause: options?.locals?.content?.cause || 'execute access unauthorized, read access unauthorized, write access unauthorized, ssl required, ssl 128 required, ip address rejected, client certificate required, site access denied, too many users, invalid configuration, password change, mapper denied access, client certificate revoked, directory listing denied, client access licenses exceeded, client certificate is untrusted or invalid, client certificate has expired or is not yet valid, passport logon failed, source access denied, infinite depth is denied, too many requests from the same client ip',
-                                    allowed: options?.locals?.content?.allowed || [{ label: 'Home', link: '/' }, { label: 'About Us', link: '/about' }, { label: 'Contact Us', link: '/support/contact' }],
+                                    code: helpers.is.validString(options?.locals?.content?.code) ? options?.locals?.content?.code : locals.content.code,
+                                    description: helpers.is.validString(options?.locals?.content?.description) ? options?.locals?.content?.description : locals.content.description,
+                                    cause: helpers.is.validString(options?.locals?.content?.cause) ? options?.locals?.content?.cause : locals.content.cause,
+                                    allowed: Array.isArray(options?.locals?.content?.allowed) ? options?.locals?.commands?.allowed : locals.commands.allowed,
                                 }
+                            },
+                            httpOptions: {
+                                cacheControl: false,
+                                statusCode: 401,
                             }
                         }
 
@@ -222,9 +225,8 @@ class HyperCloudResponse {
              * @example
              * // Use the default 403 page
              * response.pages.forbidden({
-             *      lang: 'en',
              *      title: '403 - Forbidden',
-             *      commands: {*
+             *      commands: {
              *          code: 'ERROR CODE',
              *          description: 'ERROR DESCRIPTION',
              *          cause: 'ERROR POSSIBLY CAUSED BY',
@@ -248,7 +250,7 @@ class HyperCloudResponse {
              * })
              * @param {ForbiddenAndUnauthorizedOptions} options 
              */
-            forbidden: (options: ForbiddenAndUnauthorizedOptions) => {
+            forbidden: (options?: ForbiddenAndUnauthorizedOptions) => {
                 try {
                     if (typeof this.#_server._handlers.forbidden === 'function') {
                         try {
@@ -258,29 +260,32 @@ class HyperCloudResponse {
                             this.pages.serverError({ error: error as Error });
                         }
                     } else {
-                        const viewName = 'hypercloud_401_403';
+                        const viewName = 'hypercloud_403';
+                        const page = this.server.rendering.pages.storage[viewName];
+                        const locals = page.locals.get(this.req.language) as Record<string, any>;
 
-                        /**@type {RenderingOptions} */
-                        const renderOptions: RenderingOptions = {
-                            cacheControl: false,
-                            statusCode: 403,
+                        const renderOptions: PageRenderingOptions = {
                             locals: {
-                                lang: options?.lang || this.#_req.language,
-                                title: options?.locals?.title || 'Forbidden',
-                                code: 403,
+                                title: helpers.is.validString(options?.locals?.title) ? options?.locals?.title : locals.title,
+                                code: locals.code,
+                                description: locals.description,
                                 commands: {
-                                    code: options?.locals?.commands?.code || 'ERROR CODE',
-                                    description: options?.locals?.commands?.description || 'ERROR DESCRIPTION',
-                                    cause: options?.locals?.commands?.cause || 'ERROR POSSIBLY CAUSED BY',
-                                    allowed: options?.locals?.commands?.allowed || 'SOME PAGES ON THIS SERVER THAT YOU DO HAVE PERMISSION TO ACCESS',
-                                    regards: options?.locals?.commands?.regards || 'HAVE A NICE DAY :-)'
+                                    code: helpers.is.validString(options?.locals?.commands?.code) ? options?.locals?.commands?.code : locals.commands.code,
+                                    description: helpers.is.validString(options?.locals?.commands?.description) ? options?.locals?.commands?.description : locals.commands.description,
+                                    cause: helpers.is.validString(options?.locals?.commands?.cause) ? options?.locals?.commands?.cause : locals.commands.cause,
+                                    allowed: helpers.is.validString(options?.locals?.commands?.allowed) ? options?.locals?.commands?.allowed : locals.commands.allowed,
+                                    regards: helpers.is.validString(options?.locals?.commands?.regards) ? options?.locals?.commands?.regards : locals.commands.regards,
                                 },
                                 content: {
-                                    code: options?.locals?.content?.code || 'HTTP 403 Forbidden',
-                                    description: options?.locals?.content?.description || 'Access Denied. You Do Not Have The Permission To Access This Page On This Server',
-                                    cause: options?.locals?.content?.cause || 'execute access forbidden, read access forbidden, write access forbidden, ssl required, ssl 128 required, ip address rejected, client certificate required, site access denied, too many users, invalid configuration, password change, mapper denied access, client certificate revoked, directory listing denied, client access licenses exceeded, client certificate is untrusted or invalid, client certificate has expired or is not yet valid, passport logon failed, source access denied, infinite depth is denied, too many requests from the same client ip',
-                                    allowed: options?.locals?.content?.allowed || [{ label: 'Home', link: '/' }, { label: 'About Us', link: '/about' }, { label: 'Contact Us', link: '/support/contact' }],
+                                    code: helpers.is.validString(options?.locals?.content?.code) ? options?.locals?.content?.code : locals.content.code,
+                                    description: helpers.is.validString(options?.locals?.content?.description) ? options?.locals?.content?.description : locals.content.description,
+                                    cause: helpers.is.validString(options?.locals?.content?.cause) ? options?.locals?.content?.cause : locals.content.cause,
+                                    allowed: Array.isArray(options?.locals?.content?.allowed) ? options?.locals?.commands?.allowed : locals.commands.allowed,
                                 }
+                            },
+                            httpOptions: {
+                                cacheControl: false,
+                                statusCode: 403,
                             }
                         }
 
@@ -299,7 +304,6 @@ class HyperCloudResponse {
              * @example
              * // Use the default 500 page
              * response.pages.serverError({
-             *      lang: 'en',
              *      title: '500 - Server Error',
              *      subtitle: 'Internal <code>Server error<span>!</span></code>',
              *      message: '<p> We\'re sorry, but something went wrong on our end. </p>'
@@ -337,16 +341,18 @@ class HyperCloudResponse {
                         }
                     } else {
                         const viewName = 'hypercloud_500';
+                        const page = this.server.rendering.pages.storage[viewName];
+                        const locals = page.locals.get(this.req.language) as Record<string, any>;
 
-                        /**@type {RenderingOptions} */
-                        const renderOptions: RenderingOptions = {
-                            cacheControl: false,
-                            statusCode: 500,
+                        const renderOptions: PageRenderingOptions = {
                             locals: {
-                                lang: options?.lang || this.#_req.language,
-                                title: options?.locals?.title || 'Server Error',
-                                subtitle: options?.locals?.subtitle || 'Internal <code>Server&nbsp;error<span>!</span></code>',
-                                message: options?.locals?.message || `<p> We're sorry, but something went wrong on our end. Our team has been notified, and we're working to fix the issue as soon as possible. </p>\n<p>In the meantime, you can try refreshing the page or coming back later. If the problem persists, feel free to <a href="/contact-us">contact us</a> for further assistance.</p>\n<p>Thank you for your understanding.</p>`,
+                                title: helpers.is.validString(options?.locals?.title) ? options?.locals?.title : locals.title,
+                                subtitle: helpers.is.validString(options?.locals?.subtitle) ? options?.locals?.subtitle : locals.subtitle,
+                                message: helpers.is.validString(options?.locals?.message) ? options?.locals?.message : locals.message,
+                            },
+                            httpOptions: {
+                                cacheControl: false,
+                                statusCode: 500,
                             }
                         }
 
@@ -405,64 +411,69 @@ class HyperCloudResponse {
     }
 
     /**
-     * Render an `ejs` template with the provided options.
-     * @param {string} name A view name (without a file extension) or an absolute path. If only a name is provided, the 
-     * @param {RenderingOptions} options 
+     * Render a page template with the provided options.
+     * @param {string} name A defined `Page` name 
+     * @param {PageRenderingOptions} options 
      * @returns {HyperCloudResponse}
      */
-    render(name: string, options: RenderingOptions): HyperCloudResponse {
+    render(name: string, options?: PageRenderingOptions): HyperCloudResponse {
         try {
-            const renderer = new Renderer(this);
-            const html = renderer.render(name, options?.locals || {});
+            const renderer = new Renderer(this.#_req, name);
+            const html = renderer.render(options);
             this.setHeader('Content-Type', 'text/html');
 
-            if ('cacheControl' in options) {
-                if (typeof options.cacheControl !== 'boolean') { throw new TypeError(`The "cacheControl" option in response.render expected a boolean value but instead got ${typeof options.cacheControl}`) }
-                if (options.cacheControl === true) {
-                    const ONEYEAR = 31_536_000_000; // in ms
-                    let maxAge = 0;
-                    let immutable = false;
+            if (options && 'httpOptions' in options) {
+                if (options && options.httpOptions && helpers.is.realObject(options.httpOptions)) {
+                    if ('cacheControl' in options.httpOptions) {
+                        if (typeof options.httpOptions.cacheControl !== 'boolean') { throw new TypeError(`The "cacheControl" option in response.render expected a boolean value but instead got ${typeof options.httpOptions.cacheControl}`) }
 
-                    if (!('maxAge' in options)) { throw new SyntaxError('The render cache-control was enabled without providing the maxAge') }
-                    if (!(typeof options.maxAge === 'number' || typeof options.maxAge === 'string')) { throw new TypeError(`The maxAge property should be either a number or string, but instead got ${typeof options.maxAge}`) }
+                        if (options.httpOptions.cacheControl === true) {
+                            const ONEYEAR = 31_536_000_000; // in ms
+                            let maxAge = 0;
+                            let immutable = false;
 
-                    if (typeof options.maxAge === 'number') {
-                        maxAge = options.maxAge;
+                            if (!('maxAge' in options.httpOptions)) { throw new SyntaxError('The render cache-control was enabled without providing the maxAge') }
+                            if (!(typeof options.httpOptions.maxAge === 'number' || typeof options.httpOptions.maxAge === 'string')) { throw new TypeError(`The maxAge property should be either a number or string, but instead got ${typeof options.httpOptions.maxAge}`) }
+
+                            if (typeof options.httpOptions.maxAge === 'number') {
+                                maxAge = options.httpOptions.maxAge;
+                            }
+
+                            if (typeof options.httpOptions.maxAge === 'string') {
+                                if (options.httpOptions.maxAge.length === 0) { throw new SyntaxError(`The maxAge string value cannot be empty`) }
+                                const value = ms(options.httpOptions.maxAge);
+                                if (typeof value !== 'number') { throw new SyntaxError(`${options.httpOptions.maxAge} is not a valid maxAge value`) }
+                                maxAge = value;
+                            }
+
+                            if ((options.httpOptions.maxAge as number) < 0) { throw new RangeError(`The maxAge cannot be a negative value`) }
+                            if ((options.httpOptions.maxAge) as number > ONEYEAR) { throw new RangeError(`The maxAge value should not be more than one year`) }
+
+                            if ('immutable' in options.httpOptions) {
+                                if (typeof options.httpOptions.immutable !== 'boolean') { throw new TypeError(`The immutable property only accepts boolean values, but instead got ${typeof options.httpOptions.immutable}`) }
+                                immutable = true;
+                            }
+
+                            const expiryDate = new Date(Date.now() + maxAge).toUTCString();
+                            this.setHeader('Cache-Control', `public, max-age=${maxAge}${immutable ? ', immutable' : ''}`);
+                            this.setHeader('Expires', expiryDate);
+                        } else {
+                            this.setHeader('Cache-Control', 'no-cache');
+                        }
+                    } else {
+                        this.setHeader('Cache-Control', 'no-cache');
                     }
 
-                    if (typeof options.maxAge === 'string') {
-                        if (options.maxAge.length === 0) { throw new SyntaxError(`The maxAge string value cannot be empty`) }
-                        const value = ms(options.maxAge);
-                        if (typeof value !== 'number') { throw new SyntaxError(`${options.maxAge} is not a valid maxAge value`) }
-                        maxAge = value;
+                    if ('statusCode' in options.httpOptions) {
+                        if (typeof options.httpOptions.statusCode !== 'number') { throw new TypeError(`The "statusCode" option in response.render expected a number value but instead got ${typeof options.httpOptions.statusCode}`) }
+                        this.status(options.httpOptions.statusCode);
                     }
 
-                    if ((options.maxAge as number) < 0) { throw new RangeError(`The maxAge cannot be a negative value`) }
-                    if ((options.maxAge) as number > ONEYEAR) { throw new RangeError(`The maxAge value should not be more than one year`) }
-
-                    if ('immutable' in options) {
-                        if (typeof options.immutable !== 'boolean') { throw new TypeError(`The immutable property only accepts boolean values, but instead got ${typeof options.immutable}`) }
-                        immutable = true;
+                    if ('eTag' in options.httpOptions && options.httpOptions.eTag) {
+                        if (typeof options.httpOptions.eTag !== 'string') { throw new TypeError(`The "eTag" option in response.render expected a string value but got ${typeof options.httpOptions.eTag}`) }
+                        this.setHeader('etag', options.httpOptions.eTag);
                     }
-
-                    const expiryDate = new Date(Date.now() + maxAge).toUTCString();
-                    this.setHeader('Cache-Control', `public, max-age=${maxAge}${immutable ? ', immutable' : ''}`);
-                    this.setHeader('Expires', expiryDate);
-                } else {
-                    this.setHeader('Cache-Control', 'no-cache');
                 }
-            } else {
-                this.setHeader('Cache-Control', 'no-cache');
-            }
-
-            if ('statusCode' in options) {
-                if (typeof options.statusCode !== 'number') { throw new TypeError(`The "statusCode" option in response.render expected a number value but instead got ${typeof options.statusCode}`) }
-                this.status(options.statusCode);
-            }
-
-            if ('eTag' in options && options.eTag) {
-                if (typeof options.eTag !== 'string') { throw new TypeError(`The "eTag" option in response.render expected a string value but got ${typeof options.eTag}`) }
-                this.setHeader('etag', options.eTag);
             }
 
             this.write({ chunk: html, encoding: 'utf-8' });
@@ -506,8 +517,8 @@ class HyperCloudResponse {
 
                 const rootAvail = helpers.checkPathAccessibility(options.root);
                 if (!rootAvail.valid) {
-                    if (rootAvail.errors.exist) { throw `The provided root path (${options.root}) doesn't exist` }
-                    if (rootAvail.errors.accessible) { throw `You don't have enough permissions to access the root path: ${options.root}` }
+                    if (rootAvail.errors.doesntExist) { throw new Error(`The provided root path (${options.root}) doesn't exist`) }
+                    if (rootAvail.errors.doesntExist) { throw new Error(`You don't have enough permissions to access the root path: ${options.root}`) }
                 }
 
                 filePath = path.resolve(options.root, filePath);
@@ -517,8 +528,8 @@ class HyperCloudResponse {
             // Validating the file path
             const fileAvail = helpers.checkPathAccessibility(filePath);
             if (!fileAvail.valid) {
-                if (fileAvail.errors.exist) { throw `The provided filePath (${filePath}) doesn't exist` }
-                if (fileAvail.errors.accessible) { throw `You don't have enough permissions to access the file path: ${filePath}` }
+                if (fileAvail.errors.doesntExist) { throw new Error(`The provided filePath (${filePath}) doesn't exist`) }
+                if (fileAvail.errors.notAccessible) { throw new Error(`You don't have enough permissions to access the file path: ${filePath}`) }
             }
 
             const paths = filePath.split('\\');
@@ -535,9 +546,9 @@ class HyperCloudResponse {
                         if ('notFoundFile' in options) {
                             const notFoundAvail = helpers.checkPathAccessibility(options.notFoundFile as string);
                             if (!notFoundAvail.valid) {
-                                if (notFoundAvail.errors.isString) { throw `The notFoundFile path should be a string, instead got ${typeof options.notFoundFile}` }
-                                if (notFoundAvail.errors.exist) { throw `The notFoundFile path (${options.notFoundFile}) doesn't exist` }
-                                if (notFoundAvail.errors.accessible) { throw `You don't have enough permissions to access the notFoundFile path: ${options.notFoundFile}` }
+                                if (notFoundAvail.errors.notString) { throw new Error(`The notFoundFile path should be a string, instead got ${typeof options.notFoundFile}`) }
+                                if (notFoundAvail.errors.doesntExist) { throw new Error(`The notFoundFile path (${options.notFoundFile}) doesn't exist`) }
+                                if (notFoundAvail.errors.notAccessible) { throw new Error(`You don't have enough permissions to access the notFoundFile path: ${options.notFoundFile}`) }
                             }
 
                             if (!options.notFoundFile?.toLowerCase().startsWith(root.toLowerCase())) { throw new RangeError(`The not 404 file (${options.notFoundFile}) is not in your root directory.`) }
@@ -555,9 +566,9 @@ class HyperCloudResponse {
                         if ('unauthorizedFile' in options) {
                             const unAuthAvail = helpers.checkPathAccessibility(options.unauthorizedFile as string)
                             if (!unAuthAvail.valid) {
-                                if (unAuthAvail.errors.isString) { throw `The unauthorizedFile path should be a string, instead got ${typeof options.unauthorizedFile}` }
-                                if (unAuthAvail.errors.exist) { throw `The unauthorizedFile path (${options.unauthorizedFile}) doesn't exist` }
-                                if (unAuthAvail.errors.accessible) { throw `You don't have enough permissions to access the unauthorizedFile path: ${options.unauthorizedFile}` }
+                                if (unAuthAvail.errors.notString) { throw new Error(`The unauthorizedFile path should be a string, instead got ${typeof options.unauthorizedFile}`) }
+                                if (unAuthAvail.errors.doesntExist) { throw new Error(`The unauthorizedFile path (${options.unauthorizedFile}) doesn't exist`) }
+                                if (unAuthAvail.errors.notAccessible) { throw new Error(`You don't have enough permissions to access the unauthorizedFile path: ${options.unauthorizedFile}`) }
                             }
 
                             if (!options.unauthorizedFile?.toLowerCase().startsWith(root.toLowerCase())) { throw new RangeError(`The not 401 file (${options.unauthorizedFile}) is not in your root directory.`) }
@@ -698,9 +709,9 @@ class HyperCloudResponse {
             if (options && 'serverErrorFile' in options) {
                 const errValidity = helpers.checkPathAccessibility(options.serverErrorFile as string);
                 if (!errValidity.valid) {
-                    if (errValidity.errors.isString) { throw `The serverErrorFile path should be a string, instead got ${typeof options.serverErrorFile}` }
-                    if (errValidity.errors.exist) { throw `The serverErrorFile path (${options.serverErrorFile}) doesn't exist` }
-                    if (errValidity.errors.accessible) { throw `You don't have enough permissions to access the errValidity path: ${options.serverErrorFile}` }
+                    if (errValidity.errors.notString) { throw new Error(`The serverErrorFile path should be a string, instead got ${typeof options.serverErrorFile}`) }
+                    if (errValidity.errors.doesntExist) { throw new Error(`The serverErrorFile path (${options.serverErrorFile}) doesn't exist`) }
+                    if (errValidity.errors.notAccessible) { throw new Error(`You don't have enough permissions to access the errValidity path: ${options.serverErrorFile}`) }
                 }
 
                 if (!options.serverErrorFile?.toLowerCase().startsWith(root.toLowerCase())) { throw new RangeError(`The not 500 file (${options.serverErrorFile}) is not in your root directory.`) }
@@ -741,7 +752,7 @@ class HyperCloudResponse {
         if (typeof data === 'string') {
             if (typeof contentType === 'string' && mimes.includes(contentType.toLowerCase())) {
                 type = contentType;
-            } else if (helpers.isHTML(data)) {
+            } else if (helpers.is.html(data)) {
                 type = 'text/html';
             } else {
                 type = 'text/plain';
@@ -854,7 +865,7 @@ class HyperCloudResponse {
      * @returns {this}
      */
     end(options?: ResponseEndOptions): this {
-        if (helpers.is.undefined(options) || !helpers.is.realObject(options)) {
+        if (helpers.is.undefined(options) || helpers.isNot.realObject(options)) {
             this.#_res.end();
             return this;
         }

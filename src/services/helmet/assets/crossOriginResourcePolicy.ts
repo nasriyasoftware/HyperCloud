@@ -12,7 +12,7 @@ class CrossOriginResourcePolicy {
     static validate(options?: CrossOriginResourcePolicyOptions | false) {
         if (options === false) { return null };
 
-        if (!options || !helpers.is.realObject(options) || !options.policy) {
+        if (!options || helpers.isNot.realObject(options) || !options.policy) {
             return 'same-origin'
         }
 
