@@ -27,7 +27,7 @@ class ComponentsManager {
 
             for (const folder of folders) {
                 if (folder.name !== 'locals') {
-                    this.#_helpers.register(path.join(directory, folder.name));
+                    await this.#_helpers.register(path.join(directory, folder.name));
                 }
             }
         }

@@ -16,3 +16,4 @@ logs*/
 *_temp/
 
 dist
+copyDist.mjs
