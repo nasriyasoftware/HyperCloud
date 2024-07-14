@@ -4,9 +4,9 @@ import helpers from "../../../utils/helpers";
 import Page from "../assets/Page";
 
 class PagesManager {
-    #_storage: Record<string, Page> = {};
+    readonly #_storage: Record<string, Page> = {};
 
-    #_helpers = {
+    readonly #_helpers = {
         create: (page: Page) => {            
             this.#_storage[page.name] = page;
         },

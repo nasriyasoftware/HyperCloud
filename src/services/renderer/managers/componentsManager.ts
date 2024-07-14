@@ -4,9 +4,9 @@ import helpers from "../../../utils/helpers";
 import Component from "../assets/Component";
 
 class ComponentsManager {
-    #_storage: Record<string, Component> = {}
+    readonly #_storage: Record<string, Component> = {}
 
-    #_helpers = {
+    readonly #_helpers = {
         create: (component: Component) => {
             this.#_storage[component.name] = component;
         },
