@@ -1,4 +1,4 @@
-import { ComponentConstructorOpts, FileAsset, InternalScriptOptions, InternalScriptRecord, InternalStylesheetRecord, PageRenderingCacheAsset, ViewRenderingAsset } from '../../../docs/docs';
+import { FileAsset, InternalScriptOptions, InternalScriptRecord, InternalStylesheetRecord, PageRenderingCacheAsset, ViewRenderingAsset } from '../../../docs/docs';
 import helpers from '../../../utils/helpers';
 import fs from 'fs';
 import path from 'path';

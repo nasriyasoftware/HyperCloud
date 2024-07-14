@@ -4,7 +4,8 @@ import helpers from "../../../utils/helpers";
 import Component from "../assets/Component";
 
 class ComponentsManager {
-    readonly #_storage: Record<string, Component> = {}
+    readonly #_storage: Record<string, Component> = {};
+    readonly #_registers: Promise<void>[] = [];
 
     readonly #_helpers = {
         create: (component: Component) => {
@@ -36,7 +37,7 @@ class ComponentsManager {
      * Register your defined components so you can use them in your code
      * @param paths A `PathLike` or an array of `PathLike` directories containing your components. 
      */
-    async register(paths: string | string[]) {
+    register(paths: string | string[]) {
         if (!Array.isArray(paths)) { paths = [paths] }
         const errRes = { message: 'Invalid components\' paths detected. Read the error list', errors: [] as any[] }
 
@@ -44,7 +45,7 @@ class ComponentsManager {
         for (const viewsPath of paths) {
             const validity = helpers.checkPathAccessibility(viewsPath);
             if (validity.valid) {
-                await this.#_helpers.register(viewsPath);
+                this.#_registers.push(this.#_helpers.register(viewsPath));
                 continue;
             }
 
@@ -56,6 +57,15 @@ class ComponentsManager {
         }
 
         if (errRes.errors.length > 0) { throw errRes }
+    }
+
+    /**Run all the stored registers */
+    async scan(): Promise<void> {
+        if (this.#_registers.length > 0) {
+            helpers.printConsole('Scanning for components...');
+            await Promise.allSettled(this.#_registers);
+            this.#_registers.length = 0;
+        }
     }
 
     /**Get all the components in an array */

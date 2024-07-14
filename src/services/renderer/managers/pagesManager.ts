@@ -5,9 +5,10 @@ import Page from "../assets/Page";
 
 class PagesManager {
     readonly #_storage: Record<string, Page> = {};
+    readonly #_registers: Promise<void>[] = [];
 
     readonly #_helpers = {
-        create: (page: Page) => {            
+        create: (page: Page) => {
             this.#_storage[page.name] = page;
         },
         register: async (directory: string) => {
@@ -36,7 +37,7 @@ class PagesManager {
      * Register your defined pages so you can use them in your code
      * @param paths A `PathLike` or an array of `PathLike` directories containing your pages. 
      */
-    async register(paths: string | string[]) {        
+    register(paths: string | string[]) {
         if (!Array.isArray(paths)) { paths = [paths] }
         const errRes = { message: 'Invalid pages\' paths detected. Read the error list', errors: [] as any[] }
 
@@ -44,7 +45,7 @@ class PagesManager {
         for (const viewsPath of paths) {
             const validity = helpers.checkPathAccessibility(viewsPath);
             if (validity.valid) {
-                await this.#_helpers.register(viewsPath);
+                this.#_registers.push(this.#_helpers.register(viewsPath));
                 continue;
             }
 
@@ -56,6 +57,15 @@ class PagesManager {
         }
 
         if (errRes.errors.length > 0) { throw errRes }
+    }
+
+    /**Run all the stored registers */
+    async scan(): Promise<void> {
+        if (this.#_registers.length > 0) {
+            helpers.printConsole('Scanning for pages...');
+            await Promise.allSettled(this.#_registers);
+            this.#_registers.length = 0;
+        }
     }
 
     /**Get all the pages in an array */

@@ -90,11 +90,12 @@ class HyperCloudServer {
         }
     })
 
-    constructor(userOptions?: SecureServerOptions | ServerOptions | HyperCloudInitFile, addOpt?: HyperCloudManagementOptions) {        
+    constructor(userOptions?: SecureServerOptions | ServerOptions | HyperCloudInitFile, addOpt?: HyperCloudManagementOptions) {
         this._routesManager = new RoutesManager();
         this.#_helmet = new HelmetManager(this);
         this.rateLimiter = new RateLimitingManager(this);
-        this.rendering = new RenderingManager(this);        
+        this.rendering = new RenderingManager(this);
+        this.rendering.pages.register(path.resolve(path.join(_dirname, './services/pages')));
 
         try {
             if (helpers.is.undefined(userOptions)) { return }
@@ -616,7 +617,8 @@ class HyperCloudServer {
                 port = this.#_config.secure ? 443 : 80;
             }
 
-            await this.rendering.pages.register(path.resolve(path.join(_dirname, './services/pages')));
+            
+            await Promise.allSettled([this.rendering.pages.scan(), this.rendering.components.scan()]);
             return new Promise((resolve, reject) => {
                 const res = server.listen(port, () => {
                     console.info(`HyperCloud Server is listening ${this.#_config.secure ? 'securely ' : ''}on port #${port}`);
