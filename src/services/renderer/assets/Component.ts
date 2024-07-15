@@ -120,7 +120,7 @@ export class Component {
 
     readonly script = {
         set: (config: InternalScriptOptions) => {
-            if (!helpers.is.realObject(config)) { throw this.#_helpers.createError(`The script configs you're trying to add is not a valid object`) }
+            if (helpers.isNot.realObject(config)) { throw this.#_helpers.createError(`The script configs you're trying to add is not a valid object`) }
 
             if ('filePath' in config) {
                 const validity = helpers.checkPathAccessibility(config.filePath);
@@ -161,9 +161,9 @@ export class Component {
          * @param lang A language supported by your server.
          */
         add: (locals: Record<string, any>, lang?: string) => {
-            if (!helpers.is.realObject(locals)) { throw this.#_helpers.createError(`An invalid locale has been passed to the ${this.#_name} component's "locals.add()". Expected a real object bust instead got ${typeof locals}`) }
+            if (helpers.isNot.realObject(locals)) { throw this.#_helpers.createError(`An invalid locale has been passed to the ${this.#_name} component's "locals.add()". Expected a real object bust instead got ${typeof locals}`) }
             if (lang === undefined) { lang = 'default' }
-            if (!helpers.is.realObject(this.#_locals[lang])) { this.#_locals[lang] = {} }
+            if (helpers.isNot.realObject(this.#_locals[lang])) { this.#_locals[lang] = {} }
 
             for (const prop in locals) {
                 this.#_locals[lang][prop] = locals[prop];
@@ -171,10 +171,10 @@ export class Component {
         },
         multilingual: {
             set: (locals: Record<string, Record<string, any>>) => {
-                if (!helpers.is.realObject(locals)) { throw this.#_helpers.createError(`An invalid locale has been passed to the ${this.#_name} component's "locals.multilingual.set()" locale. Expected a real object bust instead got ${typeof locals}`) }
+                if (helpers.isNot.realObject(locals)) { throw this.#_helpers.createError(`An invalid locale has been passed to the ${this.#_name} component's "locals.multilingual.set()" locale. Expected a real object bust instead got ${typeof locals}`) }
 
                 if ('default' in locals) {
-                    if (!helpers.is.realObject(locals.default)) { throw this.#_helpers.createError(`The object passed to "locals.multilingual.set()" has an invalid value type for "default". Expected a real object but instead got ${typeof locals.default}`) }
+                    if (helpers.isNot.realObject(locals.default)) { throw this.#_helpers.createError(`The object passed to "locals.multilingual.set()" has an invalid value type for "default". Expected a real object but instead got ${typeof locals.default}`) }
                 } else {
                     throw this.#_helpers.createError(`The object passed to "locals.multilingual.set()" is missing the "default" property.`)
                 }

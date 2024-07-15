@@ -1,44 +1,40 @@
-import { ExternalScriptOptions, ExternalScriptRecord, ExternalStylesheetRecord, HTMLMetaName, HttpEquivType, InternalScriptOptions, InternalScriptRecord, InternalStylesheetRecord, OnPageScriptOptions, OnPageScriptRecord, PageRenderingCacheAsset, ViewRenderingAsset } from "../../../docs/docs";
+import { ExternalScriptOptions, ExternalScriptRecord, ExternalStylesheetRecord, HTMLMetaName, HttpEquivType, InternalScriptOptions, InternalScriptRecord, InternalStylesheetRecord, OnPageScriptOptions, OnPageScriptRecord, PageRenderingCacheAsset } from "../../../docs/docs";
+import HyperCloudServer from "../../../server";
 import helpers from "../../../utils/helpers";
 import fs from 'fs';
 import path from 'path';
 
-export class Page {
-    #_id = helpers.generateRandom(16, { includeSymbols: false });
-    /**Page name (internally on the server) */
-    readonly #_name: string;
-    /**The EJS template */
-    readonly #_template: ViewRenderingAsset = { filePath: '', content: '' }
-
-    readonly #_title: Record<string, string> = { default: '' }
-    readonly #_description: Record<string, string> = { default: '' }
-    /**The template's default locals */
-    readonly #_locals: Record<string, any> = { default: {} }
-
+class GlobalAssets {
+    readonly #_server: HyperCloudServer
     readonly #_stylesheets: (InternalStylesheetRecord | ExternalStylesheetRecord)[] = [];
     readonly #_scripts: (InternalScriptRecord | ExternalScriptRecord | OnPageScriptRecord)[] = [];
     readonly #_metaTags = [] as ({ attributes: Record<string, string> })[];
+    readonly #_locals: Record<string, any> = { default: {} }
 
     readonly #_cache = Object.seal({
         extensions: { css: false, js: false }
     })
 
+    constructor(server: HyperCloudServer) {
+        this.#_server = server;
+    }
+
     readonly #_helpers = {
         checkPath: (pathToCheck: string, type: 'Template' | 'CSS' | 'JS') => {
             const validity = helpers.checkPathAccessibility(pathToCheck);
             if (!validity.valid) {
-                if (validity.errors.notString) { return this.#_helpers.createError(`The ${type.toLowerCase()} path that was passed to the ${this.#_name} page is not a valid string`) }
-                if (validity.errors.doesntExist) { return this.#_helpers.createError(`The ${type.toLowerCase()} path (${pathToCheck}) that was passed to the ${this.#_name} page doesn't exist`) }
-                if (validity.errors.notAccessible) { return this.#_helpers.createError(`The ${type.toLowerCase()} path (${pathToCheck}) that was passed to the ${this.#_name} page isn't accessible`) }
+                if (validity.errors.notString) { return this.#_helpers.createError(`The ${type.toLowerCase()} path that was passed to the rendering's global assets is not a valid string`) }
+                if (validity.errors.doesntExist) { return this.#_helpers.createError(`The ${type.toLowerCase()} path (${pathToCheck}) that was passed to the rendering's global assets doesn't exist`) }
+                if (validity.errors.notAccessible) { return this.#_helpers.createError(`The ${type.toLowerCase()} path (${pathToCheck}) that was passed to the rendering's global assets isn't accessible`) }
             }
 
             const ext = type === 'Template' ? '.ejs' : type === 'CSS' ? '.css' : type === 'JS' ? '.js' : ''
-            if (!path.basename(pathToCheck).endsWith(ext)) { return this.#_helpers.createError(`The ${type.toLowerCase()} path you provided for the ${this.#_name} page isn't a ${ext.substring(1)} file`) }
+            if (!path.basename(pathToCheck).endsWith(ext)) { return this.#_helpers.createError(`The ${type.toLowerCase()} path you provided for the rendering's global assets isn't a ${ext.substring(1)} file`) }
             return true;
         },
         createError: (message: string) => {
-            const error = new Error(`(${this.#_name}) ${message}`);
-            error.name = `${this.name}Error`;
+            const error = new Error(message);
+            error.name = `Global-Assets_Error`;
             return error;
         },
         validate: {
@@ -78,25 +74,6 @@ export class Page {
         }
     }
 
-    constructor(name: string) {
-        this.#_name = name;
-    }
-
-    readonly template = {
-        path: {
-            set: (filePath: string) => {
-                const checkRes = this.#_helpers.checkPath(filePath, 'Template');
-                if (checkRes instanceof Error) { throw checkRes }
-                this.#_template.filePath = filePath;
-                this.#_template.content = fs.readFileSync(filePath, { encoding: 'utf-8' })
-            },
-            get: () => { return this.#_template.filePath }
-        },
-        content: {
-            get: () => { return this.#_template.content }
-        }
-    }
-
     readonly metaTags = {
         add: {
             /**
@@ -105,7 +82,7 @@ export class Page {
              * @param charset 
              */
             charset: (charset: string) => {
-                if (!helpers.is.validString(charset)) { throw this.#_helpers.createError(`The page charset is expected to be a string, instead got ${typeof charset}`) }
+                if (!helpers.is.validString(charset)) { throw this.#_helpers.createError(`The site's charset is expected to be a string, instead got ${typeof charset}`) }
                 this.#_metaTags.push({ attributes: { charset } });
             },
             /**
@@ -198,222 +175,8 @@ export class Page {
         get: () => { return this.#_metaTags }
     }
 
-    readonly title = {
-        /**
-         * Set a title for your page. Pass a language as the
-         * second argument if you want to create language-specific
-         * title.
-         * 
-         * **Examples:**
-         * 
-         * Setting a title for a page
-         * ```js
-         * const page = new Page('Home');
-         * page.title.set('Home');
-         * ```
-         * 
-         * Setting a title for a page in Arabic
-         * ```js
-         * const page = new Page('Home');
-         * page.title.set('الرئيسة', 'ar');
-         * ```
-         * @param title The page title
-         * @param lang The language you want to add. E.g: `en`, `ar`, `se`, etc.
-         */
-        set: (title: string, lang?: string) => {
-            if (!helpers.is.validString(title)) { throw this.#_helpers.createError(`The title's value is expected to be a string, instead got ${typeof title}`) }
-            if (lang === undefined) { lang = 'default' }
-            this.#_title[lang] = title;
-        },
-        multilingual: {
-            set: (titles: Record<string, string>) => {
-                if (helpers.isNot.realObject(titles)) { throw this.#_helpers.createError(`Invalid titles have been passed to the ${this.#_name} page's "title.multilingual.set()". Expected a real object bust instead got ${typeof titles}`) }
-                for (const lang in titles) {
-                    if (!helpers.is.validString(titles[lang])) { throw this.#_helpers.createError(`One of the passed titles is not a string`) }
-                }
-
-                if ('default' in titles) {
-                    for (const lang in titles) {
-                        this.#_title[lang] = titles[lang];
-                    }
-                } else {
-                    throw this.#_helpers.createError(`The object passed to "title.multilingual.set()" is missing the "default" property.`)
-                }
-            }
-        },
-        get: (lang: string = 'default') => this.#_title[lang] || this.#_title.default
-    }
-
-    readonly description = {
-        /**
-         * Set a description for your page. Pass a language as the
-         * second argument if you want to create language-specific
-         * description.
-         * 
-         * **Examples:**
-         * 
-         * Setting a description for a page
-         * ```js
-         * const page = new Page('Home');
-         * page.description.set('This is a home page');
-         * ```
-         * 
-         * Setting a description for a page in Arabic
-         * ```js
-         * const page = new Page('Home');
-         * page.description.set('هذه هي الصفحة الرئيسة', 'ar');
-         * ```
-         * @param description The page description
-         * @param lang The language you want to add. E.g: `en`, `ar`, `se`, etc.
-         */
-        set: (description: string, lang?: string) => {
-            if (!helpers.is.validString(description)) { throw this.#_helpers.createError(`The description's value is expected to be a string, instead got ${typeof description}`) }
-            if (lang === undefined) { lang = 'default' }
-            this.#_description[lang] = description;
-        },
-        multilingual: {
-            set: (descriptions: Record<string, string>) => {
-                if (helpers.isNot.realObject(descriptions)) { throw this.#_helpers.createError(`Invalid descriptions have been passed to the ${this.#_name} page's "description.multilingual.set()". Expected a real object bust instead got ${typeof descriptions}`) }
-                for (const lang in descriptions) {
-                    if (!helpers.is.validString(descriptions[lang])) { throw this.#_helpers.createError(`One of the passed descriptions is not a string`) }
-                }
-
-                if ('default' in descriptions) {
-                    for (const lang in descriptions) {
-                        this.#_description[lang] = descriptions[lang];
-                    }
-                } else {
-                    throw this.#_helpers.createError(`The object passed to "description.multilingual.set()" is missing the "default" property.`)
-                }
-            }
-        },
-        get: (lang: string = 'default') => this.#_description[lang] || this.#_description.default
-    }
-
-    readonly locals = {
-        /**
-         * Add a locale object for your page. If the locale is
-         * language specific, specify the language in the second argument.
-         * 
-         * **Notes:**
-         * - The `locals.add` method *adds* the given properties, it doesn't reasign
-         * the locals, which means it's safe to add locals in multiple calls.
-         * - Be aware that adding locals already added will overwrite them, which means
-         * the newer value will replace the previous one.
-         * @example
-         * const page = new Page('Home');
-         * 
-         * page.locals.add({ name: 'John', age: 20 }); // Adds object globally
-         * page.locals.add({ height: 175 }); // Adds the height globally
-         * 
-         * page.locals.add({ title: 'Home' }, 'en');     // Adds a title specifically under the "en" language
-         * page.locals.add({ title: 'الرئيسة' }, 'ar'); // Adds a title specifically under the "ar" language
-         * @param locale The locale object
-         * @param lang A language supported by your server.
-         */
-        add: (locals: Record<string, any>, lang?: string) => {
-            if (helpers.isNot.realObject(locals)) { throw this.#_helpers.createError(`An invalid locale has been passed to the ${this.#_name} page's "locals.add()". Expected a real object bust instead got ${typeof locals}`) }
-            if (lang === undefined) { lang = 'default' }
-            if (helpers.isNot.realObject(this.#_locals[lang])) { this.#_locals[lang] = {} }
-
-            for (const prop in locals) {
-                this.#_locals[lang][prop] = locals[prop];
-            }
-        },
-        multilingual: {
-            set: (locals: Record<string, Record<string, any>>) => {
-                if (helpers.isNot.realObject(locals)) { throw this.#_helpers.createError(`An invalid locale has been passed to the ${this.#_name} page's "locals.multilingual.set()" locale. Expected a real object bust instead got ${typeof locals}`) }
-
-                if ('default' in locals) {
-                    if (helpers.isNot.realObject(locals.default)) { throw this.#_helpers.createError(`The object passed to "locals.multilingual.set()" has an invalid value type for "default". Expected a real object but instead got ${typeof locals.default}`) }
-                } else {
-                    throw this.#_helpers.createError(`The object passed to "locals.multilingual.set()" is missing the "default" property.`)
-                }
-
-                for (const lang in locals) {
-                    this.#_locals[lang] = locals[lang];
-                }
-            }
-        },
-        get: (lang: string = 'default') => this.#_locals[lang] || this.#_locals.default
-    }
-
-    readonly scripts = {
-        /**
-         * Add code that directly runs on your page
-         * @param script The script you want to run on the page
-         * @param nomodule Specifies that the script should not be executed in browsers supporting ES2015 modules. Default: `false`
-         */
-        add: (config: OnPageScriptOptions) => {
-            if (helpers.isNot.realObject(config)) { throw this.#_helpers.createError(`The script configs you're trying to add is not a valid object`) }
-
-            if (!('content' in config)) {
-                throw this.#_helpers.createError(`The script's "content" property is missing`);
-            }
-
-            if (!helpers.is.validString(config.content)) { throw this.#_helpers.createError(`The script value you're trying to add is not a valid JavaScript code`) }
-            this.#_scripts.push({
-                scope: 'OnPage',
-                nomodule: typeof config.nomodule === 'boolean' ? config.nomodule : undefined,
-                content: config.content
-            })
-        },
-        /**Link script files to your page */
-        link: {
-            /**
-             * Link an internal JavaScript file (on your server) to this page
-             * @param config The internal JavaScript configurations
-             */
-            internal: (config: InternalScriptOptions) => {
-                if (helpers.isNot.realObject(config)) { throw this.#_helpers.createError(`The script configs you're trying to add is not a valid object`) }
-
-                if ('filePath' in config) {
-                    const validity = helpers.checkPathAccessibility(config.filePath);
-                    if (!validity.valid) {
-                        if (validity.errors.notString) { throw this.#_helpers.createError(`The script "filePath" is expecting a string value, instead got ${typeof config.filePath}`) }
-                        if (validity.errors.doesntExist) { throw this.#_helpers.createError(`The script "filePath" (${config.filePath}) doesn't exist`) }
-                        if (validity.errors.notAccessible) { throw this.#_helpers.createError(`You don't have enough permissions to access the script "filePath" (${config.filePath})`) }
-                    }
-                } else {
-                    throw this.#_helpers.createError(`Unable to add internal script to page. The config object is missing the "filePath" property`)
-                }
-
-                this.#_helpers.validate.scriptConfigs(config);
-                this.#_scripts.push({
-                    ...config,
-                    fileName: path.basename(config.filePath),
-                    scope: 'Internal'
-                })
-            },
-            /**
-             * Link an external JavaScript file (from other servers) to this page
-             * @param config The external JavaScript configurations
-             */
-            external: (config: ExternalScriptOptions) => {
-                if (helpers.isNot.realObject(config)) { throw this.#_helpers.createError(`The script configs you're trying to add is not a valid object`) }
-
-                if ('src' in config) {
-                    try {
-                        new URL(config.src);
-                    } catch (error) {
-                        throw this.#_helpers.createError(`Unable to add external script to page. The script's "src" value is not a valid URL`)
-                    }
-                } else {
-                    throw this.#_helpers.createError(`Unable to add external script to page. The config object is missing the "src" property`)
-                }
-
-                this.#_helpers.validate.scriptConfigs(config);
-                this.#_scripts.push({
-                    ...config,
-                    scope: 'External'
-                })
-            }
-        },
-        get: () => { return this.#_scripts }
-    }
-
     readonly stylesheets = {
-        /**Link stylesheets to your page */
+        /**Link global stylesheets to your site */
         link: {
             /**
              * Link an internal `css` file
@@ -444,20 +207,138 @@ export class Page {
         get: () => { return this.#_stylesheets }
     }
 
-    /**Page name */
-    get name() { return this.#_name }
-    /**Page ID */
-    get _id() { return this.#_id }
+    readonly scripts = {
+        /**
+         * Add code that directly runs on your site
+         * @param script The script you want to run on your site
+         * @param nomodule Specifies that the script should not be executed in browsers supporting ES2015 modules. Default: `false`
+         */
+        add: (config: OnPageScriptOptions) => {
+            if (helpers.isNot.realObject(config)) { throw this.#_helpers.createError(`The script configs you're trying to add is not a valid object`) }
 
-    /**Control page caching for different assets */
+            if (!('content' in config)) {
+                throw this.#_helpers.createError(`The script's "content" property is missing`);
+            }
+
+            if (!helpers.is.validString(config.content)) { throw this.#_helpers.createError(`The script value you're trying to add is not a valid JavaScript code`) }
+            this.#_scripts.push({
+                scope: 'OnPage',
+                nomodule: typeof config.nomodule === 'boolean' ? config.nomodule : undefined,
+                content: config.content
+            })
+        },
+        /**Link script files to your site */
+        link: {
+            /**
+             * Link an internal JavaScript file (on your server) to this site
+             * @param config The internal JavaScript configurations
+             */
+            internal: (config: InternalScriptOptions) => {
+                if (helpers.isNot.realObject(config)) { throw this.#_helpers.createError(`The script configs you're trying to add is not a valid object`) }
+
+                if ('filePath' in config) {
+                    const validity = helpers.checkPathAccessibility(config.filePath);
+                    if (!validity.valid) {
+                        if (validity.errors.notString) { throw this.#_helpers.createError(`The script "filePath" is expecting a string value, instead got ${typeof config.filePath}`) }
+                        if (validity.errors.doesntExist) { throw this.#_helpers.createError(`The script "filePath" (${config.filePath}) doesn't exist`) }
+                        if (validity.errors.notAccessible) { throw this.#_helpers.createError(`You don't have enough permissions to access the script "filePath" (${config.filePath})`) }
+                    }
+                } else {
+                    throw this.#_helpers.createError(`Unable to add internal script rendering's global assets. The config object is missing the "filePath" property`)
+                }
+
+                this.#_helpers.validate.scriptConfigs(config);
+                this.#_scripts.push({
+                    ...config,
+                    fileName: path.basename(config.filePath),
+                    scope: 'Internal'
+                })
+            },
+            /**
+             * Link an external JavaScript file (from other servers) to your site
+             * @param config The external JavaScript configurations
+             */
+            external: (config: ExternalScriptOptions) => {
+                if (helpers.isNot.realObject(config)) { throw this.#_helpers.createError(`The script configs you're trying to add is not a valid object`) }
+
+                if ('src' in config) {
+                    try {
+                        new URL(config.src);
+                    } catch (error) {
+                        throw this.#_helpers.createError(`Unable to add external script rendering's global assets. The script's "src" value is not a valid URL`)
+                    }
+                } else {
+                    throw this.#_helpers.createError(`Unable to add external script rendering's global assets. The config object is missing the "src" property`)
+                }
+
+                this.#_helpers.validate.scriptConfigs(config);
+                this.#_scripts.push({
+                    ...config,
+                    scope: 'External'
+                })
+            }
+        },
+        get: () => { return this.#_scripts }
+    }
+
+    /**
+     * The server locals object has properties that are local
+     * variables within the application, and will be available
+     * in templates rendered with `{@link HyperCloudResponse.render}`.
+     */
+    readonly locals = {
+        /**
+         * Set your server's locals
+         * @param locals The locals object you want to set
+         * @param lang A language to bind the locals object to (optional)
+         */
+        set: (locals: Record<string, any>, lang?: string) => {
+            if (helpers.isNot.realObject(locals)) { throw new TypeError(`The server's rendering locals are expected to be a real object, isntead got ${typeof locals}`) }
+            if (lang === undefined) {
+                lang = 'default';
+            } else {
+                if (!this.#_server.supportedLanguages.includes(lang)) { throw new SyntaxError(`The language you used set your server locals (${lang}) is not supported by your server`) }
+            }
+
+            this.#_locals[lang] = locals;
+        },
+        /**Multilingual locals */
+        multilingual: {
+            /**
+             * Set your server's multilingual locals 
+             * @param locals The multilingual locals
+             */
+            set: (locals: Record<string, any>) => {
+                if (helpers.isNot.realObject(locals)) { throw new TypeError(`The server's multilingual rendering locals are expected to be a real object, isntead got ${typeof locals}`) }
+
+                if ('default' in locals) {
+                    for (const lang in locals) {
+                        this.#_locals[lang] = locals[lang];
+                    }
+                } else {
+                    throw new Error(`The server's multilingual rendering locals object is missing the "default" property.`)
+                }
+            }
+        },
+        /**
+         * Get the server's locals
+         * @param lang The language of the locals
+         * @returns 
+         */
+        get: (lang: string = 'default'): Record<string, any> => {
+            return this.#_locals[lang] || this.#_locals.default;
+        }
+    }
+
+    /**Control global site caching for different assets */
     readonly cache = {
         /**
-         * Enable caching for this page.
+         * Enable site caching.
          * @param extensions The extensions you want to enable. Default: All assets
          * @example
-         * page.cache.enable();                 // Enable caching for all assets
-         * page.cache.enable('js');             // Enable caching for JavaScript Files
-         * page.cache.enable(['js', 'css']);    // Enable caching for CSS Files
+         * assets.cache.enable();                 // Enable caching for all assets
+         * assets.cache.enable('js');             // Enable caching for JavaScript Files
+         * assets.cache.enable(['js', 'css']);    // Enable caching for CSS Files
          */
         enable: (extensions?: PageRenderingCacheAsset | PageRenderingCacheAsset[]) => {
             try {
@@ -474,17 +355,17 @@ export class Page {
                     }
                 }
             } catch (error) {
-                if (error instanceof Error) { error.message = `Unable to enable ${this.#_name} page cache: ${error.message}` }
+                if (error instanceof Error) { error.message = `Unable to enable rendering's global assets cache: ${error.message}` }
                 throw error;
             }
         },
         /**
-         * Disable caching for this page.
+         * Disable site caching.
          * @param extensions The extensions you want to disble. Default: All assets
          * @example
-         * page.cache.disble();                 // Disable caching for all assets
-         * page.cache.disble('js');             // Disable caching for JavaScript Files
-         * page.cache.disble(['js', 'css']);    // Disable caching for CSS Files
+         * assets.cache.disble();                 // Disable caching for all assets
+         * assets.cache.disble('js');             // Disable caching for JavaScript Files
+         * assets.cache.disble(['js', 'css']);    // Disable caching for CSS Files
          */
         disable: (extensions?: PageRenderingCacheAsset | PageRenderingCacheAsset[]) => {
             try {
@@ -501,12 +382,12 @@ export class Page {
                     }
                 }
             } catch (error) {
-                if (error instanceof Error) { error.message = `Unable to disable ${this.#_name} page cache: ${error.message}` }
+                if (error instanceof Error) { error.message = `Unable to disable rendering's global assets cache: ${error.message}` }
                 throw error;
             }
         },
         /**
-         * Update page caching state.
+         * Update site caching state.
          * - For enabled assets, content will be cached in memory and their eTags generated.
          * - For disabled assets, content will be cleared from memory and eTags will be removed.
          */
@@ -561,7 +442,7 @@ export class Page {
                     }
                 })
             } catch (error) {
-                if (error instanceof Error) { error.message = `Unable to update the ${this.#_name} page cache: ${error.message}` }
+                if (error instanceof Error) { error.message = `Unable to update the rendering's global assets cache: ${error.message}` }
                 throw error;
             }
         },
@@ -570,4 +451,4 @@ export class Page {
     }
 }
 
-export default Page;
+export default GlobalAssets;

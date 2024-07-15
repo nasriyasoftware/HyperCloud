@@ -1,7 +1,7 @@
 import helpers from '../../utils/helpers';
 import RenderingManager from './manager';
 import engine from 'ejs';
-import { PageRenderingOptions } from '../../docs/docs';
+import { ExternalScriptRecord, InternalScriptRecord, OnPageScriptRecord, PageRenderingOptions } from '../../docs/docs';
 import Page from './assets/Page';
 import HyperCloudRequest from '../handler/assets/request';
 
@@ -35,7 +35,7 @@ class Renderer {
         if (!this.#_page) { throw `The page (${name}) template is not defined` }
     }
 
-    #_helpers = {
+    readonly #_helpers = {
         getLocals: (locals: Record<string, any> = {}): Record<string, any> => {
             const mainLocals = { ...this.#_request.server.locals, ...this.#_page.locals.get(this.#_data.lang) }
             return { ...mainLocals, ...(helpers.is.realObject(locals) ? locals : {}), lang: this.#_data.lang, dir: this.#_data.dir }
@@ -72,9 +72,12 @@ class Renderer {
                 }
             })()
 
-            this.#_data.stylesheets = this.#_page.stylesheets.get().map(sheet => `<link rel="stylesheet" href="${sheet.scope === 'Internal' ? `${this.#_assetsBaseUrl}/pages/${this.#_page._id}/${sheet.fileName}` : sheet.url}">`);
-            this.#_data.scripts = this.#_page.scripts.get().map(script => {
+            this.#_data.stylesheets = [
+                ...this.#_rendering.assets.stylesheets.get().map(sheet => `<link rel="stylesheet" href="${sheet.scope === 'Internal' ? `${this.#_assetsBaseUrl}/global/css/${sheet.fileName}` : sheet.url}">`),
+                ...this.#_page.stylesheets.get().map(sheet => `<link rel="stylesheet" href="${sheet.scope === 'Internal' ? `${this.#_assetsBaseUrl}/pages/${this.#_page._id}/${sheet.fileName}` : sheet.url}">`)
+            ]
 
+            const stringifyScript = (script: InternalScriptRecord | ExternalScriptRecord | OnPageScriptRecord, resourceScope: 'Page' | 'Global' = 'Global') => {
                 switch (script.scope) {
                     case 'OnPage': {
                         return `<script${script.nomodule ? ' nomodule' : ''}>${script.content}</script>`
@@ -89,7 +92,8 @@ class Renderer {
                             script.referrerpolicy ? `referrerpolicy=${script.referrerpolicy}` : ''
                         ].filter(i => i.length > 0);
 
-                        return `<script src="${this.#_assetsBaseUrl}/pages/${this.#_page._id}/${script.fileName}"${attrs.length > 0 ? ` ${attrs.join(' ')}` : ''}></script>`
+                        const src = resourceScope === 'Page' ? `${this.#_assetsBaseUrl}/pages/${this.#_page._id}/${script.fileName}` : `${this.#_assetsBaseUrl}/global/js/${script.fileName}`;
+                        return `<script src="${src}"${attrs.length > 0 ? ` ${attrs.join(' ')}` : ''}></script>`
                     }
 
                     case 'External': {
@@ -104,7 +108,12 @@ class Renderer {
                         return `<script src="${script.src}${attrs.length > 0 ? ` ${attrs.join(' ')}` : ''}"></script>`
                     }
                 }
-            })
+            }
+
+            this.#_data.scripts = [
+                ...this.#_rendering.assets.scripts.get().map(script => stringifyScript(script)),
+                ...this.#_page.scripts.get().map(script => stringifyScript(script, 'Page'))
+            ]
 
             this.#_data.locals = this.#_helpers.getLocals();
         },
@@ -169,7 +178,7 @@ class Renderer {
                 const htmlTagIndex = this.#_rendered.indexOf('<html');
 
                 if (htmlTagIndex === -1) {
-                    this.#_rendered = `${newHTMLTag}${this.#_rendered}</html>`
+                    this.#_rendered = `${newHTMLTag}\n${this.#_rendered}\n</html>`;
                 } else {
                     const htmlTag = this.#_rendered.substring(htmlTagIndex, this.#_rendered.indexOf('>') + 1);
                     this.#_rendered = this.#_rendered.replace(htmlTag, newHTMLTag);
@@ -178,27 +187,13 @@ class Renderer {
             head: {
                 /**Check the document's `<head>` tag and add it if necessary */
                 check: () => {
-                    let headStartIndex = this.#_rendered.indexOf('<head>');
-                    let headEndIndex = this.#_rendered.indexOf('</head>');
+                    const htmlTag = this.#_rendered.substring(this.#_rendered.indexOf('<html'), this.#_rendered.indexOf('>') + 1);
+                    let headStart = this.#_rendered.indexOf('<head>');
 
-                    if (headStartIndex === -1 || headEndIndex === -1) {
-                        // Either <head> or </head> is missing
-                        const htmlTagIndex = this.#_rendered.indexOf('<html>');
-                        headStartIndex = htmlTagIndex + '<html>'.length;
-
-                        if (headStartIndex === -1) {
-                            // If <html> tag is missing, fallback to beginning of the document
-                            headStartIndex = 0;
-                        }
-
-                        if (headEndIndex === -1 || headEndIndex < headStartIndex) {
-                            // If </head> tag is missing or misplaced, insert a new head section
-                            this.#_rendered = this.#_rendered.slice(0, headStartIndex) + '<head></head>' + this.#_rendered.slice(headStartIndex);
-                            headEndIndex = headStartIndex + '<head></head>'.length;
-                        } else {
-                            // If <head> tag is missing but </head> exists, adjust the start index
-                            headStartIndex = headEndIndex - 6; // Length of '</head>' is 6
-                        }
+                    if (headStart === -1) {
+                        this.#_rendered = this.#_rendered.replace(htmlTag, `${htmlTag}\n<head>`);
+                        headStart = this.#_rendered.indexOf('<head>');
+                        this.#_rendered = this.#_rendered.replace('<body>', '</head>\n<body>')
                     }
                 },
                 content: () => {
@@ -221,6 +216,16 @@ class Renderer {
                     const headEndIndex = this.#_rendered.indexOf('</head>');
                     const existingHeadElements = this.#_helpers.html.head.content();
 
+                    const metaTags = this.#_page.metaTags.get().map(meta => {
+                        const attrs = [];
+                        for (const prop in meta.attributes) {
+                            const value = meta.attributes[prop];
+                            attrs.push(`${prop}${helpers.is.validString(value) ? `="${value}"` : ''}`);
+                        }
+
+                        return attrs.length > 0 ? `<meta ${attrs.join(' ')}>` : undefined;
+                    }).filter(i => i !== undefined);
+
                     // Generate new head elements
                     const newHeadElements = [
                         `<meta charset="utf-8">`,
@@ -230,6 +235,7 @@ class Renderer {
                         this.#_data.favicon ? `<link rel="icon" href="${this.#_data.favicon}">` : '',
                         this.#_data.thumbnail ? `<meta property="og:image" content="${this.#_data.thumbnail}">` : '',
                         this.#_data.keywords.length ? `<meta name="keywords" content="${this.#_data.keywords.join(', ')}">` : '',
+                        ...metaTags,
                         ...this.#_data.stylesheets,
                         ...this.#_data.scripts
                     ];
@@ -266,7 +272,6 @@ class Renderer {
                 }
             }
         }
-
     }
 
     /**
@@ -286,7 +291,7 @@ class Renderer {
                 this.#_helpers.html.head.check();
                 this.#_helpers.html.head.update();
             }
-            
+
             return this.#_rendered;
         } catch (error) {
             if (typeof error === 'string') { error = `Failed to render ${this.#_page.name}: ${error}` }
