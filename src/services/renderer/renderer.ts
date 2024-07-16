@@ -216,7 +216,7 @@ class Renderer {
                     const headEndIndex = this.#_rendered.indexOf('</head>');
                     const existingHeadElements = this.#_helpers.html.head.content();
 
-                    const metaTags = this.#_page.metaTags.get().map(meta => {
+                    const metaTags = [...this.#_rendering.assets.metaTags.get(), ...this.#_page.metaTags.get()].map(meta => {
                         const attrs = [];
                         for (const prop in meta.attributes) {
                             const value = meta.attributes[prop];
@@ -235,7 +235,7 @@ class Renderer {
                         this.#_data.favicon ? `<link rel="icon" href="${this.#_data.favicon}">` : '',
                         this.#_data.thumbnail ? `<meta property="og:image" content="${this.#_data.thumbnail}">` : '',
                         this.#_data.keywords.length ? `<meta name="keywords" content="${this.#_data.keywords.join(', ')}">` : '',
-                        ...metaTags,
+                        ...metaTags,                        
                         ...this.#_data.stylesheets,
                         ...this.#_data.scripts
                     ];
