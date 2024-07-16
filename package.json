@@ -1,6 +1,6 @@
 {
   "name": "@nasriya/hypercloud",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "Nasriya HyperCloud is a lightweight Node.js HTTP2 framework.",
   "main": "./dist/cjs/hypercloud.js",
   "module": "./dist/esm/hypercloud.js",
@@ -34,7 +34,29 @@
     "test": "jest",
     "deepTest": "jest --coverage"
   },
-  "keywords": [],
+  "keywords": [
+    "Server-side rendering",
+    "SSR framework",
+    "JavaScript framework",
+    "Node.js framework",
+    "Component-based rendering",
+    "Multilingual support",
+    "Dynamic components",
+    "Page templates",
+    "Asset management",
+    "Global stylesheets",
+    "Global scripts",
+    "Meta tags",
+    "Reusable components",
+    "Web development",
+    "Backend framework",
+    "Full-stack JavaScript",
+    "EJS templates",
+    "Component assets",
+    "Page assets",
+    "Rendering manager",
+    "http2"
+  ],
   "author": "Nasriya Software, LLC.",
   "license": "Nasriya License",
   "devDependencies": {
