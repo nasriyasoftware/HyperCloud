@@ -25,9 +25,9 @@ ___
 
 ___
 ## Status [![Status](https://img.shields.io/badge/Status-Stable-green.svg)](link-to-your-status-page)
-If you encounter one, please [open an issue](https://github.com/nasriyasoftware/HyperCloud/issues).
+If you encounter an issue or a bug, please [open an issue](https://github.com/nasriyasoftware/HyperCloud/issues).
 ___
-## Quick Start Quide
+## Quick Start Guide
 Quickly run a `HyperCloud` server in **5** easy steps.
 
 #### 1. Installation
@@ -36,7 +36,7 @@ npm i @nasriya/hypercloud
 ```
 
 #### 2. Importing
-Importing in **ES6** modules
+Importing in **ESM** modules
 ```js
 import hypercloud from '@nasriya/hypercloud';
 ```
@@ -88,7 +88,7 @@ Congratulations! Your server is now ready to handle requests.
 
 ___
 ## Features
-HyperCloud has more featues and advanced configurations.
+HyperCloud has more features and advanced configurations.
 
 #### Enable Debugging
 You can enable debugging to get more details about operations and errors.
@@ -128,14 +128,14 @@ server.languages.supported = ['en', 'ar', 'de'];
 ```
 
 ###### Default Language
-If a user doesn't have a preferred language, the browser's language is selected then checked against the server's [supported languages](#supported-languages), if the browser's language isn't supported, the server's `languages.default` is used to render pages or serve other language-related content.
+If a user doesn't have a preferred language, the browser's language is selected then checked against the server's [supported languages](#supported-languages), if the browser's language isn't supported, the server's `default` language is used to render pages or serve other language-related content.
 
 To set a default language:
 ```js
 server.languages.default = 'ar';
 ```
 
-**Note:** The `languages.default` must be one of the [supported languages](#supported-languages) or an error will be thrown.
+**Note:** The `default` language must be one of the [supported languages](#supported-languages) or an error will be thrown.
 
 #### HyperCloud Built-In User
 HyperCloud provides a built-in `HyperCloudUser` on each `request` and allows you to populate it using a [custom handler](https://github.com/nasriyasoftware/HyperCloud/blob/main/examples/request-user.md#user-handler), you can then access the `user` object from any route via the `request` object.
@@ -155,11 +155,11 @@ The built-in `user` object looks like this:
     }
 }
 ```
-Learn how to populate and `request.user` object and work with it [here](https://github.com/nasriyasoftware/HyperCloud/blob/main/examples/request-user.md).
+Learn how to populate the `request.user` object and work with it [here](https://github.com/nasriyasoftware/HyperCloud/blob/main/examples/request-user.md).
 
 #### Error Handling & Pages
 
-**HyperCloud** provides three built-in error pages out of the box, `401`, `403`, `404`, and `500`. You can render these pages from your code and customize them with your own text, or you can set custom handlers to run whenever you needed.
+**HyperCloud** provides four built-in error pages out of the box, `401`, `403`, `404`, and `500`. You can render these pages from your code and customize them with your own text, or you can set custom handlers to run whenever you needed.
 
 To render error pages, just call them from the `pages` module in the `response` object.
 
@@ -202,7 +202,7 @@ server.handlers.logger(logify.middlewares.hypercloud);
 ```
 
 #### Generating eTags
-[ETags](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/ETag) can signifucantly improve server performance. To generate `eTags` for your resources, use the following syntax:
+[ETags](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/ETag) can significantly improve server performance. To generate `eTags` for your resources, use the following syntax:
 
 ```js
 import path from 'path';

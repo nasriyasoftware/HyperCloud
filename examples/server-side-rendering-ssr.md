@@ -5,7 +5,7 @@ ___
 ### Files Syntax
 When defining pages or components, there's a syntax that you must follow in order for the renderer to detect and register your defined pages and components.
 
-- **Pages:** `*.page.js`. For example: `home.pae.js`.
+- **Pages:** `*.page.js`. For example: `home.page.js`.
 - **Components:** `*.comp.js` or `*.component.js`. Example: `header.comp.js` or `header.component.js`.
 ___
 
@@ -111,7 +111,7 @@ export default page;
 ```
 
 ### 2- Register Assets
-After creating and assets (pages and components), we need to register them on the server.
+After creating the assets (pages and components), we need to register them on the server.
 
 ##### Registering Pages & Components
 To register our pages and components, we tell the server where it can find them by providing the containing folder.
