@@ -1,6 +1,6 @@
 <a href="https://package.nasriya.net/hypercloud"><img src="https://static.wixstatic.com/shapes/72ffe6_f9d8d6b66e7c495598327e3ab4712c81.svg" width="350px" alt="Nasriya HyperCloud"></a>
 
-[![Static Badge](https://img.shields.io/badge/license-personal_use-blue?labelColor=%23585858&color=%234ec920)](https://github.com/nasriyasoftware/HyperCloud?tab=License-1-ov-file) ![Repository Size](https://img.shields.io/github/repo-size/nasriyasoftware/HyperCloud.svg) ![Last Commit](https://img.shields.io/github/last-commit/nasriyasoftware/HyperCloud.svg) [![Status](https://img.shields.io/badge/Status-Beta-blue.svg)](link-to-your-status-page)
+[![Static Badge](https://img.shields.io/badge/license-personal_use-blue?labelColor=%23585858&color=%234ec920)](https://github.com/nasriyasoftware/HyperCloud?tab=License-1-ov-file) ![Repository Size](https://img.shields.io/github/repo-size/nasriyasoftware/HyperCloud.svg) ![Last Commit](https://img.shields.io/github/last-commit/nasriyasoftware/HyperCloud.svg) [![Status](https://img.shields.io/badge/Status-Stable-green.svg)](link-to-your-status-page)
 ##### Visit us at [www.nasriya.net](https://nasriya.net).
 
 Nasriya HyperCloud is a lightweight Node.js HTTP2 framework.
@@ -12,7 +12,7 @@ HyperCloud is a robust server-side rendering (SSR) framework designed to build a
 ___
 
 ## Key Features
-- **[HTTP2](https://en.wikipedia.org/wiki/HTTP/2)** Freamework.
+- **[HTTP2](https://en.wikipedia.org/wiki/HTTP/2)** Framework.
 - **Component-Based Architecture:** Define and build reusable components and pages with ease.
 - **[Multilingual Support](#languages):** Define localized content for your pages using locals for each language. The framework ensures the correct content is rendered based on the user's language preference.
 - **Automatic Asset Management:** Automatically include stylesheets, scripts, and meta tags from components and global settings in the rendered pages.
@@ -24,8 +24,8 @@ ___
 - Built-in [Helmet](#helmet-protection) Protection.
 
 ___
-## Status [![Status](https://img.shields.io/badge/Status-Beta-blue.svg)](link-to-your-status-page)
-We're still running in **Beta**, so issues are expected, if you encounter one, please [open an issue](https://github.com/nasriyasoftware/HyperCloud/issues).
+## Status [![Status](https://img.shields.io/badge/Status-Stable-green.svg)](link-to-your-status-page)
+If you encounter one, please [open an issue](https://github.com/nasriyasoftware/HyperCloud/issues).
 ___
 ## Quick Start Quide
 Quickly run a `HyperCloud` server in **5** easy steps.
