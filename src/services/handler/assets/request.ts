@@ -22,7 +22,7 @@ class HyperCloudRequest {
     constructor(request: InitializedRequest, req: http2.Http2ServerRequest) {
         this.#_request = request;
         this.#_req = req;
-        this.#_lang = this.#_request.server.defaultLanguage;
+        this.#_lang = this.#_request.server.languages.default;
         this.#_locale = `${this.#_lang}-PS`;
         /**@type {HyperCloudUserOptions} */
         this.#_user.instance = new HyperCloudUser(this)
@@ -151,7 +151,7 @@ class HyperCloudRequest {
     set _language(lang: string) {
         if (typeof lang === 'string') {
             lang = lang.toLowerCase();
-            if (!this.server.supportedLanguages.includes(lang)) { throw `The language you provided (${lang}) is not a supported language. Supported languages are: ${this.server.supportedLanguages.join(', ')}.` }
+            if (!this.server.languages.supported.includes(lang)) { throw `The language you provided (${lang}) is not a supported language. Supported languages are: ${this.server.languages.supported.join(', ')}.` }
             this.#_lang = lang;
         } else {
             throw new TypeError(`The request's language that has been used is not a valid string, but a type of ${typeof lang}`)

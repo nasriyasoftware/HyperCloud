@@ -145,7 +145,7 @@ class RenderingManager {
         set: (name: string, lang: string = 'default') => {
             if (!helpers.is.validString(name)) { throw new TypeError(`The site name can only a valid string, instead got ${typeof name}`) }
             if (lang !== 'default') {
-                if (this.#_server.supportedLanguages.includes(lang)) { throw new SyntaxError(`The site name language ${lang} is not supported by your server. Make sure to set it up first`) }
+                if (this.#_server.languages.supported.includes(lang)) { throw new SyntaxError(`The site name language ${lang} is not supported by your server. Make sure to set it up first`) }
             }
 
             this.#_siteName[lang] = name;
@@ -488,13 +488,13 @@ class RenderingManager {
                 })
 
                 const updateRes = await Promise.allSettled(promises);
-                const fullfilled = updateRes.filter(i => i.status === 'fulfilled');
+                const fulfilled = updateRes.filter(i => i.status === 'fulfilled');
                 const rejected = updateRes.filter(i => i.status === 'rejected');
 
                 return {
                     updateType: 'components',
                     total: updateRes.length,
-                    updated: fullfilled.length,
+                    updated: fulfilled.length,
                     failed: { total: rejected.length, errors: rejected.map(i => i.reason) }
                 }
             },
@@ -520,7 +520,7 @@ class RenderingManager {
             },
             /**Update the cache of everything */
             everything: async () => {
-                const promises = [this.cache.update.pages(), this.cache.update.components()];
+                const promises = [this.cache.update.pages(), this.cache.update.components(), this.cache.update.globalAssets()];
                 return Promise.all(promises);
             }
         }

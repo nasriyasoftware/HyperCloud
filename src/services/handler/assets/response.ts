@@ -91,16 +91,18 @@ class HyperCloudResponse {
              * @example
              * // Use the default 404 page
              * response.pages.notFound({
-             *      title: '404 - Not Found',
-             *      subtitle: 'This page cannot be found',
-             *      home: 'Home'
+             *      locals: {
+             *          title: '404 - Not Found',
+             *          subtitle: 'This page cannot be found',
+             *          home: 'Home'
+             *      }
              * });
              * 
              * // All options are "optional" and can be omitted
              * response.pages.notFound(); // Renders the default 404 page
              * @example
              * // Setting your own handler
-             * server.setHandler('notFound', (request, response, next) => {
+             * server.handlers.notFound((request, response, next) => {
              *      // Decide what to do here
              * })
              * @param {NotFoundResponseOptions} [options] Rendering options
@@ -146,27 +148,29 @@ class HyperCloudResponse {
              * @example
              * // Use the default 401 page
              * response.pages.unauthorized({
-             *      title: '401 - Unauthorized',
-             *      commands: {
-             *          code: 'ERROR CODE',
-             *          description: 'ERROR DESCRIPTION',
-             *          cause: 'ERROR POSSIBLY CAUSED BY',
-             *          allowed: 'SOME PAGES ON THIS SERVER THAT YOU DO HAVE PERMISSION TO ACCESS',
-             *          regards: 'HAVE A NICE DAY :-)'
-             *        },
-             *        content: {
-             *          code: 'HTTP 401 Unauthorized',
-             *          description: 'Access Denied. You Do Not Have The Permission To Access This Page',
-             *          cause: 'execute access unauthorized, read access unauthorized, write access unauthorized',
-             *          allowed: [{ label: 'Home', link: '/' }, { label: 'About Us', link: '/about' }, { label: 'Contact Us', link: '/support/contact' }],
-             *        }
+             *      locals: {
+             *          title: '401 - Unauthorized',
+             *          commands: {
+             *              code: 'ERROR CODE',
+             *              description: 'ERROR DESCRIPTION',
+             *              cause: 'ERROR POSSIBLY CAUSED BY',
+             *              allowed: 'SOME PAGES ON THIS SERVER THAT YOU DO HAVE PERMISSION TO ACCESS',
+             *              regards: 'HAVE A NICE DAY :-)'
+             *            },
+             *            content: {
+             *              code: 'HTTP 401 Unauthorized',
+             *              description: 'Access Denied. You Do Not Have The Permission To Access This Page',
+             *              cause: 'execute access unauthorized, read access unauthorized, write access unauthorized',
+             *              allowed: [{ label: 'Home', link: '/' }, { label: 'About Us', link: '/about' }, { label: 'Contact Us', link: '/support/contact' }],
+             *            }
+             *      }
              * });
              * 
              * // All options are "optional" and can be omitted
              * response.pages.unauthorized(); // Renders the default 401 page
              * @example
              * // Setting your own handler
-             * server.setHandler('unauthorized', (request, response, next) => {
+             * server.handlers.unauthorized((request, response, next) => {
              *      // Decide what to do here
              * })
              * @param {ForbiddenAndUnauthorizedOptions} [options] 
@@ -225,27 +229,29 @@ class HyperCloudResponse {
              * @example
              * // Use the default 403 page
              * response.pages.forbidden({
-             *      title: '403 - Forbidden',
-             *      commands: {
-             *          code: 'ERROR CODE',
-             *          description: 'ERROR DESCRIPTION',
-             *          cause: 'ERROR POSSIBLY CAUSED BY',
-             *          allowed: 'SOME PAGES ON THIS SERVER THAT YOU DO HAVE PERMISSION TO ACCESS',
-             *          regards: 'HAVE A NICE DAY :-)'
-             *        },
-             *        content: {
-             *          code: 'HTTP 403 Forbidden',
-             *          description: 'Access Denied. You Do Not Have The Permission To Access This Page',
-             *          cause: 'execute access forbidden, read access forbidden, write access forbidden',
-             *          allowed: [{ label: 'Home', link: '/' }, { label: 'About Us', link: '/about' }, { label: 'Contact Us', link: '/support/contact' }],
-             *        }
+             *      locals: {
+             *          title: '403 - Forbidden',
+             *          commands: {
+             *              code: 'ERROR CODE',
+             *              description: 'ERROR DESCRIPTION',
+             *              cause: 'ERROR POSSIBLY CAUSED BY',
+             *              allowed: 'SOME PAGES ON THIS SERVER THAT YOU DO HAVE PERMISSION TO ACCESS',
+             *              regards: 'HAVE A NICE DAY :-)'
+             *            },
+             *            content: {
+             *              code: 'HTTP 403 Forbidden',
+             *              description: 'Access Denied. You Do Not Have The Permission To Access This Page',
+             *              cause: 'execute access forbidden, read access forbidden, write access forbidden',
+             *              allowed: [{ label: 'Home', link: '/' }, { label: 'About Us', link: '/about' }, { label: 'Contact Us', link: '/support/contact' }],
+             *            }
+             *      }
              * });
              * 
              * // All options are "optional" and can be omitted
              * response.pages.forbidden(); // Renders the default 403 page
              * @example
              * // Setting your own handler
-             * server.setHandler('forbidden', (request, response, next) => {
+             * server.handlers.forbidden((request, response, next) => {
              *      // Decide what to do here
              * })
              * @param {ForbiddenAndUnauthorizedOptions} options 
@@ -304,16 +310,19 @@ class HyperCloudResponse {
              * @example
              * // Use the default 500 page
              * response.pages.serverError({
-             *      title: '500 - Server Error',
-             *      subtitle: 'Internal <code>Server error<span>!</span></code>',
-             *      message: '<p> We\'re sorry, but something went wrong on our end. </p>'
+             *      locals: {
+             *          title: '500 - Server Error',
+             *          subtitle: 'Internal <code>Server error<span>!</span></code>',
+             *          message: '<p> We\'re sorry, but something went wrong on our end. </p>'
+             *      },
+             *      error: new Error('Something went wrong')
              * });
              * 
              * // All options are "optional" and can be omitted
              * response.pages.serverError(); // Renders the default 500 page
              * @example
              * // Setting your own handler
-             * server.setHandler('serverError', (request, response, next) => {
+             * server.handlers.serverError((request, response, next) => {
              *      // Decide what to do here
              * })
              * @param {ServerErrorOptions} options 

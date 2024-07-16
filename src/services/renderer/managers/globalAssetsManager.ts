@@ -297,7 +297,7 @@ class GlobalAssets {
             if (lang === undefined) {
                 lang = 'default';
             } else {
-                if (!this.#_server.supportedLanguages.includes(lang)) { throw new SyntaxError(`The language you used set your server locals (${lang}) is not supported by your server`) }
+                if (!this.#_server.languages.supported.includes(lang)) { throw new SyntaxError(`The language you used set your server locals (${lang}) is not supported by your server`) }
             }
 
             this.#_locals[lang] = locals;
@@ -361,11 +361,11 @@ class GlobalAssets {
         },
         /**
          * Disable site caching.
-         * @param extensions The extensions you want to disble. Default: All assets
+         * @param extensions The extensions you want to disable. Default: All assets
          * @example
-         * assets.cache.disble();                 // Disable caching for all assets
-         * assets.cache.disble('js');             // Disable caching for JavaScript Files
-         * assets.cache.disble(['js', 'css']);    // Disable caching for CSS Files
+         * assets.cache.disable();                 // Disable caching for all assets
+         * assets.cache.disable('js');             // Disable caching for JavaScript Files
+         * assets.cache.disable(['js', 'css']);    // Disable caching for CSS Files
          */
         disable: (extensions?: PageRenderingCacheAsset | PageRenderingCacheAsset[]) => {
             try {

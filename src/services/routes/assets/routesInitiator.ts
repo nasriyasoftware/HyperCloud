@@ -55,8 +55,8 @@ class RequestRoutesManager {
         // Prepare the language
         newRouts.push(new Route({
             path: '*', method: 'USE', handler: (request, response, next) => {
-                const supportedLanguages = this.#_response.server.supportedLanguages;
-                const defaultLanguage = this.#_response.server.defaultLanguage || 'en';
+                const supportedLanguages = this.#_response.server.languages.supported;
+                const defaultLanguages = this.#_response.server.languages.default || 'en';
 
                 /**
                  * Check if the user has a preferred language and if it's supported.
@@ -118,7 +118,7 @@ class RequestRoutesManager {
                  * set the language based on the browser (if supported),
                  * or use the default language.
                 */
-                request._language = supportedLanguages.includes(browserLang) ? browserLang : defaultLanguage;
+                request._language = supportedLanguages.includes(browserLang) ? browserLang : defaultLanguages;
                 next();
             }
         }))
@@ -179,17 +179,15 @@ class RequestRoutesManager {
                                 return handler(request, response, next, routeError);
                             } catch (error) {
                                 return response.pages.serverError({
-                                    lang: request.server.defaultLanguage,
                                     locals: {
                                         title: `Server Error (500)`,
                                         subtitle: 'Server Error (500)',
-                                        message: `Ops! We're experincing some difficulties, pleaes refresh the page or try again later.\n\nIf you're the site owner and the error persisted, please review the your site logs and open an issue on Github.\n\nError Code: 0x00008`
+                                        message: `Ops! We're experiencing some difficulties, please refresh the page or try again later.\n\nIf you're the site owner and the error persisted, please review the your site logs and open an issue on Github.\n\nError Code: 0x00008`
                                     }
                                 });
                             }
                         } else {
                             return response.pages.serverError({
-                                lang: request.server.defaultLanguage,
                                 locals: {
                                     title: `Server Error (500)`,
                                     subtitle: 'Server Error (500)',

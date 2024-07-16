@@ -112,7 +112,7 @@ class UserPreferences {
                 if ('language' in options && options.language !== undefined) {
                     if (typeof options.language !== 'string') { throw new TypeError(`The user's preferred language has been set to a value of type ${typeof options.language} while only string values are accepted`) }
                     options.language = options.language.toLowerCase();
-                    if (!request.server.supportedLanguages.includes(options.language)) { throw `The user's preferred language has been set to ${options.language}, which is not a supported language.` }
+                    if (!request.server.languages.supported.includes(options.language)) { throw `The user's preferred language has been set to ${options.language}, which is not a supported language.` }
                     this.#_data.language = options.language
                 }
 

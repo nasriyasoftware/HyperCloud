@@ -424,14 +424,16 @@ export interface ExtensionData {
 
 /**Options for the `500` server error page */
 export interface ServerErrorOptions {
-    lang?: string;
     locals?: {
         title?: string;
         subtitle?: string; // The subtitle can be an HTML string
         message?: string; // The message can be an HTML string
     };
     error?: Error | Record<string, any>;
-    /**Do **NOT** use this property */
+    /**
+     * Do **NOT** use this property
+     * @private
+    */
     bypassHandler?: boolean;
 }
 

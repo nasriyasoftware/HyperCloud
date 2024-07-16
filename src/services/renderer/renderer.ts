@@ -37,7 +37,7 @@ class Renderer {
 
     readonly #_helpers = {
         getLocals: (locals: Record<string, any> = {}): Record<string, any> => {
-            const mainLocals = { ...this.#_request.server.locals, ...this.#_page.locals.get(this.#_data.lang) }
+            const mainLocals = { ...this.#_request.server.rendering.assets.locals.get(this.#_data.lang), ...this.#_page.locals.get(this.#_data.lang) }
             return { ...mainLocals, ...(helpers.is.realObject(locals) ? locals : {}), lang: this.#_data.lang, dir: this.#_data.dir }
         },
         validateRenderingOptions: (options?: PageRenderingOptions) => {

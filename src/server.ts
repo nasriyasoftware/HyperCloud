@@ -15,6 +15,7 @@ import RequestRoutesManager from './services/routes/assets/routesInitiator';
 import Router from './services/routes/assets/router';
 import HelmetManager from './services/helmet/manager';
 import RateLimitingManager from './services/rateLimiter/rateLimiter';
+import LanguagesManager from './services/languages/manager';
 
 const _dirname = __dirname;
 
@@ -49,7 +50,6 @@ class HyperCloudServer {
         locals: {} as Record<string, string>,
         cronJobs: {},
         handlers: {} as Record<string, Function>,
-        languages: { default: 'en', supported: ['en'] },
         siteName: {} as Record<string, string>
     }
 
@@ -91,6 +91,7 @@ class HyperCloudServer {
     })
 
     constructor(userOptions?: SecureServerOptions | ServerOptions | HyperCloudInitFile, addOpt?: HyperCloudManagementOptions) {
+        this.languages = new LanguagesManager();
         this._routesManager = new RoutesManager();
         this.#_helmet = new HelmetManager(this);
         this.rateLimiter = new RateLimitingManager(this);
@@ -262,16 +263,16 @@ class HyperCloudServer {
                 if (helpers.is.undefined(options.languages) || helpers.isNot.realObject(options.languages)) { throw `The options.languages option has been used with an invalid value. Expected an object but instead got ${typeof options.languages}` }
 
                 if ('supported' in options.languages && !helpers.is.undefined(options.languages.supported)) {
-                    this.supportedLanguages = options.languages.supported;
+                    this.languages.supported = options.languages.supported;
                 }
 
                 if ('default' in options.languages && !helpers.is.undefined(options.languages.default)) {
-                    this.defaultLanguage = options.languages.default;
+                    this.languages.default = options.languages.default;
                 }
             }
 
             if ('locals' in options && !helpers.is.undefined(options.locals)) {
-                this.locals = options.locals;
+                this.rendering.assets.locals.set(options.locals);
             }
 
             if ('handlers' in options && !helpers.is.undefined(options.handlers)) {
@@ -302,7 +303,10 @@ class HyperCloudServer {
                                 ssl: this.#_config.ssl,
                                 proxy: { trusted_proxies: this.#_config.trusted_proxies },
                                 locals: this.#_config.locals,
-                                languages: this.#_config.languages,
+                                languages: {
+                                    default: this.languages.default,
+                                    supported: this.languages.supported
+                                },
                             }
 
                             this.#_utils.config.save(savePath, toSave)
@@ -332,8 +336,8 @@ class HyperCloudServer {
          */
         set: (name: string, lang?: string) => {
             if (!helpers.is.validString(name)) { throw new Error(`The site name must be a string, but instead got ${typeof name}`) }
-            if (lang === undefined) { lang = this.#_config.languages.default } else {
-                if (this.#_config.languages.supported.includes(lang)) {
+            if (lang === undefined) { lang = this.languages.default } else {
+                if (this.languages.supported.includes(lang)) {
                     this.#_config.siteName[lang] = name;
                 } else {
                     throw new Error(`The language you choose (${lang}) for your (${name}) site name is not supported. Make sure to first add "${lang}" to the supported languages`);
@@ -349,78 +353,13 @@ class HyperCloudServer {
          * @param lang The language your site name is associated with
          */
         get: (lang?: string) => {
-            if (lang === undefined) { lang = this.#_config.languages.default }
-            if (!this.#_config.languages.supported.includes(lang)) { throw new Error(`Unable to get the site name for the "${lang}" language because it's not a supported language`) }
+            if (lang === undefined) { lang = this.languages.default }
+            if (!this.languages.supported.includes(lang)) { throw new Error(`Unable to get the site name for the "${lang}" language because it's not a supported language`) }
             return this.#_config.siteName[lang];
         }
     } as const
 
-    get defaultLanguage() { return this.#_config.languages.default }
-    /**
-     * Set or get the default language of the server
-     * @param {string} lang The default language
-     */
-    set defaultLanguage(lang: string) {
-        if (this.#_config.languages.supported.includes(lang)) {
-            this.#_config.languages.default = lang;
-        } else {
-            throw `Cannot set default language: ${lang} is not supported`;
-        }
-    }
-
-    get supportedLanguages(): string[] { return this.#_config.languages.supported }
-    /**
-     * Set or get the server's supported languages
-     * @param {string|string[]} langs A list of supported languages
-     */
-    set supportedLanguages(langs: string | string[]) {
-        if (!(typeof langs === 'string' || Array.isArray(langs))) {
-            throw new TypeError(`The server's "supportedLanguages" accepts a string or a list of strings, but instead got ${typeof langs}`)
-        }
-
-        if (typeof langs === 'string') {
-            if (langs.length === 0) { throw `The server's "supportedLanguages" cannot be an empty string` }
-            this.#_config.languages.supported = [langs.toLowerCase()];
-        } else {
-            langs = [...new Set(langs)];
-
-            if (langs.length === 0) {
-                throw `The server's "supportedLanguages" recieved an empty array`;
-            }
-
-            const supported: string[] = [];
-            for (const lang of langs) {
-                if (typeof lang === 'string' && lang.length > 0) {
-                    supported.push(lang.toLowerCase());
-                } else {
-                    throw new TypeError(`The server's "supportedLanguages" accepts a list of strings, but one or more of its items are invalid`);
-                }
-            }
-
-            this.#_config.languages.supported = supported;
-        }
-
-        if (!this.#_config.languages.supported.includes(this.#_config.languages.default)) {
-            helpers.printConsole(`The server recieved a new list of supported languages, but the default language (${this.defaultLanguage}) is not part of the new list.`);
-            helpers.printConsole(`Setting the new default language to: ${this.supportedLanguages[0] || 'en'}`);
-            this.defaultLanguage = this.supportedLanguages[0] || 'en';
-        }
-    }
-
-    /**
-     * The `server.locals` object has properties that are local
-     * variables within the application, and will be available
-     * in templates rendered with `{@link HyperCloudResponse.render}`.
-     */
-    get locals(): Record<string, string> { return this.#_config.locals }
-    set locals(value) {
-        if (helpers.is.realObject(value)) {
-            this.#_config.locals = value;
-        } else {
-            throw new TypeError(`The "server.locals" property expected an object with key:value pairs, but instead got ${typeof value}`)
-        }
-    }
-
+    public readonly languages: LanguagesManager;
     public readonly rateLimiter: RateLimitingManager;
     public readonly rendering: RenderingManager;
     /**@private */
@@ -593,14 +532,7 @@ class HyperCloudServer {
                     }
                 } catch (error) {
                     if (!helpers.is.undefined(resTemp) && resTemp instanceof HyperCloudResponse) {
-                        resTemp.pages.serverError({
-                            lang: this.defaultLanguage,
-                            locals: {
-                                title: `Server Error (500)`,
-                                subtitle: 'Server Error (500)',
-                                message: `Ops! We're experincing some difficulties, pleaes refresh the page or try again later.\n\nIf you're the site owner and the error persisted, please review the your site logs and open an issue on Github.\n\nError Code: 0x00008`
-                            }
-                        });
+                        resTemp.pages.serverError({ error: error as Error });
                     } else {
                         console.error(error);
                         res.statusCode = 500;
@@ -617,8 +549,11 @@ class HyperCloudServer {
                 port = this.#_config.secure ? 443 : 80;
             }
 
-            
+
             await Promise.allSettled([this.rendering.pages.scan(), this.rendering.components.scan()]);
+            helpers.printConsole('Checking/Updating cache storage...');
+            await this.rendering.cache.update.everything();
+            
             return new Promise((resolve, reject) => {
                 const res = server.listen(port, () => {
                     console.info(`HyperCloud Server is listening ${this.#_config.secure ? 'securely ' : ''}on port #${port}`);
