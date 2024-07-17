@@ -20,7 +20,7 @@ import LanguagesManager from './services/languages/manager';
 const _dirname = __dirname;
 
 /**HyperCloud HTTP2 server */
-class HyperCloudServer {
+export class HyperCloudServer {
     #_recievedReqNum = 0;
     readonly #_system = {
         httpServer: undefined as http.Server | undefined,
@@ -585,4 +585,5 @@ class HyperCloudServer {
         return this;
     }
 }
+
 export default HyperCloudServer;

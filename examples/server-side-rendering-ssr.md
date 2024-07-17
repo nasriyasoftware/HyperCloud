@@ -62,10 +62,32 @@ import { Component } from '@nasriya/hypercloud';
 const comp = new Component('header');   // Where `header` is the component name
 ```
 
-3. Specify the path of the component template
+3. Set either a component template or a `render` handler.
 ```js
+// Set a templete
 comp.template.path.set(path.join(import.meta.dirname, 'header.ejs'));
+
+// Set a rendering handler
+comp.onRender.set(locals => {
+    return `
+        <header>
+            <img src="${locals.logo.src}">
+            <nav>
+                <ul>
+                    ${locals.nav.map(nav => {
+                        return `<a href="${nav.href ? nav.href : '#'}"><li>${nav.label}</li></a>`
+                    })}
+                </ul>
+            </nav>
+        </header>
+    `
+})
 ```
+
+**Notes:**
+- Only one method is required in order to render the component.
+- If both the `onRender` handler and a `template` have been set, the `template` will be ignored.
+- The `onRenderHandler` should either return a `string` or `Promise<string>`.
 
 4. Specify the paths of the assets (optional)
 ```js

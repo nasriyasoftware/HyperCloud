@@ -45,8 +45,8 @@ type EventCallback = (...args: any[]) => void;
  * TODO: Change all the server examples to use my own server class
  */
 
-/**This class is used internallly, not by the user */
-class HyperCloudResponse {
+/**This class is used internally, not by the user */
+export class HyperCloudResponse {
     readonly #_server: HyperCloudServer;
     readonly #_req: HyperCloudRequest;
     readonly #_res: http2.Http2ServerResponse;
@@ -107,7 +107,7 @@ class HyperCloudResponse {
              * })
              * @param {NotFoundResponseOptions} [options] Rendering options
              */
-            notFound: (options?: NotFoundResponseOptions) => {
+            notFound: async (options?: NotFoundResponseOptions) => {
                 try {
                     if (typeof this.#_server._handlers.notFound === 'function') {
                         try {
@@ -175,7 +175,7 @@ class HyperCloudResponse {
              * })
              * @param {ForbiddenAndUnauthorizedOptions} [options] 
              */
-            unauthorized: (options?: ForbiddenAndUnauthorizedOptions) => {
+            unauthorized: async (options?: ForbiddenAndUnauthorizedOptions) => {
                 try {
                     if (typeof this.#_server._handlers.unauthorized === 'function') {
                         try {
@@ -256,7 +256,7 @@ class HyperCloudResponse {
              * })
              * @param {ForbiddenAndUnauthorizedOptions} options 
              */
-            forbidden: (options?: ForbiddenAndUnauthorizedOptions) => {
+            forbidden: async (options?: ForbiddenAndUnauthorizedOptions) => {
                 try {
                     if (typeof this.#_server._handlers.forbidden === 'function') {
                         try {
@@ -327,7 +327,7 @@ class HyperCloudResponse {
              * })
              * @param {ServerErrorOptions} options 
              */
-            serverError: (options?: ServerErrorOptions) => {
+            serverError: async (options?: ServerErrorOptions) => {
                 try {
                     if (options && 'error' in options) {
                         const dashLine = '#'.repeat(50);
@@ -425,10 +425,10 @@ class HyperCloudResponse {
      * @param {PageRenderingOptions} options 
      * @returns {HyperCloudResponse}
      */
-    render(name: string, options?: PageRenderingOptions): HyperCloudResponse {
+    async render(name: string, options?: PageRenderingOptions): Promise<HyperCloudResponse> {
         try {
             const renderer = new Renderer(this.#_req, name);
-            const html = renderer.render(options);
+            const html = await renderer.render(options);
             this.setHeader('Content-Type', 'text/html');
 
             if (options && 'httpOptions' in options) {

@@ -1,4 +1,4 @@
-import { FileAsset, InternalScriptOptions, InternalScriptRecord, InternalStylesheetRecord, PageRenderingCacheAsset, ViewRenderingAsset } from '../../../docs/docs';
+import { FileAsset, InternalScriptOptions, InternalScriptRecord, InternalStylesheetRecord, OnRenderHandler, PageRenderingCacheAsset, ViewRenderingAsset } from '../../../docs/docs';
 import helpers from '../../../utils/helpers';
 import fs from 'fs';
 import path from 'path';
@@ -7,7 +7,7 @@ export class Component {
     readonly #_id = helpers.generateRandom(16, { includeSymbols: false });
     /**Component name */
     readonly #_name: string;
-    /**The EJS template */
+    /**The template */
     readonly #_template: ViewRenderingAsset = { filePath: '', content: '' }
 
     /**The component's stylesheet */
@@ -76,6 +76,8 @@ export class Component {
         }
     }
 
+    #_onRender: OnRenderHandler | null = null;
+
     /**
      * Create a new component
      * @param name The component name
@@ -107,9 +109,9 @@ export class Component {
         set: (filePath: string) => {
             const validity = helpers.checkPathAccessibility(filePath);
             if (!validity.valid) {
-                if (!validity.errors.notString) { throw this.#_helpers.createError(`The stylesheet path that you passed should be a string, instead got ${typeof filePath}`) }
-                if (!validity.errors.doesntExist) { throw this.#_helpers.createError(`The stylesheet path (${filePath}) doesn't exist.`) }
-                if (!validity.errors.notAccessible) { throw this.#_helpers.createError(`You don't have enough permissions to access the stylesheet path (${filePath})`) }
+                if (validity.errors.notString) { throw this.#_helpers.createError(`The stylesheet path that you passed should be a string, instead got ${typeof filePath}`) }
+                if (validity.errors.doesntExist) { throw this.#_helpers.createError(`The stylesheet path (${filePath}) doesn't exist.`) }
+                if (validity.errors.notAccessible) { throw this.#_helpers.createError(`You don't have enough permissions to access the stylesheet path (${filePath})`) }
             }
 
             const name = path.basename(filePath);
@@ -184,7 +186,7 @@ export class Component {
                 }
             }
         },
-        get: (lang: string = 'default') => this.#_locals[lang] || this.#_locals.default
+        get: (lang: string = 'default') => lang in this.#_locals ? this.#_locals[lang] : this.#_locals.default
     }
 
     /**Component name */
@@ -223,11 +225,11 @@ export class Component {
         },
         /**
          * Disable caching for this component.
-         * @param extensions The extensions you want to disble. Default: All assets
+         * @param extensions The extensions you want to disable. Default: All assets
          * @example
-         * component.cache.disble();                 // Disable caching for all assets
-         * component.cache.disble('js');             // Disable caching for JavaScript Files
-         * component.cache.disble(['js', 'css']);    // Disable caching for CSS Files
+         * component.cache.disable();                 // Disable caching for all assets
+         * component.cache.disable('js');             // Disable caching for JavaScript Files
+         * component.cache.disable(['js', 'css']);    // Disable caching for CSS Files
          */
         disable: (extensions?: PageRenderingCacheAsset | PageRenderingCacheAsset[]) => {
             try {
@@ -255,6 +257,7 @@ export class Component {
          */
         update: async () => {
             try {
+                if (!this.#_template.filePath) { return }
                 const promises: Promise<void>[] = [new Promise<void>((resolve, reject) => {
                     try {
                         this.#_template.content = fs.readFileSync(this.#_template.filePath, { encoding: 'utf-8' });
@@ -309,6 +312,19 @@ export class Component {
         },
         /**Read the caching status of this component */
         status: () => this.#_cache.extensions
+    }
+
+    readonly onRender = {
+        /**
+         * Set the component's renderer function
+         * @param {OnRenderHandler} callback
+         */
+        set: (callback: OnRenderHandler) => {
+            if (typeof callback !== 'function') { throw new TypeError(`The component's "onRender" handler must be a function, instead got ${typeof callback}`) }
+            this.#_onRender = callback;
+        },
+        /**Get the component's render function */
+        get: () => { return this.#_onRender }
     }
 }
 

@@ -72,6 +72,8 @@ export type MimeType =
     | "application/vnd.rar" | "application/rtf" | "application/x-sh" | "image/svg+xml"
     | "application/x-tar" | "image/tiff";
 
+export type OnRenderHandler = (locals: Record<string, any> | any, include: (name: string, locals: Record<string, any>) => Promise<string>, lang: string) => string | Promise<string>;
+
 export interface HTMLScriptTag {
     /**
      * Specifies that the script is downloaded in parallel to

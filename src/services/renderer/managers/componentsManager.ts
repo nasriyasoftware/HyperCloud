@@ -39,7 +39,7 @@ class ComponentsManager {
      */
     register(paths: string | string[]) {
         if (!Array.isArray(paths)) { paths = [paths] }
-        const errRes = { message: 'Invalid components\' paths detected. Read the error list', errors: [] as any[] }
+        const errRes = { message: 'Invalid components\' paths detected. Read the error list', errors: [] as any[], paths }
 
         // Validating input
         for (const viewsPath of paths) {

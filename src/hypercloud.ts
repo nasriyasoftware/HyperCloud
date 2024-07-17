@@ -7,6 +7,9 @@ import path from 'path';
 import process from 'process';
 export { Page } from './services/renderer/assets/Page';
 export { Component } from './services/renderer/assets/Component';
+export { HyperCloudServer } from './server';
+export { HyperCloudRequest } from './services/handler/assets/request';
+export { HyperCloudResponse } from './services/handler/assets/response';
 
 process.env.HYPERCLOUD_SERVER_VERBOSE = 'FALSE';
 

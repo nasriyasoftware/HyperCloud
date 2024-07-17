@@ -185,9 +185,9 @@ class GlobalAssets {
             internal: (filePath: string) => {
                 const validity = helpers.checkPathAccessibility(filePath);
                 if (!validity.valid) {
-                    if (!validity.errors.notString) { throw this.#_helpers.createError(`The stylesheet path that you passed should be a string, instead got ${typeof filePath}`) }
-                    if (!validity.errors.doesntExist) { throw this.#_helpers.createError(`The stylesheet path (${filePath}) doesn't exist.`) }
-                    if (!validity.errors.notAccessible) { throw this.#_helpers.createError(`You don't have enough permissions to access the stylesheet path (${filePath})`) }
+                    if (validity.errors.notString) { throw this.#_helpers.createError(`The stylesheet path that you passed should be a string, instead got ${typeof filePath}`) }
+                    if (validity.errors.doesntExist) { throw this.#_helpers.createError(`The stylesheet path (${filePath}) doesn't exist.`) }
+                    if (validity.errors.notAccessible) { throw this.#_helpers.createError(`You don't have enough permissions to access the stylesheet path (${filePath})`) }
                 }
 
                 const name = path.basename(filePath);
@@ -326,7 +326,7 @@ class GlobalAssets {
          * @returns 
          */
         get: (lang: string = 'default'): Record<string, any> => {
-            return this.#_locals[lang] || this.#_locals.default;
+            return lang in this.#_locals ? this.#_locals[lang] : this.#_locals.default;
         }
     }
 

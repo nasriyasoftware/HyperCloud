@@ -123,7 +123,7 @@ class Renderer {
                 const locals = this.#_helpers.getLocals();
                 return this.#_helpers.render.withIncludes(template, locals);
             },
-            component: (name: string) => {
+            component: async (name: string, locals: Record<string, any>) => {
                 const component = this.#_rendering.components.storage[name];
                 if (!component) { throw new Error(`The page "${this.#_page.name}" has an undefined component "${name}" in its template`) }
 
@@ -154,21 +154,85 @@ class Renderer {
                     }
                 }
 
-                const templateContent = component.template.content.get();
-                const templatelocals = this.#_helpers.getLocals(component.locals.get(this.#_data.lang))
-                return this.#_helpers.render.withIncludes(templateContent, templatelocals);
+                const componentLocals = component.locals.get(this.#_data.lang);
+                const mainLocals: Record<string, any> = (() => {
+                    if (Object.keys(componentLocals).length > 0) {
+                        return componentLocals;
+                    } else if (!helpers.is.undefined(locals)) {
+                        return locals;
+                    } else {
+                        return {}
+                    }
+                })()                
+
+                // if (name === 'socialBar') {
+                //     console.log('socialBar locals:', mainLocals);
+                //     console.log({ passedLocals: locals, componentLocals, mainLocals })
+                // }
+
+                const handler = component.onRender.get();
+                if (typeof handler === 'function') {
+                    const templateContent = handler(mainLocals, this.#_helpers.render.component, this.#_data.lang);
+
+                    if (typeof templateContent === 'string') {
+                        return this.#_helpers.render.withIncludes(templateContent, mainLocals);
+                    } else {
+                        if (templateContent && typeof templateContent?.then === 'function') {
+                            const content = await templateContent.then();
+                            if (typeof content === 'string') {
+                                return this.#_helpers.render.withIncludes(content, mainLocals);
+                            }
+                        }
+
+                        throw new Error(`The onRender function of the component (${component.name}) does did not return a string value`)
+                    }
+                } else {
+                    const templateContent = component.template.content.get();
+                    return this.#_helpers.render.withIncludes(templateContent, mainLocals);
+                }
             },
-            withIncludes: (template: string, locals: Record<string, any>) => {
-                const includeRegex = /<%-\s*include\(['"](.+?)['"]\)\s*%>/g;
+            withIncludes: async (template: string, locals: Record<string, any>) => {
+                try {
+                    const includeRegex = /<%-\s*include\(['"](.+?)['"](, ?(.+?))?\)\s*%>/g;
+                    let match;
+                    let result = '';
+                    let lastIndex = 0;
 
-                const renderInclude = (match: string, p1: string) => {
-                    const includedComponentName = p1;
-                    const includedContent = this.#_helpers.render.component(includedComponentName);
-                    return includedContent;
-                };
+                    const renderInclude = async (match: string, componentName: string, _: any, args: string): Promise<string> => {
+                        let includedLocals;
 
-                const renderedTemplate = template.replace(includeRegex, renderInclude);
-                return engine.render(renderedTemplate, locals);
+                        if (args) {
+                            try {
+                                includedLocals = eval(`(${args})`);
+                            } catch (error) {
+                                console.error('Failed to evaluate arguments for include:', args, error);
+                                includedLocals = {};
+                            }
+                        } else {
+                            includedLocals = locals;
+                        }
+
+                        return this.#_helpers.render.component(componentName, includedLocals);
+                    };
+
+                    while ((match = includeRegex.exec(template)) !== null) {
+                        const [fullMatch, componentName, , args] = match;
+                        result += template.slice(lastIndex, match.index);
+                        lastIndex = includeRegex.lastIndex;
+
+                        try {
+                            result += await renderInclude(fullMatch, componentName, null, args);
+                        } catch (error) {
+                            console.error('Error in renderInclude:', error);
+                            throw error;
+                        }
+                    }
+
+                    result += template.slice(lastIndex);
+                    return engine.render(result, locals);
+                } catch (error) {
+                    throw error;
+                }
             }
         },
         html: {
@@ -235,7 +299,7 @@ class Renderer {
                         this.#_data.favicon ? `<link rel="icon" href="${this.#_data.favicon}">` : '',
                         this.#_data.thumbnail ? `<meta property="og:image" content="${this.#_data.thumbnail}">` : '',
                         this.#_data.keywords.length ? `<meta name="keywords" content="${this.#_data.keywords.join(', ')}">` : '',
-                        ...metaTags,                        
+                        ...metaTags,
                         ...this.#_data.stylesheets,
                         ...this.#_data.scripts
                     ];
@@ -279,14 +343,14 @@ class Renderer {
      * @param {PageRenderingOptions} options A `key:value` pairs object for variables
      * @returns {string} The rendered `HTML` page
      */
-    render(options?: PageRenderingOptions): string {
+    async render(options?: PageRenderingOptions): Promise<string> {
         try {
             if (!this.#_rendered) {
                 this.#_data.lang = this.#_request.language;
                 this.#_data.dir = this.#_data.lang === 'ar' || this.#_data.lang === 'he' ? 'rtl' : 'ltr';
 
                 this.#_helpers.validateRenderingOptions(options);
-                this.#_rendered = this.#_helpers.render.page();
+                this.#_rendered = await this.#_helpers.render.page();
                 this.#_helpers.html.check();
                 this.#_helpers.html.head.check();
                 this.#_helpers.html.head.update();

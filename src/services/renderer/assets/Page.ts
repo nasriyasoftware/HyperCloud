@@ -7,7 +7,7 @@ export class Page {
     #_id = helpers.generateRandom(16, { includeSymbols: false });
     /**Page name (internally on the server) */
     readonly #_name: string;
-    /**The EJS template */
+    /**The template */
     readonly #_template: ViewRenderingAsset = { filePath: '', content: '' }
 
     readonly #_title: Record<string, string> = { default: '' }
@@ -335,7 +335,7 @@ export class Page {
                 }
             }
         },
-        get: (lang: string = 'default') => this.#_locals[lang] || this.#_locals.default
+        get: (lang: string = 'default') => lang in this.#_locals ? this.#_locals[lang] : this.#_locals.default
     }
 
     readonly scripts = {
@@ -422,9 +422,9 @@ export class Page {
             internal: (filePath: string) => {
                 const validity = helpers.checkPathAccessibility(filePath);
                 if (!validity.valid) {
-                    if (!validity.errors.notString) { throw this.#_helpers.createError(`The stylesheet path that you passed should be a string, instead got ${typeof filePath}`) }
-                    if (!validity.errors.doesntExist) { throw this.#_helpers.createError(`The stylesheet path (${filePath}) doesn't exist.`) }
-                    if (!validity.errors.notAccessible) { throw this.#_helpers.createError(`You don't have enough permissions to access the stylesheet path (${filePath})`) }
+                    if (validity.errors.notString) { throw this.#_helpers.createError(`The stylesheet path that you passed should be a string, instead got ${typeof filePath}`) }
+                    if (validity.errors.doesntExist) { throw this.#_helpers.createError(`The stylesheet path (${filePath}) doesn't exist.`) }
+                    if (validity.errors.notAccessible) { throw this.#_helpers.createError(`You don't have enough permissions to access the stylesheet path (${filePath})`) }
                 }
 
                 const name = path.basename(filePath);
@@ -480,11 +480,11 @@ export class Page {
         },
         /**
          * Disable caching for this page.
-         * @param extensions The extensions you want to disble. Default: All assets
+         * @param extensions The extensions you want to disable. Default: All assets
          * @example
-         * page.cache.disble();                 // Disable caching for all assets
-         * page.cache.disble('js');             // Disable caching for JavaScript Files
-         * page.cache.disble(['js', 'css']);    // Disable caching for CSS Files
+         * page.cache.disable();                 // Disable caching for all assets
+         * page.cache.disable('js');             // Disable caching for JavaScript Files
+         * page.cache.disable(['js', 'css']);    // Disable caching for CSS Files
          */
         disable: (extensions?: PageRenderingCacheAsset | PageRenderingCacheAsset[]) => {
             try {
