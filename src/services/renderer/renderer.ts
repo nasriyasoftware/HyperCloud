@@ -238,13 +238,13 @@ class Renderer {
         html: {
             /**Check the document's `<html>` tag and add the `lang` and `dir` attributes */
             check: () => {
-                const newHTMLTag = `<html lang=${this.#_data.lang} dir=${this.#_data.dir}>`;
-                const htmlTagIndex = this.#_rendered.indexOf('<html');
+                const newHTMLTag = `<html lang="${this.#_data.lang}" dir="${this.#_data.dir}">`;
+                const htmlTagStartIndex = this.#_rendered.indexOf('<html');
+                const htmlTag = this.#_rendered.substring(htmlTagStartIndex, this.#_rendered.indexOf('>') + 1);
 
-                if (htmlTagIndex === -1) {
+                if (htmlTagStartIndex === -1) {
                     this.#_rendered = `${newHTMLTag}\n${this.#_rendered}\n</html>`;
                 } else {
-                    const htmlTag = this.#_rendered.substring(htmlTagIndex, this.#_rendered.indexOf('>') + 1);
                     this.#_rendered = this.#_rendered.replace(htmlTag, newHTMLTag);
                 }
             },
@@ -257,7 +257,13 @@ class Renderer {
                     if (headStart === -1) {
                         this.#_rendered = this.#_rendered.replace(htmlTag, `${htmlTag}\n<head>`);
                         headStart = this.#_rendered.indexOf('<head>');
-                        this.#_rendered = this.#_rendered.replace('<body>', '</head>\n<body>')
+                        const bodyStart = this.#_rendered.indexOf('<body>');
+
+                        if (bodyStart === -1) {
+                            this.#_rendered = this.#_rendered.replace('<head>','<head>\n</head>\n<body>\n</body>')
+                        } else {
+                            this.#_rendered = this.#_rendered.replace('<body>', '</head>\n<body>')
+                        }
                     }
                 },
                 content: () => {

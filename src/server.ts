@@ -482,7 +482,7 @@ export class HyperCloudServer {
      * @param callback Pass a callback function to run when the server starts listening.
      * @returns {Promise<void|http2.Http2SecureServer>} If secure connection is configured, a `Promise<http2.Http2SecureServer>` will be returned, otherwise, a `Promise<void>` will be returned.
      */
-    async listen(port: number, callback: Function): Promise<void | http2.Http2SecureServer> {
+    async listen(port: number, callback?: Function): Promise<void | http2.Http2SecureServer> {
         try {
             if (this.#_config.secure) {
                 const { cert, key } = await (async () => {
