@@ -89,7 +89,8 @@ class Renderer {
                             script.crossorigin ? `crossorigin=${script.crossorigin}` : '',
                             script.defer ? 'defer' : '',
                             script.nomodule ? 'nomodule' : '',
-                            script.referrerpolicy ? `referrerpolicy=${script.referrerpolicy}` : ''
+                            script.referrerpolicy ? `referrerpolicy=${script.referrerpolicy}` : '',
+                            script.type ? `type="${script.type}"` : ''
                         ].filter(i => i.length > 0);
 
                         const src = resourceScope === 'Page' ? `${this.#_assetsBaseUrl}/pages/${this.#_page._id}/${script.fileName}` : `${this.#_assetsBaseUrl}/global/js/${script.fileName}`;
@@ -102,7 +103,8 @@ class Renderer {
                             script.crossorigin ? `crossorigin=${script.crossorigin}` : '',
                             script.defer ? 'defer' : '',
                             script.nomodule ? 'nomodule' : '',
-                            script.referrerpolicy ? `referrerpolicy=${script.referrerpolicy}` : ''
+                            script.referrerpolicy ? `referrerpolicy=${script.referrerpolicy}` : '',
+                            script.type ? `type="${script.type}"` : ''
                         ].filter(i => i.length > 0);
 
                         return `<script src="${script.src}${attrs.length > 0 ? ` ${attrs.join(' ')}` : ''}"></script>`
@@ -146,7 +148,8 @@ class Renderer {
                             script.crossorigin ? `crossorigin=${script.crossorigin}` : '',
                             script.defer ? 'defer' : '',
                             script.nomodule ? 'nomodule' : '',
-                            script.referrerpolicy ? `referrerpolicy=${script.referrerpolicy}` : ''
+                            script.referrerpolicy ? `referrerpolicy=${script.referrerpolicy}` : '',
+                            script.type ? `type="${script.type}"` : ''
                         ].map(i => i.length > 0);
 
                         const tag = `<script src="${src}"${attrs.length > 0 ? ` ${attrs.join(' ')}` : ''}></script>`

@@ -108,11 +108,11 @@ export interface HTMLScriptTag {
     /**Specifies the URL of an external script file */
     src: string;
     /**Specifies the media type of the script */
-    type?: 'text/javascript';
+    type?: 'text/javascript' | 'application/ecmascript' | 'text/babel' | 'application/ld+json' | 'module';
 }
 
 export interface InternalScriptOptions extends Omit<InternalScriptRecord, 'scope' | 'fileName'> { }
-export interface InternalScriptRecord extends Omit<HTMLScriptTag, 'src' | 'type' | 'integrity'>, FileAsset {
+export interface InternalScriptRecord extends Omit<HTMLScriptTag, 'src' | 'integrity'>, FileAsset {
     scope: 'Internal';
     /**The path to the script file */
     filePath: string;

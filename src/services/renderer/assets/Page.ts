@@ -72,7 +72,11 @@ export class Page {
 
                 if ('type' in config) {
                     if (typeof config.type !== 'string') { throw this.#_helpers.createError(`The script's "type" value can only be a string value, instead got ${typeof config.type}`) }
-                    if (config.type !== 'text/javascript') { throw this.#_helpers.createError(`The script's "type" value can only be "text/javascript"`) }
+
+                    const possibleOptions = ['text/javascript', 'application/ecmascript', 'text/babel', 'application/ld+json', 'module'] as InternalScriptOptions['type'][];
+                    config.type = config.type.toLowerCase() as InternalScriptOptions['type'];
+
+                    if (!possibleOptions.includes(config.type)) { throw this.#_helpers.createError(`The script's "type" value is not supported`) }
                 }
             }
         }
