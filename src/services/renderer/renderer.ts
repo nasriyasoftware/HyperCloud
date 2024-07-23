@@ -166,7 +166,7 @@ class Renderer {
                     } else {
                         return {}
                     }
-                })()                
+                })()
 
                 // if (name === 'socialBar') {
                 //     console.log('socialBar locals:', mainLocals);
@@ -241,20 +241,28 @@ class Renderer {
         html: {
             /**Check the document's `<html>` tag and add the `lang` and `dir` attributes */
             check: () => {
-                const newHTMLTag = `<html lang="${this.#_data.lang}" dir="${this.#_data.dir}">`;
-                const htmlTagStartIndex = this.#_rendered.indexOf('<html');
-                const htmlTag = this.#_rendered.substring(htmlTagStartIndex, this.#_rendered.indexOf('>') + 1);
+                const hasDocType = this.#_rendered.substring(0, '<!DOCTYPE html>'.length).toLowerCase().startsWith('<!DOCTYPE html>'.toLowerCase());
+                if (!hasDocType) { this.#_rendered = `<!DOCTYPE html>\n${this.#_rendered}` }
 
-                if (htmlTagStartIndex === -1) {
-                    this.#_rendered = `${newHTMLTag}\n${this.#_rendered}\n</html>`;
-                } else {
+                const htmlTagStartIndex = this.#_rendered.indexOf('<html');
+                const hasHTML = htmlTagStartIndex > -1;
+
+                const newHTMLTag = `<html lang="${this.#_data.lang}" dir="${this.#_data.dir}">`;
+
+                if (hasHTML) {
+                    const fromHtml = this.#_rendered.substring(htmlTagStartIndex)
+                    const htmlTag = fromHtml.substring(htmlTagStartIndex, fromHtml.indexOf('>') + 1);
                     this.#_rendered = this.#_rendered.replace(htmlTag, newHTMLTag);
+                } else {
+                    this.#_rendered = `${this.#_rendered.substring(0, `<!DOCTYPE html>\n`.length)}${newHTMLTag}\n${this.#_rendered.replace(`<!DOCTYPE html>\n`, '')}\n</html>`;
                 }
             },
             head: {
                 /**Check the document's `<head>` tag and add it if necessary */
                 check: () => {
-                    const htmlTag = this.#_rendered.substring(this.#_rendered.indexOf('<html'), this.#_rendered.indexOf('>') + 1);
+                    const htmlTagStartIndex = this.#_rendered.indexOf('<html');
+                    const fromHtml = this.#_rendered.substring(htmlTagStartIndex)
+                    const htmlTag = fromHtml.substring(htmlTagStartIndex, fromHtml.indexOf('>') + 1);
                     let headStart = this.#_rendered.indexOf('<head>');
 
                     if (headStart === -1) {
@@ -263,7 +271,7 @@ class Renderer {
                         const bodyStart = this.#_rendered.indexOf('<body>');
 
                         if (bodyStart === -1) {
-                            this.#_rendered = this.#_rendered.replace('<head>','<head>\n</head>\n<body>\n</body>')
+                            this.#_rendered = this.#_rendered.replace('<head>', '<head>\n</head>\n<body>\n</body>')
                         } else {
                             this.#_rendered = this.#_rendered.replace('<body>', '</head>\n<body>')
                         }
