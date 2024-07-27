@@ -163,8 +163,9 @@ class SSLManager {
                 }
             },
             generateSelfSigned: async () => {
-                const selfSigned: { key: Buffer, cert: Buffer } = await helpers.loadModule('openssl-self-signed-certificate');
-                return { key: selfSigned.key.toString('utf-8'), cert: selfSigned.cert.toString('utf-8') }
+                const key = fs.readFileSync(path.join(__dirname, './self-signed/key.pem'), { encoding: 'utf-8' });
+                const cert = fs.readFileSync(path.join(__dirname, './self-signed/cert.pem'), { encoding: 'utf-8' })
+                return { key, cert }
             },
             cleanUp: () => {
                 this.#_cache.bat_str = '';;
