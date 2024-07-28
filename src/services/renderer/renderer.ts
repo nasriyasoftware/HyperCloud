@@ -247,7 +247,7 @@ class Renderer {
                 const htmlTagStartIndex = this.#_rendered.indexOf('<html');
                 const hasHTML = htmlTagStartIndex > -1;
 
-                const newHTMLTag = `<html lang="${this.#_data.lang}" dir="${this.#_data.dir}">`;
+                const newHTMLTag = `<html lang="${this.#_data.lang}" dir="${this.#_data.dir}" theme=${this.#_request.colorScheme}>`;
 
                 if (hasHTML) {
                     const fromHtml = this.#_rendered.substring(htmlTagStartIndex)
