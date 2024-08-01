@@ -477,6 +477,33 @@ export class HyperCloudServer {
     }
 
     /**
+     * Extend the functionality of the server
+     * @param value 
+     * @example
+     * import { Router } from '@nasriya/hypercloud';
+     * 
+     * const router = new Router();
+     * 
+     * router.get('/', (req, res, next) => {
+     *      console.log(req.__toJSON());
+     *      next();
+     * })
+     * 
+     * server.extend(router);
+     */
+    extend(value: Router) {
+        if (value instanceof Router) {
+            if (!value._data) { return }
+            const routes = [...value._data.routes.dynamic, ...value._data.routes.static];
+            for (const route of routes) {
+                this._routesManager.add(route);
+            }
+
+            return;
+        }
+    }
+
+    /**
      * Start listening for incoming requests
      * @param port Specify the port number of the protocol for the server. Default: `443` for secure servers and `80` for plain HTTP ones.
      * @param callback Pass a callback function to run when the server starts listening.
@@ -553,7 +580,7 @@ export class HyperCloudServer {
             await Promise.allSettled([this.rendering.pages.scan(), this.rendering.components.scan()]);
             helpers.printConsole('Checking/Updating cache storage...');
             await this.rendering.cache.update.everything();
-            
+
             return new Promise((resolve, reject) => {
                 const res = server.listen(port, () => {
                     console.info(`HyperCloud Server is listening ${this.#_config.secure ? 'securely ' : ''}on port #${port}`);

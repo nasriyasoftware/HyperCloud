@@ -10,6 +10,7 @@ export { Component } from './services/renderer/assets/Component';
 export { HyperCloudServer } from './server';
 export { HyperCloudRequest } from './services/handler/assets/request';
 export { HyperCloudResponse } from './services/handler/assets/response';
+export { Router } from './services/routes/assets/router';
 
 process.env.HYPERCLOUD_SERVER_VERBOSE = 'FALSE';
 

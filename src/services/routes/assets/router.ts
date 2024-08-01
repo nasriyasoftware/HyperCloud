@@ -7,8 +7,9 @@ import helpers from '../../../utils/helpers';
 import fs from 'fs';
 import path from 'path';
 
-class Router {
-    #_server: HyperCloudServer;
+export class Router {
+    #_server: HyperCloudServer | undefined;
+    #_routes = { static: [] as StaticRoute[], dynamic: [] as Route[] }
 
     #_defaults = {
         caseSensitive: false,
@@ -22,7 +23,11 @@ class Router {
             const subDomain = options && 'subDomain' in options ? options.subDomain : this.#_defaults.subDomain;
 
             const route = new Route({ path, handler, method, caseSensitive, subDomain });
-            this.#_server._routesManager.add(route);
+            if (this.#_server instanceof HyperCloudServer) {
+                this.#_server._routesManager.add(route);
+            } else {
+                this.#_routes.dynamic.push(route);
+            }
         },
         createStaticRoute: (root: string, options?: StaticRouteOptions) => {
             const caseSensitive = options && 'caseSensitive' in options ? options.caseSensitive : this.#_defaults.caseSensitive;
@@ -32,14 +37,33 @@ class Router {
             const dotfiles = options && 'dotfiles' in options ? options.dotfiles : 'ignore';
 
             const route = new StaticRoute(root, { path, subDomain, caseSensitive, dotfiles });
-            this.#_server._routesManager.add(route);
+            if (this.#_server instanceof HyperCloudServer) {
+                this.#_server._routesManager.add(route);
+            } else {
+                this.#_routes.static.push(route);
+            }
         }
     })
 
-    constructor(server: HyperCloudServer, options?: { caseSensitive?: boolean; subDomain?: string; }) {
-        this.#_server = server;
+    constructor(server?: HyperCloudServer, options?: { caseSensitive?: boolean; subDomain?: string; }) {
+        if (server instanceof HyperCloudServer) { this.#_server = server }
+
         if (options && 'caseSensitive' in options && typeof options.caseSensitive === 'boolean') { this.#_defaults.caseSensitive = options.caseSensitive }
         if (options && 'subDomain' in options && typeof options.subDomain === 'string') { this.#_defaults.subDomain = options.subDomain }
+    }
+
+    /**
+     * A property used when to get the data from this router
+     * when extended by the server.
+     * @private
+     */
+    get _data() {
+        if (this.#_server instanceof HyperCloudServer) { return null }
+
+        return {
+            routes: { static: this.#_routes.static, dynamic: this.#_routes.dynamic },
+            options: { ...this.#_defaults }
+        }
     }
 
     /**
@@ -60,7 +84,7 @@ class Router {
         const content = fs.readdirSync(faviconPath, { withFileTypes: true });
         const file = content.find(i => i.isFile() && i.name.startsWith('favicon'));
         if (!file) { throw `The favicon path you provided (${faviconPath}) does not contain a favicon file` }
-        
+
         const route = new Route({
             path: '/favicon.ico',
             caseSensitive: true,
@@ -75,7 +99,11 @@ class Router {
             }
         })
 
-        this.#_server._routesManager.add(route);
+        if (this.#_server instanceof HyperCloudServer) {
+            this.#_server._routesManager.add(route);
+        } else {
+            this.#_routes.dynamic.push(route)
+        }
     }
 
     /**

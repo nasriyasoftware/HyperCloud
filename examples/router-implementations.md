@@ -1,5 +1,47 @@
 ## Advanced Router Implementations
 
+### Ways to create a `Router`
+
+#### 1. From  the server
+You can create a `Router` directly from the server using `server.Router()`. Routes created on the returned server are automatically mounted on the server.
+
+```js
+import hypercloud from '@nasriya/hypercloud';
+
+const server = hypercloud.Server();
+
+// Create the router from the server
+const router = server.Router();
+```
+
+#### 2. Standalone `Router`
+To create dynamic content, you can import the router directly from the package
+
+```js
+// api/auth
+import { Router } from '@nasriya/hypercloud';
+
+const router = new Router();
+
+router.use('*', (req, res, next) => {
+    next();
+})
+
+export default router;
+```
+
+```js
+// server
+import hypercloud from '@nasriya/hypercloud';
+import authRouter from './api/auth';
+
+const server = hypercloud.Server();
+
+// Mount the created router on the server
+server.extend(authRouter);
+```
+___
+
 ##### Favicon
 Specify the website's `favicon` by passing the root directory that contains your `favicon`. Your `favicon` extension can be **.png** or **.ico**.
 
