@@ -356,6 +356,29 @@ export class HyperCloudServer {
             if (lang === undefined) { lang = this.languages.default }
             if (!this.languages.supported.includes(lang)) { throw new Error(`Unable to get the site name for the "${lang}" language because it's not a supported language`) }
             return this.#_config.siteName[lang];
+        },
+        /**
+         * Set multiple site names for different languages.
+         * @example
+         * server.siteName.multilingual({
+         *     default: 'Nasriya Software',
+         *     ar: 'ناصرية سوفتوير'
+         * });
+         * @param record An object where the keys are language codes and the values are the site names.
+         */
+        multilingual: (record: Record<string, string>) => {
+            if (helpers.isNot.realObject(record)) { throw new TypeError(`The server's multilingual site names' can only be an object, instead got ${typeof record}`) }
+            if ('default' in record) {
+                record[this.languages.default] = record.default;
+                delete record.default;                
+            } else {
+                throw new Error(`The server's multilingual site names' object is missing the "default" language`);
+            }
+
+            for (const lang in record) {
+                if (helpers.isNot.validString(record[lang])) { throw new TypeError(`One the site names' multilingual object is expected to be a key:value pairs of strings, instead, one of the values ${record[lang]} was ${typeof record[lang]}`) }
+                this.#_config.siteName[lang] = record[lang];
+            }
         }
     } as const
 
@@ -427,7 +450,7 @@ export class HyperCloudServer {
      * 
      * You can customize the behavior with options
      */
-    helmet(options: HelmetConfigOptions) { this.#_helmet.config(options) }
+    helmet(options?: HelmetConfigOptions) { this.#_helmet.config(options) }
 
     /**
      * Increase productivity by spreading routes into multiple files. All
