@@ -4,13 +4,13 @@ import helpers from './utils/helpers';
 
 import fs from 'fs';
 import path from 'path';
-import process from 'process';
 export { Page } from './services/renderer/assets/Page';
 export { Component } from './services/renderer/assets/Component';
 export { HyperCloudServer } from './server';
 export { HyperCloudRequest } from './services/handler/assets/request';
 export { HyperCloudResponse } from './services/handler/assets/response';
 export { Router } from './services/routes/assets/router';
+export { RateLimitingManager } from './services/rateLimiter/rateLimiter';
 export { HyperCloudRequestHandler, HyperCloudRequestErrorHandler } from './docs/docs';
 
 process.env.HYPERCLOUD_SERVER_VERBOSE = 'FALSE';

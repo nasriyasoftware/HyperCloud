@@ -5,12 +5,12 @@ import HyperCloudRequest from "../handler/assets/request";
 import HyperCloudResponse from "../handler/assets/response";
 import helpers from "../../utils/helpers";
 
-class RateLimitingManager {
-    readonly #_server: HyperCloudServer;
+export class RateLimitingManager {
+    readonly #_server: HyperCloudServer | undefined;
     readonly #_rules: Map<string, RateLimitRule> = new Map();
     readonly #_records: Map<string, RateLimitingRecord> = new Map();
 
-    constructor(server: HyperCloudServer) {
+    constructor(server?: HyperCloudServer) {
         this.#_server = server;
     }
 
@@ -239,7 +239,11 @@ class RateLimitingManager {
      */
     mainLimiter(handler: HyperCloudRequestHandler) {
         if (typeof handler !== 'function') { throw new SyntaxError(`The main`) }
-        this.#_server._handlers['mainRateLimiter'] = handler;
+        if (this.#_server instanceof HyperCloudServer) {
+            this.#_server._handlers['mainRateLimiter'] = handler;
+        } else {
+            throw new Error(`The rate limitter's main handler can only be used on an instance that was created by the server`)
+        }
     }
 }
 
