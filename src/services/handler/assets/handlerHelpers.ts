@@ -55,7 +55,7 @@ export function bodyParser(body: any, contentType: string): BodyParserResult {
     if (contentType.includes('application/json')) {
         try {
             const jsonData = JSON.parse(request.body);
-            request.body = new RequestBody().from(jsonData)         
+            request.body = new RequestBody().from(jsonData)
             request.bodyType = 'json';
             return request;
         } catch (error) {
@@ -89,76 +89,46 @@ export function bodyParser(body: any, contentType: string): BodyParserResult {
         request.bodyType = 'graphql';
         return request;
     }
-
-    if (request.body.includes('Content-Disposition: form-data; name=')) {
-        // Handle 'form-data'
-        const body = {} as Record<string, any>; // The new body
-        const newLine = '%0D%0A';
-        let all = encodeURIComponent(request.body);
-        const lines = all.split(newLine);
-        let processingIndex = 0;
-        let lastKey; // Used to track multi-line files
-
-        while (processingIndex < lines.length - 2) {
-            let processed = 0;
-            const item = { type: '', key: '', value: '', filename: undefined as unknown as string }
-
-            if (lines[processingIndex].startsWith('----------------------------')) {
-                // Ignore the dashes line: lines[processingIndex] and increase the number of processed lines
-                processingIndex++;
-                continue;
-            }
-
-            const dispositionLine = lines[processingIndex];
-            const disposition = decodeURIComponent(dispositionLine).split(';').map(i => i.trim());
-
-            if (disposition.length === 1) {
-                const value = disposition[0];
-                if (lastKey) { body[lastKey].value += value.length === 0 ? '\n' : `\n${value}` }
-                processed++;
-            } else {
-                if (lastKey) {
-                    body[lastKey].value = body[lastKey].value.trim();
-                    lastKey = null;
-                }
-
-                item.key = disposition[1].replace('name=', '').replace(/"/g, '').trim();
-                if (disposition.length > 2) {
-                    item.filename = disposition[2].replace('filename=', '').replace(/"/g, '').trim();
-                    processed++;
-
-                    item.type = decodeURIComponent(lines[processingIndex + processed]).replace('Content-Type:', '').replace(/"/g, '').trim();
-                    processed++;
-
-                    lastKey = item.key; // This key will be used to append the next lines of the file
-                } else {
-                    item.type = 'text/plain';
-                    processed++;
-
-                    let next
-                    do {
-                        next = lines[processingIndex + processed];
-                        processed++;
-                    } while (next.length === 0)
-
-                    item.value = next;
-                }
-
-                const assign = { type: item.type, value: item.value.trim(), name: undefined as string | undefined }
-                if (item.filename) { assign.name = item.filename }
-                body[item.key] = assign;
-                processed++;
-            }
-
-            processingIndex += processed;
+    
+    if (contentType.includes('multipart/form-data')) {
+        const boundary = contentType.split('boundary=')[1];
+        if (!boundary) {
+            throw new Error('Boundary not found in multipart/form-data');
         }
 
-        if (lastKey) {
-            body[lastKey].value = body[lastKey].value.trim();
-            lastKey = null;
-        }
+        const parts: string[] = body.split(`--${boundary}`);
+        const result: { fields: Record<string, any>, files: any[] } = { fields: {}, files: [] };
 
-        request.body = new RequestBody().from(body);
+        parts.forEach(part => {
+            if (part.includes('Content-Disposition')) {
+                const [headers, content] = part.split('\r\n\r\n');
+                const headerLines = headers.split('\r\n');
+                const disposition = headerLines.find(line => line.includes('Content-Disposition'));
+                if (!disposition) {
+                    return;
+                }
+
+                const nameMatch = disposition.match(/name="([^"]+)"/);
+                const filenameMatch = disposition.match(/filename="([^"]+)"/);
+
+                if (nameMatch) {
+                    const name = nameMatch[1];
+                    if (filenameMatch) {
+                        const filename = filenameMatch[1];
+                        const contentTypeLine = headerLines.find(line => line.includes('Content-Type'));
+                        const contentType = contentTypeLine ? contentTypeLine.split(': ')[1] : 'application/octet-stream';
+                        const fileContent = content.trim();
+
+                        result.files.push({ name, filename, contentType, content: fileContent });
+                    } else {
+                        const fieldValue = content.trim();
+                        result.fields[name] = fieldValue;
+                    }
+                }
+            }
+        });
+
+        request.body = new RequestBody().from(result);
         request.bodyType = 'formData';
         return request;
     }

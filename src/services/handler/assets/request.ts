@@ -1,5 +1,5 @@
 import http2 from 'http2';
-import { InitializedRequest, ColorScheme, HyperCloudUserOptions, HttpMethod, RequestBodyType } from '../../../docs/docs';
+import { InitializedRequest, ColorScheme, HyperCloudUserOptions, HttpMethod, RequestBodyType, FormDataBody } from '../../../docs/docs';
 import helpers from '../../../utils/helpers';
 import HyperCloudUser from './user';
 
@@ -55,7 +55,7 @@ export class HyperCloudRequest {
     /**The type of the recieved body. Note that the body is converted to `json` format whenever possible */
     get bodyType(): RequestBodyType | undefined { return this.#_request.bodyType }
     /**The body of the request */
-    get body(): string | Record<string, any> | Buffer | undefined { return this.#_request.body }
+    get body(): string | Record<string, any> | Buffer | FormDataBody  | undefined { return this.#_request.body }
     /**The request cookies object */
     get cookies(): Record<string, string> { return this.#_request.cookies }
     /**The request headers */
@@ -99,6 +99,7 @@ export class HyperCloudRequest {
             query: this.query,
             href: this.href,
             bodyType: this.bodyType,
+            body: helpers.is.realObject(this.body) ? this.body : this.body,
             params: this.params,
             cookies: this.cookies,
             locale: this.locale,

@@ -114,7 +114,7 @@ class Initializer {
                     }
                 })
 
-                await requestEnd.then();
+                await requestEnd;
             }
         }
 

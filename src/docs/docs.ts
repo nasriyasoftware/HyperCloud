@@ -74,6 +74,11 @@ export type MimeType =
 
 export type OnRenderHandler = (locals: Record<string, any> | any, include: (name: string, locals: Record<string, any>) => Promise<string>, lang: string) => string | Promise<string>;
 
+export interface FormDataBody {
+    fields: Record<string, any>;
+    files: any[];
+}
+
 export interface HTMLScriptTag {
     /**
      * Specifies that the script is downloaded in parallel to
