@@ -76,7 +76,14 @@ export type OnRenderHandler = (locals: Record<string, any> | any, include: (name
 
 export interface FormDataBody {
     fields: Record<string, any>;
-    files: any[];
+    files: FormDataFile[];
+}
+
+export interface FormDataFile {
+    name: string;
+    filename: string;
+    contentType: MimeType,
+    content: Buffer
 }
 
 export interface HTMLScriptTag {
