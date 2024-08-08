@@ -6,6 +6,27 @@ For now, [HTTP2](https://en.wikipedia.org/wiki/HTTP/2) is only available via [TL
 ##### Examples:
 
 ##### 1. Creating a simple HTTP server
+HyperCloud servers can be used in two different methods.
+
+###### The main method
+The main method is about creating a server on the main `hypercloud` instance, this way, to access the server, you can simply import the instance and access the server.
+
+```js
+// server.js
+hypercloud.server = hypercloud.Server();
+```
+
+```js
+// api.js
+// Import the instance
+import hypercloud from '@nasriya/hypercloud';
+
+// Access the server
+const server = hypercloud.server;
+```
+
+###### The simple method
+This method allows you to create a server that's only accessible in the scope it was created from - unless if it was exported.
 ```js
 const server = hypercloud.Server();
 ```

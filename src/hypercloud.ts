@@ -17,6 +17,7 @@ process.env.HYPERCLOUD_SERVER_VERBOSE = 'FALSE';
 
 class HyperCloud {
     readonly #_servers: HyperCloudServer[] = [];
+    #_server: HyperCloudServer | undefined;
 
     /**
      * Create an HTTP2 HyperCloud server instance and customize it to suite your needs. [Examples](https://github.com/nasriyasoftware/HyperCloud/blob/main/examples/createServer.md)
@@ -41,6 +42,42 @@ class HyperCloud {
             process.env.HYPERCLOUD_SERVER_VERBOSE = value === true ? 'TRUE' : 'FALSE';
         } else {
             throw `HyperCloud verbose property can only accept boolean value, but instead got ${typeof value}`;
+        }
+    }
+
+    /**
+     * Get the main server.
+     * @returns {HyperCloudServer | undefined}
+     */
+    get server(): HyperCloudServer | undefined { return this.#_server }
+
+    /**
+     * Set the main HyperCloud server
+     * 
+     * **Example**:
+     * 
+     * Create the main server
+     * ```js
+     * import hypercloud from '@nasriya/hypercloud';
+     * hypercloud.server = hypercloud.Server();
+     * ```
+     * 
+     * Use the server on other files:
+     * ```js
+     * import hypercloud from '@nasriya/hypercloud';
+     * const router = hypercloud.server.Router();
+     * ```
+     * @param server The created server
+     */
+    set server(server: HyperCloudServer) {
+        if (server instanceof HyperCloudServer) {
+            if (this.#_server instanceof HyperCloudServer) {
+                throw new SyntaxError(`HyperCloud server (hypercloud.server) has already been assigned. You cannot reassign it again`)
+            }
+
+            this.#_server = server;
+        } else {
+            throw new TypeError(`The value that was passed to "hypercloud.server" was not an instance of "HyperCloud", instead it was ${typeof server}`)
         }
     }
 
@@ -101,4 +138,5 @@ class HyperCloud {
     }
 }
 
-export default new HyperCloud();
+const hypercloud = new HyperCloud();
+export default hypercloud

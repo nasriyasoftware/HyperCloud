@@ -49,8 +49,11 @@ const hypercloud = require('@nasriya/hypercloud').default;
 
 #### 3. Creating & Initializing a server
 ```js
-// Creates a new server
+// Create a new server
 const server = hypercloud.Server();
+
+// (Optional) Set the main server so you can use it anywhere
+hypercloud.server = server;
 ```
 **::** [Advanced Server Configurations](https://github.com/nasriyasoftware/HyperCloud/blob/main/examples/server-configurations.md) **::**
 
