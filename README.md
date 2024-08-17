@@ -7,6 +7,12 @@
 Nasriya HyperCloud is a lightweight Node.js HTTP2 framework.
 
 Made with ❤️ in **Palestine** 🇵🇸
+
+> [!IMPORTANT]
+> Support the development of this package by on the following channels:
+>
+> [Wise Payments](https://wise.com/pay/me/ahmadn106)
+> 
 ___
 ## Overview
 HyperCloud is a robust server-side rendering (SSR) framework designed to build and define components and pages efficiently. The framework supports multilingual pages, handles component rendering, and manages assets seamlessly, ensuring a smooth development experience.

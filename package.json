@@ -76,5 +76,9 @@
   "bugs": {
     "url": "https://github.com/nasriyasoftware/HyperCloud/issues"
   },
-  "homepage": "https://package.nasriya.net/HyperCloud"
+  "homepage": "https://package.nasriya.net/HyperCloud",
+  "funding": {
+    "type": "individual",
+    "url": "https://wise.com/pay/me/ahmadn106"
+  }
 }
