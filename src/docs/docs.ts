@@ -74,16 +74,133 @@ export type MimeType =
 
 export type OnRenderHandler = (locals: Record<string, any> | any, include: (name: string, locals: Record<string, any>) => Promise<string>, lang: string) => string | Promise<string>;
 
-export interface FormDataBody {
-    fields: Record<string, any>;
-    files: FormDataFile[];
+export type StorageUnitName =
+    | 'Bit'
+    | 'Byte'
+    | 'Kilobyte'
+    | 'Kibibyte'
+    | 'Megabyte'
+    | 'Mebibyte'
+    | 'Gigabyte'
+    | 'Gibibyte'
+    | 'Terabyte'
+    | 'Tebibyte'
+    | 'Petabyte'
+    | 'Pebibyte'
+    | 'Exabyte'
+    | 'Exbibyte'
+    | 'Zettabyte'
+    | 'Zebibyte'
+    | 'Yottabyte'
+    | 'Yobibyte'
+    | 'Brontobyte'
+    | 'Geopbyte'
+    | 'Nibble'
+    | 'Word';
+
+export type StorageUnitAbbreviation =
+    | 'b'  // Bit
+    | 'B'  // Byte
+    | 'KB' // Kilobyte
+    | 'KiB'// Kibibyte
+    | 'MB' // Megabyte
+    | 'MiB'// Mebibyte
+    | 'GB' // Gigabyte
+    | 'GiB'// Gibibyte
+    | 'TB' // Terabyte
+    | 'TiB'// Tebibyte
+    | 'PB' // Petabyte
+    | 'PiB'// Pebibyte
+    | 'EB' // Exabyte
+    | 'EiB'// Exbibyte
+    | 'ZB' // Zettabyte
+    | 'ZiB'// Zebibyte
+    | 'YB' // Yottabyte
+    | 'YiB'// Yobibyte
+    | 'BB' // Brontobyte
+    | 'GPB'; // Geopbyte
+
+export type StorageUnit = StorageUnitName | StorageUnitAbbreviation;
+
+export interface UploadLimitsController {
+    fileStream: {
+        get: () => number;
+        set: (limit: number) => void;
+    };
+    images: {
+        get: () => number;
+        set: (limit: number) => void;
+    };
+    videos: {
+        get: () => number;
+        set: (limit: number) => void;
+    };
+    mime: {
+        get: (mime: MimeType) => number | undefined;
+        set: (mime: MimeType, limit: number) => void;
+    };
 }
 
+export interface StorageSize {
+    /**A positive value */
+    value: number;
+    /**The storage unit */
+    unit: StorageUnit
+}
+
+export interface FormDataBody {
+    fields: Record<string, any>;
+    files: (FormDataMemoryFile | FormDataStorageFile)[];
+}
+
+/**Represents a file in form data. */
 export interface FormDataFile {
-    name: string;
-    filename: string;
-    contentType: MimeType,
-    content: Buffer
+    /**
+     * The name of the form field associated with the file.
+     * @example 'profilePicture'
+     */
+    fieldName: string;
+    /**
+     * The name of the uploaded file.
+     * @example 'profile.jpg'
+     */
+    fileName: string;
+    /**
+     * The MIME type of the file.
+     * @example 'image/jpeg'
+     */
+    mime: MimeType;
+    /**
+     * The size of the file in bytes.
+     * @example 204800
+     */
+    size: number;
+}
+
+/**
+ * Represents a small file stored in memory.
+ * Inherits from {@link FormDataFile}.
+ */
+export interface FormDataMemoryFile extends FormDataFile {
+    /**
+     * The binary data of the file.
+     * This property is used for small-sized files that are stored entirely in memory.
+     * @example <Buffer 89 50 4e ...>
+     */
+    content: Buffer;
+}
+
+/**
+ * Represents a large file stored in temporary storage.
+ * Inherits from {@link FormDataFile}.
+ */
+export interface FormDataStorageFile extends FormDataFile {
+    /**
+     * The path to the temporary file on disk.
+     * This property is used for large files that are stored in temporary storage.
+     * @example '/tmp/uploads/largefile.tmp'
+     */
+    path?: string;
 }
 
 export interface HTMLScriptTag {

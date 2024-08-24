@@ -5,7 +5,7 @@ import path from 'path';
 
 import helpers from './utils/helpers';
 import SSLManager from './services/ssl/manager';
-import { HelmetConfigOptions, HyperCloudInitFile, HyperCloudManagementOptions, HyperCloudRequestErrorHandler, HyperCloudRequestHandler, HyperCloudServerHandlers, OptionalProtocol, SecureServerOptions, ServerOptions } from './docs/docs';
+import { HelmetConfigOptions, HyperCloudInitFile, HyperCloudManagementOptions, HyperCloudRequestErrorHandler, HyperCloudRequestHandler, HyperCloudServerHandlers, MimeType, OptionalProtocol, SecureServerOptions, ServerOptions } from './docs/docs';
 
 import initializer from './services/handler/initializer';
 import HyperCloudResponse from './services/handler/assets/response';
@@ -16,6 +16,7 @@ import Router from './services/routes/assets/router';
 import HelmetManager from './services/helmet/manager';
 import RateLimitingManager from './services/rateLimiter/rateLimiter';
 import LanguagesManager from './services/languages/manager';
+import Uploads from './services/uploads/uploads';
 
 const _dirname = __dirname;
 
@@ -50,7 +51,7 @@ export class HyperCloudServer {
         locals: {} as Record<string, string>,
         cronJobs: {},
         handlers: {} as Record<string, Function>,
-        siteName: {} as Record<string, string>
+        siteName: {} as Record<string, string>,
     }
 
     readonly #_utils = Object.freeze({
@@ -94,6 +95,7 @@ export class HyperCloudServer {
         this.languages = new LanguagesManager();
         this._routesManager = new RoutesManager();
         this.#_helmet = new HelmetManager(this);
+        this.uploads = new Uploads;
         this.rateLimiter = new RateLimitingManager(this);
         this.rendering = new RenderingManager(this);
         this.rendering.pages.register(path.resolve(path.join(_dirname, './services/pages')));
@@ -322,6 +324,38 @@ export class HyperCloudServer {
     }
 
     /**
+     * Configuration object for handling file uploads.
+     * 
+     * This object provides settings to manage and enforce upload limits for different types of files. It includes general limits for images and videos, as well as specific limits based on MIME types. The MIME type-specific limits take precedence over the general image and video limits. The configuration allows for the following:
+     * 
+     * - Setting and retrieving maximum file size limits for images and videos.
+     * - Setting and retrieving file size limits for specific MIME types.
+     * - Removing limits by setting them to `0`.
+     * 
+     * The configuration is intended to help manage resource usage and ensure that uploads adhere to defined size constraints.
+     * 
+     * Example usage:
+     * 
+     * ```ts
+     * // Set a maximum file size of 10 MB for images
+     * server.uploads.limits.images.set(10 * 1024 * 1024);
+     * 
+     * // Set a maximum file size of 50 MB for videos
+     * server.uploads.limits.videos.set(50 * 1024 * 1024);
+     * 
+     * // Set a maximum file size of 5 MB for application/pdf MIME type
+     * server.uploads.limits.mime.set('application/pdf', 5 * 1024 * 1024);
+     * 
+     * // Get the maximum file size limit for images
+     * const imageLimit = server.uploads.limits.images.get();
+     * 
+     * // Get the maximum file size limit for a specific MIME type
+     * const pdfLimit = server.uploads.limits.mime.get('application/pdf');
+     * ```
+     */
+    readonly uploads: Uploads;
+
+    /**
      * Set or get your site/brand name. This name is used
      * for rendering pages and in other places
     */
@@ -370,7 +404,7 @@ export class HyperCloudServer {
             if (helpers.isNot.realObject(record)) { throw new TypeError(`The server's multilingual site names' can only be an object, instead got ${typeof record}`) }
             if ('default' in record) {
                 record[this.languages.default] = record.default;
-                delete record.default;                
+                delete record.default;
             } else {
                 throw new Error(`The server's multilingual site names' object is missing the "default" language`);
             }
