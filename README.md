@@ -28,11 +28,13 @@ ___
 - **Automatic Asset Management:** Automatically include stylesheets, scripts, and meta tags from components and global settings in the rendered pages.
 - **Preserved Asset Order:** Maintain the order of assets as defined, ensuring predictable rendering.
 - **Secure Server** with **FREE** [SSL certificates](https://github.com/nasriyasoftware/HyperCloud/blob/main/examples/proxies.md#generate-ssl-certificates).
-- Works well with proxies.
 - Built-In & Custom [Error Pages](#error-handling--pages).
 - Built-in (In-Memory) [Rate Limiter](#rate-limiter).
 - Built-in [Helmet](#helmet-protection) Protection.
 
+### Additional Features
+- **[File Upload Handling](#file-upload-handling)**: Manage file uploads with built-in support for configuring file size limits, handling different file types, and automatically cleaning up temporary files.
+- Works well with proxies.
 ___
 ## Status [![Status](https://img.shields.io/badge/Status-Stable-green.svg)](link-to-your-status-page)
 If you encounter an issue or a bug, please [open an issue](https://github.com/nasriyasoftware/HyperCloud/issues).
@@ -213,6 +215,33 @@ import logify from '@nasriya/logify';
 
 server.handlers.logger(logify.middlewares.hypercloud);
 ```
+#### File Upload Handling
+The framework includes a robust file upload handling module that supports various file types and sizes. It allows for flexible configuration of file size limits, dynamic directory management, and efficient memory usage through file streaming. This feature is designed to handle multipart form data, automatically manage temporary files, and integrate seamlessly with other server functionalities.
+
+Here's how:
+```ts
+router.post('/api/v1/uploads', async (request, response, next) => {
+    try {
+        // Process the form data and handle the files
+        await request.processFormData(response);
+
+        // Extract fields, files, and the cleanup function from the request body
+        const { fields, files, cleanup } = request.body as FormDataBody;
+
+        // Process the files and fields (e.g., store files, update database)
+        // ............................
+
+        // Clean up temporary files after processing
+        await cleanup();
+
+        // Return a response or proceed to the next middleware/handler
+        next();
+    } catch(error) {
+        response.status(500).json(error);
+    }    
+});
+```
+Learn more about **File Upload Handling** [here](https://github.com/nasriyasoftware/HyperCloud/blob/main/examples/uploads.md).
 
 #### Generating eTags
 [ETags](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/ETag) can significantly improve server performance. To generate `eTags` for your resources, use the following syntax:

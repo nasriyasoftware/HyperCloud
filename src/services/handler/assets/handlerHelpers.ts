@@ -2,6 +2,8 @@ import { RequestBodyType } from '../../../docs/docs';
 import helpers from '../../../utils/helpers';
 import http2 from 'http2';
 import RequestBody from './requestBody';
+import HyperCloudRequest from './request';
+import HyperCloudResponse from './response';
 
 /**
  * Convert the query back to string
@@ -88,50 +90,7 @@ export function bodyParser(body: any, contentType: string): BodyParserResult {
     if (contentType.includes('application/graphql')) {
         request.bodyType = 'graphql';
         return request;
-    }
-    
-    if (contentType.includes('multipart/form-data')) {
-        const boundary = contentType.split('boundary=')[1];
-        if (!boundary) {
-            throw new Error('Boundary not found in multipart/form-data');
-        }
-
-        const parts: string[] = body.split(`--${boundary}`);
-        const result: { fields: Record<string, any>, files: any[] } = { fields: {}, files: [] };
-
-        parts.forEach(part => {
-            if (part.includes('Content-Disposition')) {
-                const [headers, content] = part.split('\r\n\r\n');
-                const headerLines = headers.split('\r\n');
-                const disposition = headerLines.find(line => line.includes('Content-Disposition'));
-                if (!disposition) {
-                    return;
-                }
-
-                const nameMatch = disposition.match(/name="([^"]+)"/);
-                const filenameMatch = disposition.match(/filename="([^"]+)"/);
-
-                if (nameMatch) {
-                    const name = nameMatch[1];
-                    if (filenameMatch) {
-                        const filename = filenameMatch[1];
-                        const contentTypeLine = headerLines.find(line => line.includes('Content-Type'));
-                        const contentType = contentTypeLine ? contentTypeLine.split(': ')[1] : 'application/octet-stream';
-                        const fileContent = content.trim();
-
-                        result.files.push({ name, filename, contentType, content: fileContent });
-                    } else {
-                        const fieldValue = content.trim();
-                        result.fields[name] = fieldValue;
-                    }
-                }
-            }
-        });
-
-        request.body = new RequestBody().from(result);
-        request.bodyType = 'formData';
-        return request;
-    }
+    }    
 
     // Handle other types of raw data
     request.bodyType = 'buffer';

@@ -94,27 +94,29 @@ class Initializer {
                     req.setEncoding('binary'); // Other types of data
                 }
 
-                // Read and accumulate the request body
-                let tempBody = '';
-                req.on('data', (chunk) => {
-                    tempBody += chunk;
-                });
+                if (!contentType.includes('multipart/form-data')) {
+                    // Read and accumulate the request body
+                    let tempBody = '';
+                    req.on('data', (chunk) => {
+                        tempBody += chunk;
+                    });
 
-                const requestEnd = new Promise((resolve, reject) => {
-                    try {
-                        // When the entire request body has been received
-                        req.on('end', () => {
-                            const { body, bodyType } = bodyParser(tempBody, contentType);
-                            request.bodyType = bodyType;
-                            if (body) { request.body = body }
-                            resolve(undefined);
-                        });
-                    } catch (error) {
-                        reject(error);
-                    }
-                })
+                    const requestEnd = new Promise((resolve, reject) => {
+                        try {
+                            // When the entire request body has been received
+                            req.on('end', () => {
+                                const { body, bodyType } = bodyParser(tempBody, contentType);
+                                request.bodyType = bodyType;
+                                if (body) { request.body = body }
+                                resolve(undefined);
+                            });
+                        } catch (error) {
+                            reject(error);
+                        }
+                    })
 
-                await requestEnd;
+                    await requestEnd;
+                }
             }
         }
 

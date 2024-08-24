@@ -1,7 +1,10 @@
 import http2 from 'http2';
-import { InitializedRequest, ColorScheme, HyperCloudUserOptions, HttpMethod, RequestBodyType, FormDataBody } from '../../../docs/docs';
+import { InitializedRequest, ColorScheme, HyperCloudUserOptions, HttpMethod, RequestBodyType, FormDataBody, UploadCleanUpFunction } from '../../../docs/docs';
 import helpers from '../../../utils/helpers';
 import HyperCloudUser from './user';
+import HyperCloudResponse from './response';
+import path from 'path';
+import UploadHandler from '../../uploads/assets/handler';
 
 /**This class is used internallly, not by the user */
 export class HyperCloudRequest {
@@ -55,7 +58,7 @@ export class HyperCloudRequest {
     /**The type of the recieved body. Note that the body is converted to `json` format whenever possible */
     get bodyType(): RequestBodyType | undefined { return this.#_request.bodyType }
     /**The body of the request */
-    get body(): string | Record<string, any> | Buffer | FormDataBody  | undefined { return this.#_request.body }
+    get body(): string | Record<string, any> | Buffer | FormDataBody | undefined { return this.#_request.body }
     /**The request cookies object */
     get cookies(): Record<string, string> { return this.#_request.cookies }
     /**The request headers */
@@ -99,7 +102,7 @@ export class HyperCloudRequest {
             query: this.query,
             href: this.href,
             bodyType: this.bodyType,
-            body: helpers.is.realObject(this.body) ? this.body : this.body,
+            body: this.body,
             params: this.params,
             cookies: this.cookies,
             locale: this.locale,
@@ -188,6 +191,61 @@ export class HyperCloudRequest {
             throw `The provided request's "scheme" (${scheme}) is not a valid color scheme`
         }
     }
+
+    /**
+     * Handles incoming multipart form data for file uploads.
+     *
+     * This method processes multipart form data from the HTTP request to handle file uploads.
+     * It initializes an `UploadHandler` to manage the upload process and handles any errors 
+     * that might occur. After processing, the request body will include a `cleanup` function 
+     * that can be used to clean up temporary files after they have been processed, such as 
+     * moving them to a permanent location or storing their metadata in a database.
+     *
+     * **Example Usage:**
+     * 
+     * ```ts
+     * router.post('/api/v1/uploads', async (request, response, next) => {
+     *     try {
+     *         // Process the form data and handle the files
+     *         await request.processFormData(response);
+     * 
+     *         // Extract fields, files, and the cleanup function from the request body
+     *         const { fields, files, cleanup } = request.body as FormDataBody;
+     * 
+     *         // Process the files and fields (e.g., store files, update database)
+     *         // ............................
+     * 
+     *         // Clean up temporary files after processing
+     *         await cleanup();
+     * 
+     *         // Return a response or proceed to the next middleware/handler
+     *         next();
+     *     } catch(error) {
+     *         response.status(500).json(error);
+     *     }    
+     * });
+     * ```
+     * 
+     * @param {HyperCloudResponse} response - The response object used to send responses back to the client.
+     * 
+     * @returns {Promise<void>} A promise that resolves when the form data has been processed. 
+     * The cleanup function is included in the request body and should be called after processing the files.
+     * 
+     * @throws {Error} If an error occurs during form data processing, the response will send a 500 status 
+     * with an error message, and the error will be re-thrown.
+     */
+    processFormData(response: HyperCloudResponse): Promise<void> {
+        const handler = new UploadHandler(this, this.#_request, response);
+        try {
+            return handler.handle();
+        } catch (error) {
+            response.status(500).json({ type: 'server_error', error });
+            throw error;
+        }
+    }
+
+    /**The original HTTP request */
+    get httpRequest() { return this.#_req }
 }
 
 export default HyperCloudRequest;
