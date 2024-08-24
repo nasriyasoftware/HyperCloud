@@ -110,48 +110,34 @@ class Uploads {
     }
 
     /**
-     * Manages and configures file upload size limits.
-     * 
-     * This utility allows setting and retrieving the maximum allowed file sizes for different types
-     * of uploads, including images and videos. It also supports configuring upload size limits for specific
-     * MIME types, with MIME type-specific limits taking precedence over general image or video limits.
-     * 
-     * **Usage Example:**
+     * Manages and configures file uploads, including setting size limits, directories, and MIME type restrictions.
+     *
+     * The `uploads` instance provides a comprehensive interface for handling file uploads on the server. It allows you to define maximum file sizes for different types of uploads, configure the upload directory, and set specific limits based on MIME types. This utility ensures that your server handles file uploads efficiently and securely, with customizable parameters to suit your needs.
+     *
+     * **Example Usage:**
      * 
      * ```js
+     * // Set the directory where uploads will be stored
+     * server.uploads.directory = '/path/to/uploads';
+     * 
+     * // Set the maximum file size for uploads to 50 MB
+     * server.uploads.maxFileSize = { value: 50, unit: 'MB' };
+     * 
      * // Set the maximum file size for images to 10 MB
      * server.uploads.limits.images = { value: 10, unit: 'MB' };
      * 
-     * // Set the maximum file size for videos to 10485760 bytes (10 MB)
-     * server.uploads.limits.videos = 10485760;
+     * // Retrieve the current maximum file size for images
+     * const maxImageSize = server.uploads.limits.images;
      * 
-     * // Retrieve the current maximum file size for videos
-     * const maxVideoSize = server.uploads.limits.videos;
-     * 
-     * // Set a specific limit for a MIME type
+     * // Set a specific limit for PDF files
      * server.uploads.limits.mime.set('application/pdf', { value: 5, unit: 'MB' });
-     * 
-     * // Retrieve the maximum file size limit for a specific MIME type
-     * const pdfLimit = server.uploads.limits.mime.get('application/pdf');
      * ```
      * 
-     * **Methods:**
+     * **Properties:**
      * 
-     * - **images**: Get or set the maximum allowed file size for images. Accepts a `number` (bytes) or 
-     *   an object `{ value: number, unit: StorageUnit }`.
-     * - **videos**: Get or set the maximum allowed file size for videos. Accepts a `number` (bytes) or 
-     *   an object `{ value: number, unit: StorageUnit }`.
-     * - **mime**: Set or get the maximum allowed file size for specific MIME types. Uses 
-     *   `mime.set(mimeType, limit)` to set, where `limit` is a `number` (bytes) or an object 
-     *   `{ value: number, unit: StorageUnit }`, and `mime.get(mimeType)` to retrieve the limit.
-     * 
-     * **Parameters:**
-     * - **limit**: Can be a `number` representing bytes or an object `{ value: number, unit: StorageUnit }`.
-     * - **mimeType**: The MIME type to set or retrieve specific file size limits (e.g., 'application/pdf').
-     * 
-     * **Notes:**
-     * - Setting the limit to `0` will remove the restriction for the corresponding type or MIME type.
-     * - MIME type-specific limits take precedence over general limits for images or videos.
+     * - **directory**: Gets or sets the directory where uploads are stored. If the directory does not exist, it will be created automatically.
+     * - **maxFileSize**: Gets or sets the maximum file size allowed for uploads, either as a number in bytes or as a `StorageSize` object.
+     * - **limits**: Provides access to upload size limits for file streams, images, videos, and specific MIME types.
      */
     get limits() { return this.#_limits }
 }

@@ -1,14 +1,13 @@
 import { HyperCloudRequest, HyperCloudResponse } from "../../../hypercloud";
+import { InitializedRequest, MimeType, UploadCleanUpFunction } from "../../../docs/docs";
 import MimeLimits from "./mimeLimits";
 import UploadedMemoryFile from "./UploadMemoryFile";
 import UploadedStorageFile from "./UploadedStorageFile";
-import { InitializedRequest, MimeType } from "../../../docs/docs";
 import RequestBody from "../../handler/assets/requestBody";
 import fs from "fs";
 import helpers from "../../../utils/helpers";
 import path from "path";
 
-type UploadCleanUpFunction = () => Promise<void>;
 const mimes: MimeType[] = JSON.parse(fs.readFileSync(path.join(__dirname, '../../../data/mimes.json'), { encoding: 'utf8' }));
 
 class UploadHandler {
@@ -46,7 +45,7 @@ class UploadHandler {
     }
 
     readonly #_promiseResponse = {
-        resolve: undefined as unknown as (value: UploadCleanUpFunction) => void,
+        resolve: undefined as unknown as (value: void) => void,
         reject: undefined as unknown as (reason?: any) => void,
     }
 
@@ -270,16 +269,17 @@ class UploadHandler {
 
             this.#_initReq.body = new RequestBody().from({
                 files: [...storageF, ...memoryF],
-                fields: this.#_fields
+                fields: this.#_fields,
+                cleanup: this.#_helpers.cleanUp
             });
 
             this.#_initReq.bodyType = 'formData';
-            this.#_helpers.finalize().then(() => this.#_promiseResponse.resolve(this.#_helpers.cleanUp));
+            this.#_helpers.finalize().then(() => this.#_promiseResponse.resolve());
         }
     }
 
     async handle() {
-        return new Promise<UploadCleanUpFunction>((resolve, reject) => {
+        return new Promise<void>((resolve, reject) => {
             this.#_promiseResponse.resolve = resolve;
             this.#_promiseResponse.reject = reject;
 

@@ -121,6 +121,7 @@ export type StorageUnitAbbreviation =
     | 'GPB'; // Geopbyte
 
 export type StorageUnit = StorageUnitName | StorageUnitAbbreviation;
+export type UploadCleanUpFunction = () => Promise<void>;
 
 export interface UploadLimitsController {
     fileStream: {
@@ -148,10 +149,64 @@ export interface StorageSize {
     unit: StorageUnit
 }
 
+/**
+ * Represents the body of a form data request after parsing.
+ * This interface includes metadata about the fields and files from the form data,
+ * as well as a cleanup function for managing temporary files.
+ */
 export interface FormDataBody {
+    /**
+     * A record of form fields, where the keys are field names and the values are the field data.
+     * This includes all non-file fields submitted in the form.
+     * 
+     * @type {Record<string, any>}
+     * @example
+     * {
+     *   "username": "john_doe",
+     *   "age": 30
+     * }
+     */
     fields: Record<string, any>;
+
+    /**
+     * An array of file objects representing the uploaded files.
+     * Each file object can either be a `FormDataMemoryFile` or `FormDataStorageFile`,
+     * depending on whether the file was stored in memory or on disk.
+     * 
+     * @type {(FormDataMemoryFile | FormDataStorageFile)[]}
+     * @example
+     * [
+     *   {
+     *     fieldName: "profile_picture",
+     *     fileName: "john.jpg",
+     *     mime: "image/jpeg",
+     *     size: 123456,
+     *     content: <Buffer 89 50 4e ...> // For FormDataMemoryFile
+     *   },
+     *   {
+     *     fieldName: "large_file",
+     *     fileName: "document.pdf",
+     *     mime: "application/pdf",
+     *     size: 98765432,
+     *     path: "/temp/uploads/document.pdf" // For FormDataStorageFile
+     *   }
+     * ]
+     */
     files: (FormDataMemoryFile | FormDataStorageFile)[];
+
+    /**
+     * A function that cleans up temporary files created during the file upload process.
+     * This function should be called to remove any temporary files after processing is complete,
+     * such as after copying files to their final location or storing their metadata in a database.
+     * 
+     * @type {UploadCleanUpFunction}
+     * @example
+     * // Call this function to clean up temporary files
+     * formDataBody.cleanup();
+     */
+    cleanup: UploadCleanUpFunction;
 }
+
 
 /**Represents a file in form data. */
 export interface FormDataFile {
