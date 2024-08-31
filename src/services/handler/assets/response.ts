@@ -500,7 +500,7 @@ export class HyperCloudResponse {
      * @param {DownloadFileOptions} options Options for sending the file
      * @returns {http2.Http2ServerResponse|undefined}
      */
-    downloadFile(filePath: string, options: DownloadFileOptions): http2.Http2ServerResponse | undefined {
+    downloadFile(filePath: string, options?: DownloadFileOptions): http2.Http2ServerResponse | undefined {
         const sendOptions: SendFileOptions = helpers.is.realObject(options) ? { ...options, download: true } : { download: true }
         return this.sendFile(filePath, sendOptions);
     }
@@ -541,8 +541,15 @@ export class HyperCloudResponse {
                 if (fileAvail.errors.notAccessible) { throw new Error(`You don't have enough permissions to access the file path: ${filePath}`) }
             }
 
-            const paths = filePath.split('\\');
-            const fileName = paths[paths.length - 1];
+            const fileName = (() => {
+                if (options && 'fileName' in options) {
+                    if (helpers.isNot.validString(options.fileName)) { throw new TypeError(`The procided filename is not a string but a ${typeof options.fileName}`) }
+                    return options.fileName as string;
+                } else {
+                    const paths = filePath.split('\\');
+                    return paths[paths.length - 1];
+                }
+            })();
 
             // Handling dotFiles
             if (fileName.startsWith('.')) {
@@ -672,8 +679,12 @@ export class HyperCloudResponse {
             // Check if the download option is triggered or not
             if (options && 'download' in options) {
                 if (typeof options.download !== 'boolean') { throw new TypeError(`The download property should be a boolean value, but instead got ${typeof options.download}`) }
-                this.setHeader('Content-Type', 'application/octet-stream');
-                this.setHeader('Content-Disposition', `attachment; filename="${fileName}"`);
+                if (options.download === true) {
+                    this.setHeader('Content-Type', 'application/octet-stream');
+                    this.setHeader('Content-Disposition', `attachment; filename="${fileName}"`);
+                } else {
+                    this.setHeader('Content-Type', mime);
+                }
             } else {
                 this.setHeader('Content-Type', mime);
             }

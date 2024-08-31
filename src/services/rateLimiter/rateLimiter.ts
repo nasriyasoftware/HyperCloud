@@ -242,7 +242,7 @@ export class RateLimitingManager {
         if (this.#_server instanceof HyperCloudServer) {
             this.#_server._handlers['mainRateLimiter'] = handler;
         } else {
-            throw new Error(`The rate limitter's main handler can only be used on an instance that was created by the server`)
+            throw new Error(`The rate limiter's main handler can only be used on an instance that was created by the server`)
         }
     }
 }

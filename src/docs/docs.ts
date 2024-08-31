@@ -760,11 +760,15 @@ export interface DownloadFileOptions {
     serverErrorFile?: string;
     /**eTags ae useful for caching */
     eTag?: string
+    /**A filename to send as the name of the downloaded filename */
+    fileName?: string;
 }
 
 export interface SendFileOptions extends DownloadFileOptions {
     /** Set this to `true` if you want to download the file */
     download?: boolean;
+    /**A filename to send as the name of the downloaded filename. */
+    fileName?: string;
 }
 
 
