@@ -20,7 +20,7 @@ export class HyperCloudRequest {
         initialized: false
     });
 
-    #_colorScheme: ColorScheme = 'Default';
+    #_colorScheme: ColorScheme = 'Light';
 
     constructor(request: InitializedRequest, req: http2.Http2ServerRequest) {
         this.#_request = request;
@@ -185,7 +185,7 @@ export class HyperCloudRequest {
      * @private
      */
     set _colorScheme(scheme: ColorScheme) {
-        if (['Default', 'Light', 'Dark'].includes(scheme)) {
+        if (['Light', 'Dark'].includes(scheme)) {
             this.#_colorScheme = scheme;
         } else {
             throw `The provided request's "scheme" (${scheme}) is not a valid color scheme`

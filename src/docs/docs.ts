@@ -7,7 +7,7 @@ import HyperCloudServer from '../server';
 import HTTPError from '../utils/errors/HTTPError';
 
 /**The website's possible color schemes */
-export type ColorScheme = 'Dark' | 'Light' | 'Default';
+export type ColorScheme = 'Dark' | 'Light';
 export type UserRole = 'Admin' | 'Member' | 'Visitor';
 export type RedirectCode = 300 | 301 | 302 | 303 | 304 | 307 | 308;
 /** View engine type */

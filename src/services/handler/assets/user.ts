@@ -103,7 +103,7 @@ class UserPreferences {
         language: null as unknown as string,
         locale: null as unknown as string,
         currency: null as unknown as Currency,
-        colorScheme: 'Default' as ColorScheme
+        colorScheme: 'Light' as ColorScheme
     }
 
     constructor(request: HyperCloudRequest, options?: UserPreferencesOptions) {
@@ -136,9 +136,6 @@ class UserPreferences {
                     if (typeof options.colorScheme !== 'string') { throw new TypeError(`The user's preferred colorScheme has been set to a value of type ${typeof options.colorScheme} while only string values are accepted`) }
 
                     switch (options.colorScheme?.toLowerCase()) {
-                        case 'default':
-                            this.#_data.colorScheme = 'Default';
-                            break;
                         case 'dark':
                             this.#_data.colorScheme = 'Dark';
                             break;

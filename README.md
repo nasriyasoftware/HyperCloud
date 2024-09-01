@@ -166,7 +166,7 @@ The built-in `user` object looks like this:
         language: string,
         locale: string,
         currency: string,
-        colorScheme: 'Default'|'Dark'|'Light'
+        colorScheme: 'Dark'|'Light'
     }
 }
 ```

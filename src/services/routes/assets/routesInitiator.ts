@@ -127,11 +127,18 @@ class RequestRoutesManager {
         newRouts.push(new Route({
             path: '*', method: 'USE', handler: (request, response, next) => {
                 const colorScheme = request.cookies.colorScheme;
-                if (['Default', 'Light', 'Dark'].includes(colorScheme)) {
-                    request._colorScheme = colorScheme as ColorScheme;
-                } else {
-                    response.cookies.create('colorScheme', 'Default', { priority: 'Medium' });
+
+                // If no valid colorScheme is set, allow client-side detection to handle it
+                if (!colorScheme || !['Light', 'Dark'].includes(colorScheme)) {
+                    response.cookies.create('colorScheme', 'Default', {
+                        priority: 'Medium',
+                        path: '/',
+                        domain: `.${request.domain}`
+                    });
                 }
+                
+                // Assign the detected or default theme to the request object
+                request._colorScheme = colorScheme ? colorScheme as ColorScheme : 'Light';
 
                 next();
             }

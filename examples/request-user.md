@@ -13,7 +13,7 @@ The built-in `user` instance looks like this:
         language: string,
         locale: string,
         currency: string,
-        colorScheme: 'Default'|'Dark'|'Light'
+        colorScheme: 'Dark'|'Light'
     }
 }
 ```
@@ -27,12 +27,12 @@ The built-in `user` instance looks like this:
 
 
 
-| Property      | Value                               | Description                                                                            |
-| ------------- | ----------------------------------- | -------------------------------------------------------------------------------------- |
-| `language`    | `string`                            | The user's preferred language from the database  or `null` if no language is preferred |
-| `locale`      | `string`                            | The user's preferred locale from the database or `null` if no locale is preferred      |
-| `currency`    | `string`                            | The user's preferred currency in the database or `null` if no currency is preferred    |
-| `colorScheme` | `"Default"`, `"Dark"`, or `"Light"` | The user's preferred color scheme in the database or `null` if not specified           |
+| Property      | Value                   | Description                                                                            |
+| ------------- | ----------------------- | -------------------------------------------------------------------------------------- |
+| `language`    | `string`                | The user's preferred language from the database  or `null` if no language is preferred |
+| `locale`      | `string`                | The user's preferred locale from the database or `null` if no locale is preferred      |
+| `currency`    | `string`                | The user's preferred currency in the database or `null` if no currency is preferred    |
+| `colorScheme` | ``"Dark"`, or `"Light"` | The user's preferred color scheme in the database or `null` if not specified           |
 
 
 ##### Logged-out User
