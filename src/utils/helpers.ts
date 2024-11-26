@@ -275,7 +275,7 @@ class Helpers {
             fs.accessSync(path, fs.constants.R_OK | fs.constants.W_OK);
         } catch (error) {
             errors.notAccessible = true;
-            { return { valid: false, errors } }
+            return { valid: false, errors }
         }
 
         return { valid: true }
