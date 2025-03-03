@@ -58,8 +58,16 @@ class Initializer {
         const parsed = new URL(request.href)
         request.query = Object.fromEntries(parsed.searchParams)
         request.path = parsed.pathname.split('/').filter(i => i.length > 0);
+
         const parsedTldts = tldts.parse(request.href);
-        request.domain = typeof parsedTldts.domain === 'string' ? parsedTldts.domain : request.ip;
+        if (typeof parsedTldts.domain === 'string') {
+            request.domain = parsedTldts.domain;
+        } else if (parsedTldts.isIp && parsedTldts.hostname) {
+            request.domain = parsedTldts.hostname;
+        } else {
+            request.domain = 'UnknownDomain';
+        }
+        
         request.subDomain = parsedTldts.subdomain || undefined;
 
         const contentLength = (() => {
