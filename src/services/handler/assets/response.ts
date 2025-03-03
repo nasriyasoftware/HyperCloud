@@ -1364,6 +1364,10 @@ export class HyperCloudResponse {
      *
      * Returns `true` if the entire data was flushed successfully to the kernel
      * buffer. Returns `false` if all or part of the data was queued in user memory.`'drain'` will be emitted when the buffer is free again.
+     * 
+     * **Important:** This method does **not** sanitize user input. If writing
+     * user-generated content, ensure it is properly sanitized before passing it to `write()`
+     * to prevent security vulnerabilities such as cross-site scripting (XSS).
      * @param {WriteOptions} options The `write` options
      * @returns {boolean}
      */
