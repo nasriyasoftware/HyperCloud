@@ -1368,7 +1368,7 @@ export class HyperCloudResponse {
      * @returns {boolean}
      */
     write(options: WriteOptions): boolean {
-        const params = {
+        const configs = {
             chunk: null as unknown as string | Uint8Array,
             callback: null as unknown as (err: Error) => void,
             encoding: null as unknown as BufferEncoding
@@ -1380,11 +1380,11 @@ export class HyperCloudResponse {
         }
 
         if ('chunk' in options && (typeof options.chunk === 'string' || options.chunk instanceof Uint8Array)) {
-            params.chunk = options.chunk;
+            configs.chunk = options.chunk;
 
             if ('encoding' in options) {
                 if (typeof options.encoding === 'string' && this.#_encodings.includes(options.encoding)) {
-                    params.encoding = options.encoding;
+                    configs.encoding = options.encoding;
                 } else {
                     throw new TypeError(`${options.encoding} is not a supported buffer encoding.`);
                 }
@@ -1392,7 +1392,7 @@ export class HyperCloudResponse {
 
             if ('callback' in options) {
                 if (typeof options.callback === 'function') {
-                    params.callback = options.callback;
+                    configs.callback = options.callback;
                 } else {
                     throw new TypeError('The "write" callback should be a function.');
                 }
@@ -1401,12 +1401,12 @@ export class HyperCloudResponse {
             throw new TypeError('The "write" method expected a "chunk" value of type string or Unit8Array.');
         }
 
-        if (params.encoding && params.callback) {
-            return this.#_res.write(params.chunk, params.encoding, params.callback);
-        } else if (params.callback) {
-            return this.#_res.write(params.chunk, params.callback);
+        if (configs.encoding && configs.callback) {
+            return this.#_res.write(configs.chunk, configs.encoding, configs.callback);
+        } else if (configs.callback) {
+            return this.#_res.write(configs.chunk, configs.callback);
         } else {
-            return this.#_res.write(params.chunk);
+            return this.#_res.write(configs.chunk);
         }
     }
     /**
