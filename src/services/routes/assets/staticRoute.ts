@@ -67,7 +67,7 @@ class StaticRoute {
                 if (request.path.length < this.#_configs.path.length) { return response.status(500).end({ data: `Internal server error (500).\n\nIf you're a visitor please wait a few minutes.` }) }
                 // Remove the initial path (the virtual path) and keep the root path
                 const reqPath = request.path.slice(this.#_configs.path.length, request.path.length);
-                
+
                 for (let i = 0; i < reqPath.length; i++) {
                     const pathSegment = reqPath[i];
                     const isLast = i + 1 >= reqPath.length;
@@ -131,7 +131,7 @@ class StaticRoute {
                 next();
             } catch (error) {
                 console.error(error);
-                response.status(500).json({ type: 'server_error', code: 500, href: request.href, error })
+                response.status(500).json({ type: 'server_error', code: 500, href: request.href, message: "An internal server error occurred." })
             }
         }
     }
