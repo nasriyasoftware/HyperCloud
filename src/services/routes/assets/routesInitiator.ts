@@ -134,7 +134,7 @@ class RequestRoutesManager {
                     response.cookies.create('colorScheme', 'Default', {
                         priority: 'Medium',
                         path: '/',
-                        domain: `.${request.domain}`
+                        domain: `${request.domain}`
                     });
                 }
                 

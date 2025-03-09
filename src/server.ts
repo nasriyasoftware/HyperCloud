@@ -455,7 +455,7 @@ export class HyperCloudServer {
             if (handlerParams !== reqParams) { throw new RangeError(`The provided handler has ${handlerParams} parameters. The expected number of parameters is ${reqParams}`) }
             this.#_config.handlers[handlerName] = handler;
         }, userSessions: (handler: HyperCloudRequestHandler) => {
-            const handlerName = 'forbidden';
+            const handlerName = 'userSessions';
             if (typeof handler !== 'function') { throw new TypeError(`The provided handler isn't a function but a type of ${typeof handler}`) }
             const reqParams = 3;
             const handlerParams = handler.length;
