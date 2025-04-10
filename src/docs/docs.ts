@@ -5,6 +5,7 @@ import HyperCloudRequest from '../services/handler/assets/request';
 import HyperCloudResponse from '../services/handler/assets/response';
 import HyperCloudServer from '../server';
 import HTTPError from '../utils/errors/HTTPError';
+import ms from 'ms';
 
 /**The website's possible color schemes */
 export type ColorScheme = 'Dark' | 'Light';
@@ -728,7 +729,7 @@ export interface RenderingOptions {
     /** Enable or disable setting `Cache-Control` response header. Default: `true`. */
     cacheControl?: boolean;
     /** Sets the max-age property of the Cache-Control header in milliseconds or a string in [ms format](https://www.npmjs.com/package/ms). Default: `0`. */
-    maxAge?: number | string;
+    maxAge?: number | ms.StringValue;
     /** Enable or disable the `immutable` directive in the `Cache-Control` response header. If enabled, the `maxAge` option should also be specified to enable caching. The immutable directive will prevent supported clients from making conditional requests during the life of the `maxAge` option to check if the file has changed. */
     immutable?: boolean;
     /** Set an eTag on the page to let others know when the value changes */
@@ -737,7 +738,7 @@ export interface RenderingOptions {
 
 export interface DownloadFileOptions {
     /** Sets the max-age property of the Cache-Control header in milliseconds or a string in [ms format](https://www.npmjs.com/package/ms). Default: `0`. */
-    maxAge?: number | string;
+    maxAge?: number | ms.StringValue;
     /** Root directory for relative filenames. You can also use the this path to prevent using files outside of this directory. By default, it uses the project root from `process.cwd()`. */
     root?: string;
     /** Sets the Last-Modified header to the last modified date of the file on the OS. Set `false` to disable it. */

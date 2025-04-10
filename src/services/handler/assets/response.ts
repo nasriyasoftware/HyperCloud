@@ -438,21 +438,22 @@ export class HyperCloudResponse {
 
                         if (options.httpOptions.cacheControl === true) {
                             const ONEYEAR = 31_536_000_000; // in ms
-                            let maxAge = 0;
-                            let immutable = false;
+                            const cache = { maxAge: 0, immutable: false };                            
 
                             if (!('maxAge' in options.httpOptions)) { throw new SyntaxError('The render cache-control was enabled without providing the maxAge') }
                             if (!(typeof options.httpOptions.maxAge === 'number' || typeof options.httpOptions.maxAge === 'string')) { throw new TypeError(`The maxAge property should be either a number or string, but instead got ${typeof options.httpOptions.maxAge}`) }
 
                             if (typeof options.httpOptions.maxAge === 'number') {
-                                maxAge = options.httpOptions.maxAge;
+                                cache.maxAge = options.httpOptions.maxAge;
                             }
 
                             if (typeof options.httpOptions.maxAge === 'string') {
-                                if (options.httpOptions.maxAge.length === 0) { throw new SyntaxError(`The maxAge string value cannot be empty`) }
-                                const value = ms(options.httpOptions.maxAge);
+                                const maxAgeStr = options.httpOptions.maxAge.trim() as ms.StringValue;
+                                if (maxAgeStr.length === 0) { throw new SyntaxError(`The maxAge string value cannot be empty`) }
+                                
+                                const value = ms(maxAgeStr);
                                 if (typeof value !== 'number') { throw new SyntaxError(`${options.httpOptions.maxAge} is not a valid maxAge value`) }
-                                maxAge = value;
+                                cache.maxAge = value;
                             }
 
                             if ((options.httpOptions.maxAge as number) < 0) { throw new RangeError(`The maxAge cannot be a negative value`) }
@@ -460,11 +461,11 @@ export class HyperCloudResponse {
 
                             if ('immutable' in options.httpOptions) {
                                 if (typeof options.httpOptions.immutable !== 'boolean') { throw new TypeError(`The immutable property only accepts boolean values, but instead got ${typeof options.httpOptions.immutable}`) }
-                                immutable = true;
+                                cache.immutable = true;
                             }
 
-                            const expiryDate = new Date(Date.now() + maxAge).toUTCString();
-                            this.setHeader('Cache-Control', `public, max-age=${maxAge}${immutable ? ', immutable' : ''}`);
+                            const expiryDate = new Date(Date.now() + cache.maxAge).toUTCString();
+                            this.setHeader('Cache-Control', `public, max-age=${cache.maxAge}${cache.immutable ? ', immutable' : ''}`);
                             this.setHeader('Expires', expiryDate);
                         } else {
                             this.setHeader('Cache-Control', 'no-cache');
@@ -618,21 +619,21 @@ export class HyperCloudResponse {
 
                 if (options.cacheControl) {
                     const ONEYEAR = 31_536_000_000; // in ms
-                    let maxAge = 0;
-                    let immutable = false;
+                    const cache = { maxAge: 0, immutable: false };
 
                     if (!('maxAge' in options)) { throw new SyntaxError('The sendFile cache-control was enabled without providing the maxAge') }
                     if (!(typeof options.maxAge === 'number' || typeof options.maxAge === 'string')) { throw new TypeError(`The maxAge property should be either a number or string, but instead got ${typeof options.maxAge}`) }
 
                     if (typeof options.maxAge === 'number') {
-                        maxAge = options.maxAge;
+                        cache.maxAge = options.maxAge;
                     }
 
                     if (typeof options.maxAge === 'string') {
-                        if (options.maxAge.length === 0) { throw new SyntaxError(`The maxAge string value cannot be empty`) }
-                        const value = ms(options.maxAge);
+                        const maxAge = options.maxAge.trim() as ms.StringValue;
+                        if (maxAge.length === 0) { throw new SyntaxError(`The maxAge string value cannot be empty`) }
+                        const value = ms(maxAge);
                         if (typeof value !== 'number') { throw new SyntaxError(`${options.maxAge} is not a valid maxAge value`) }
-                        maxAge = value;
+                        cache.maxAge = value;
                     }
 
                     if ((options.maxAge as number) < 0) { throw new RangeError(`The maxAge cannot be a negative value`) }
@@ -640,11 +641,11 @@ export class HyperCloudResponse {
 
                     if ('immutable' in options) {
                         if (typeof options.immutable !== 'boolean') { throw new TypeError(`The immutable property only accepts boolean values, but instead got ${typeof options.immutable}`) }
-                        immutable = true;
+                        cache.immutable = true;
                     }
 
-                    const expiryDate = new Date(Date.now() + maxAge).toUTCString();
-                    this.setHeader('Cache-Control', `public, max-age=${maxAge}${immutable ? ', immutable' : ''}`);
+                    const expiryDate = new Date(Date.now() + cache.maxAge).toUTCString();
+                    this.setHeader('Cache-Control', `public, max-age=${cache.maxAge}${cache.immutable ? ', immutable' : ''}`);
                     this.setHeader('Expires', expiryDate);
                 }
             }
