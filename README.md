@@ -27,7 +27,7 @@ ___
 - **[Multilingual Support](#languages):** Define localized content for your pages using locals for each language. The framework ensures the correct content is rendered based on the user's language preference.
 - **Automatic Asset Management:** Automatically include stylesheets, scripts, and meta tags from components and global settings in the rendered pages.
 - **Preserved Asset Order:** Maintain the order of assets as defined, ensuring predictable rendering.
-- **Secure Server** with **FREE** [SSL certificates](https://github.com/nasriyasoftware/HyperCloud/blob/main/examples/proxies.md#generate-ssl-certificates).
+- **Secure Server** with **FREE** [SSL certificates](./examples/proxies.md#generate-ssl-certificates).
 - Built-In & Custom [Error Pages](#error-handling--pages).
 - Built-in (In-Memory) [Rate Limiter](#rate-limiter).
 - Built-in [Helmet](#helmet-protection) Protection.
@@ -66,7 +66,7 @@ const server = hypercloud.Server();
 // (Optional) Set the main server so you can use it anywhere
 hypercloud.server = server;
 ```
-**::** [Advanced Server Configurations](https://github.com/nasriyasoftware/HyperCloud/blob/main/examples/server-configurations.md) **::**
+**::** [Advanced Server Configurations](./examples/server-configurations.md) **::**
 
 #### 4. Defining routes
 For now, you only have a server that serves a `404` page on any path, so let's define more routes now using the server's `Router`.
@@ -80,24 +80,18 @@ router.use('/', (request, response, next) => {
 })
 ```
 
-**::** [Advanced Router Implementations](https://github.com/nasriyasoftware/HyperCloud/blob/main/examples/router-implementations.md) **::**
+**::** [Advanced Router Implementations](./examples/router-implementations.md) **::**
 
 
 #### 5. Start listening
-To start listening for requests just call the `listen` method on the server.
+To start listening for requests, simply call the `listen` method on the server.
 
 ```js
-server.listen();        // Prints ⇨ HyperCloud Server is listening on port #80
+server.listen();                  // Prints ⇨ HyperCloud Server is listening on port #80
 // OR
-server.listen(5000);    // Prints ⇨ HyperCloud Server is listening on port #5000
+server.listen({ port: 5000 });    // Prints ⇨ HyperCloud Server is listening on port #5000
 ```
-
-For secure servers
-```js
-server.listen();        // Prints ⇨ HyperCloud Server is listening securely on port #443
-// OR
-server.listen(8443);    // Prints ⇨ HyperCloud Server is listening securely on port #8443
-```
+**::** [Advanced Listening Implementations](./examples/listening-configs.md) **::**
 
 Congratulations! Your server is now ready to handle requests.
 
@@ -114,7 +108,7 @@ hypercloud.verbose = true;
 #### Rate Limiter
 Protect your websites against abusive usage by setting limits on how much users can access your site or consume your APIs. The rate limiter can help you prevent small [DDoS attacks](https://www.cloudflare.com/learning/ddos/what-is-a-ddos-attack/), but it's not meant for that purpose. We recommend using [Cloudflare](https://www.cloudflare.com/) to protect your resources from DDoS attacks.
 
-Learn how to setup a **Rate Limiter** [here](https://github.com/nasriyasoftware/HyperCloud/blob/main/examples/rate-limiter.md).
+Learn how to setup a **Rate Limiter** [here](./examples/rate-limiter.md).
 
 #### Helmet Protection
 In today's digital landscape, security is paramount. HyperCloud's built-in Helmet protection is designed to provide robust security measures, safeguarding your applications from a myriad of common web vulnerabilities. By integrating Helmet, HyperCloud ensures that your applications are shielded against threats such as cross-site scripting (XSS), clickjacking, and other malicious attacks. This advanced protection layer helps developers focus on building features and functionality, knowing that their applications are fortified with industry-leading security practices. With Helmet, HyperCloud takes a proactive approach to web security, offering peace of mind and enabling you to deliver secure, reliable applications to your users.
@@ -124,12 +118,12 @@ To enable **Helmet** protection:
 server.helmet(); // This applies all the default configurations
 ```
 
-Learn how to customize the **Helmet** [here](https://github.com/nasriyasoftware/HyperCloud/blob/main/examples/helmet.md).
+Learn how to customize the **Helmet** [here](./examples/helmet.md).
 
 #### Proxy Servers
 If your server is running behind a proxy server, you need to configure the `proxy` option of the server before initializing it.
 
-Learn how to setup your server behind a **Proxy Server** [here](https://github.com/nasriyasoftware/HyperCloud/blob/main/examples/proxies.md).
+Learn how to setup your server behind a **Proxy Server** [here](./examples/proxies.md).
 
 #### Languages
 We understand that some sites are multilingual. With **HyperCloud**, you can easily build multilingual sites.
@@ -153,7 +147,7 @@ server.languages.default = 'ar';
 **Note:** The `default` language must be one of the [supported languages](#supported-languages) or an error will be thrown.
 
 #### HyperCloud Built-In User
-HyperCloud provides a built-in `HyperCloudUser` on each `request` and allows you to populate it using a [custom handler](https://github.com/nasriyasoftware/HyperCloud/blob/main/examples/request-user.md#user-handler), you can then access the `user` object from any route via the `request` object.
+HyperCloud provides a built-in `HyperCloudUser` on each `request` and allows you to populate it using a [custom handler](./examples/request-user.md#user-handler), you can then access the `user` object from any route via the `request` object.
 
 The built-in `user` object looks like this:
 ```js
@@ -170,7 +164,7 @@ The built-in `user` object looks like this:
     }
 }
 ```
-Learn how to populate the `request.user` object and work with it [here](https://github.com/nasriyasoftware/HyperCloud/blob/main/examples/request-user.md).
+Learn how to populate the `request.user` object and work with it [here](./examples/request-user.md).
 
 #### Error Handling & Pages
 
@@ -194,7 +188,7 @@ router.use('*', (request, response, next) => {
 })
 ```
 
-Learn more about **Error Handling & Pages** [here](https://github.com/nasriyasoftware/HyperCloud/blob/main/examples/error-handling-and-pages.md).
+Learn more about **Error Handling & Pages** [here](./examples/error-handling-and-pages.md).
 
 
 #### Requests Logging
@@ -241,7 +235,7 @@ router.post('/api/v1/uploads', async (request, response, next) => {
     }    
 });
 ```
-Learn more about **File Upload Handling** [here](https://github.com/nasriyasoftware/HyperCloud/blob/main/examples/uploads.md).
+Learn more about **File Upload Handling** [here](./examples/uploads.md).
 
 #### Generating eTags
 [ETags](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/ETag) can significantly improve server performance. To generate `eTags` for your resources, use the following syntax:
@@ -285,7 +279,7 @@ You can define multilingual-ready pages by specifying locals for each language. 
     })
    ```
 
-Learn how to **define components and pages** [here](https://github.com/nasriyasoftware/HyperCloud/blob/main/examples/server-side-rendering-ssr.md).
+Learn how to **define components and pages** [here](./examples/server-side-rendering-ssr.md).
 ___
 ## Upcoming Features & Improvements
 New features planned for the complete version:

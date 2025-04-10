@@ -5,7 +5,7 @@ import path from 'path';
 
 import helpers from './utils/helpers';
 import SSLManager from './services/ssl/manager';
-import { HelmetConfigOptions, HyperCloudInitFile, HyperCloudManagementOptions, HyperCloudRequestErrorHandler, HyperCloudRequestHandler, HyperCloudServerHandlers, MimeType, OptionalProtocol, SecureServerOptions, ServerOptions } from './docs/docs';
+import { HelmetConfigOptions, HyperCloudInitFile, HyperCloudManagementOptions, HyperCloudRequestErrorHandler, HyperCloudRequestHandler, HyperCloudServerHandlers, MimeType, OptionalProtocol, SecureServerOptions, ServerListeningConfigs, ServerOptions } from './docs/docs';
 
 import initializer from './services/handler/initializer';
 import HyperCloudResponse from './services/handler/assets/response';
@@ -22,7 +22,7 @@ const _dirname = __dirname;
 
 /**HyperCloud HTTP2 server */
 export class HyperCloudServer {
-    #_recievedReqNum = 0;
+    #_receivedReqNum = 0;
     readonly #_system = {
         httpServer: undefined as http.Server | undefined,
         httpsServer: undefined as http2.Http2SecureServer | undefined
@@ -88,8 +88,179 @@ export class HyperCloudServer {
 
                 fs.writeFileSync(path.resolve(`${filePath}/config.json`), JSON.stringify(options, null, 4), { encoding: 'utf-8' });
             }
-        }
+        },
+        beforeListen: {
+            /**
+             * @description Initialize the server. If the server is supposed to be secure, generate an SSL certificate first and then create the server.
+             * @returns {Promise<http2.Http2SecureServer | http.Server>} The initialized server
+             */
+            init: async (): Promise<http2.Http2SecureServer | http.Server> => {
+                if (this.#_config.secure) {
+                    const { cert, key } = await (async () => {
+                        if (this.#_config.ssl.type === 'credentials') {
+                            return { cert: this.#_config.ssl.credentials.cert, key: this.#_config.ssl.credentials.key }
+                        } else {
+                            return new SSLManager().generate({
+                                type: this.#_config.ssl.type as "selfSigned" | "letsEncrypt",
+                                storePath: this.#_config.ssl.storePath,
+                                letsEncrypt: this.#_config.ssl.letsEncrypt
+                            })
+                        }
+                    })()
+
+                    this.#_system.httpsServer = http2.createSecureServer({ cert, key, allowHTTP1: true })
+                } else {
+                    this.#_system.httpServer = http.createServer();
+                }
+
+                return this.#_server;
+            },
+            /**
+             * Gets the listen configurations for the server.
+             * If the server is configured to use HTTPS, it will listen on port 443, otherwise it will listen on port 80.
+             * If options are provided, it will override the default configurations.
+             * @param {ServerListeningConfigs} [options] The listen configurations.
+             * @returns {ServerListeningConfigs} The listen configurations.
+             */
+            getConfigs: (options?: ServerListeningConfigs): ServerListeningConfigs => {
+                const config: ServerListeningConfigs = {
+                    host: '0.0.0.0',
+                    port: this.#_config.secure ? 443 : 80,
+                }
+
+                if (options !== undefined) {
+                    if (helpers.isNot.realObject(options)) { throw new TypeError(`The options object should be a real object, instead got ${typeof options}`) }
+
+                    if (helpers.hasOwnProperty(options, 'ipv6Only')) {
+                        const ipv6Only = options.ipv6Only;
+                        if (typeof ipv6Only !== 'boolean') { throw new TypeError(`The options.ipv6Only should be a boolean, instead got ${typeof ipv6Only}`) }
+                        config.host = '::';
+                    } else {
+                        if (helpers.hasOwnProperty(options, 'host')) {
+                            const host = options.host;
+                            if (typeof host !== 'string') { throw new TypeError(`The options.host should be a string, instead got ${typeof host}`) }
+                            const validHosts = ['::', '::1', 'localhost'];
+                            if (!validHosts.includes(host) && !helpers.validate.ipAddress(host)) { throw new TypeError(`The options.host should be a valid IP address, instead got ${host}`) }
+                            config.host = host;
+                        }
+                    }
+
+                    if (helpers.hasOwnProperty(options, 'port')) {
+                        const port = options.port;
+                        if (typeof port !== 'number') { throw new TypeError(`The options.port should be a number, instead got ${typeof port}`) }
+                        if (port <= 0) { throw new RangeError(`The options.port has been assigned an invalid value (${port}). Ports are numbers greater than zero`) }
+                        config.port = port;
+                    }
+
+                    if (helpers.hasOwnProperty(options, 'onListen')) {
+                        const onListen = options.onListen;
+                        if (typeof onListen !== 'function') { throw new TypeError(`The options.onListen should be a function, instead got ${typeof onListen}`) }
+                        config.onListen = onListen;
+                    }
+
+                    if (helpers.hasOwnProperty(options, 'backlog')) {
+                        const backlog = options.backlog;
+                        if (typeof backlog !== 'number') { throw new TypeError(`The options.backlog should be a number, instead got ${typeof backlog}`) }
+                        if (backlog <= 0) { throw new RangeError(`The options.backlog has been assigned an invalid value (${backlog}). Backlog is a number greater than zero`) }
+                        config.backlog = backlog;
+                    }
+
+                    if (helpers.hasOwnProperty(options, 'exclusive')) {
+                        const exclusive = options.exclusive;
+                        if (typeof exclusive !== 'boolean') { throw new TypeError(`The options.exclusive should be a boolean, instead got ${typeof exclusive}`) }
+                        config.exclusive = exclusive;
+                    }
+                }
+
+                return config
+            },
+            /**
+             * Scans for pages and components, and updates the cache storage.
+             * 
+             * @returns {Promise<void>}
+             */
+            scanSSRAssets: async (): Promise<void> => {
+                helpers.printConsole('Scanning for pages and components...');
+                await Promise.allSettled([this.rendering.pages.scan(), this.rendering.components.scan()]);
+                helpers.printConsole('Checking/Updating cache storage...');
+                await this.rendering.cache.update.everything();
+            }
+        },
     })
+
+    readonly #_serverEvents = {
+        /**
+         * Handles incoming HTTP requests and sends appropriate responses.
+         * 
+         * This asynchronous function processes each request by incrementing the request count,
+         * generating a unique request ID, and creating `HyperCloudRequest` and `HyperCloudResponse`
+         * objects. It sets specific server headers and attempts to match the request with available
+         * routes. If a match is found, it initializes route management with `RequestRoutesManager`.
+         * Otherwise, it sends a 404 Not Found response.
+         * 
+         * In case of errors during request processing, it attempts to send a 500 Server Error response.
+         * 
+         * @param {any} req - The incoming HTTP request object.
+         * @param {any} res - The HTTP response object to be sent back to the client.
+         */
+        request: async (req: any, res: any) => {
+            /**A copy of the response to throw an error */
+            let resTemp: HyperCloudResponse = {} as unknown as HyperCloudResponse;
+            try {
+                res.on('close', () => {
+                    if (resTemp) { resTemp._closed = true }
+                });
+
+                this.#_receivedReqNum++;
+                const request_id = `ns${btoa(`request-num:${this.#_receivedReqNum};date:${new Date().toISOString()}`)}`;
+                // @ts-ignore
+                req.id = request_id;
+                const request = await initializer.createRequest(this, req, { trusted_proxies: this.#_config.trusted_proxies });
+                const response = initializer.createResponse(this, request, res);
+                resTemp = response;
+
+                // Set the custom server headers
+                res.setHeader('X-Frame-Options', 'DENY');
+                res.setHeader('X-Server', 'Nasriya HyperCloud');
+                res.setHeader('X-Request-ID', request_id);
+
+                const matchedRoutes = this._routesManager.match(request);
+                if (matchedRoutes.length > 0) {
+                    new RequestRoutesManager(matchedRoutes, request, response);
+                } else {
+                    response.status(404).pages.notFound();
+                }
+            } catch (error) {
+                if (!helpers.is.undefined(resTemp) && resTemp instanceof HyperCloudResponse) {
+                    resTemp.pages.serverError({ error: error as Error });
+                } else {
+                    console.error(error);
+                    res.statusCode = 500;
+                    res.end();
+                }
+            }
+        },
+        /**
+         * Returns an error handler function for a specific port.
+         * 
+         * If the provided error indicates that the port is already in use (`EADDRINUSE`),
+         * it closes the server and throws a descriptive error.
+         * 
+         * **Note:** When this handler is used, it must be called with a port number as an argument.
+         * It cannot be referenced directly as a callback.
+         *
+         * @param {number} port - The port number to associate with the error handler.
+         * @throws {Error} If the error code is `EADDRINUSE`, indicating the port is already in use.
+         */
+        port: (port: number): (err: any) => void => {
+            return (err: any) => {
+                if (err.code === 'EADDRINUSE') {
+                    this.#_server.close();
+                    throw new Error(`Port #${port} is already in use, please choose another port`);
+                }
+            }
+        }
+    }
 
     constructor(userOptions?: SecureServerOptions | ServerOptions | HyperCloudInitFile, addOpt?: HyperCloudManagementOptions) {
         this.languages = new LanguagesManager();
@@ -561,90 +732,38 @@ export class HyperCloudServer {
     }
 
     /**
-     * Start listening for incoming requests
-     * @param port Specify the port number of the protocol for the server. Default: `443` for secure servers and `80` for plain HTTP ones.
-     * @param callback Pass a callback function to run when the server starts listening.
-     * @returns {Promise<void|http2.Http2SecureServer>} If secure connection is configured, a `Promise<http2.Http2SecureServer>` will be returned, otherwise, a `Promise<void>` will be returned.
+     * Starts the server and makes it listen on a specified port or the default port.
+     * @param options - The options object that can be used to configure the server.
+     * @returns A promise that resolves when the server is listening.
+     * @example
+     * server.listen({
+     *      host: 'localhost',
+     *      port: 8080,
+     *      onListen: (host, port) => console.log(`Server is listening on ${host}:${port}`),
+     *      backlog: 100,
+     *      exclusive: false
+     * });
      */
-    async listen(port: number, callback?: Function): Promise<void | http2.Http2SecureServer> {
+    async listen(options: ServerListeningConfigs): Promise<void> {
         try {
-            if (this.#_config.secure) {
-                const { cert, key } = await (async () => {
-                    if (this.#_config.ssl.type === 'credentials') {
-                        return { cert: this.#_config.ssl.credentials.cert, key: this.#_config.ssl.credentials.key }
-                    } else {
-                        return new SSLManager().generate({
-                            type: this.#_config.ssl.type as "selfSigned" | "letsEncrypt",
-                            storePath: this.#_config.ssl.storePath,
-                            letsEncrypt: this.#_config.ssl.letsEncrypt
-                        })
-                    }
-                })()
+            const server = await this.#_utils.beforeListen.init();
 
-                this.#_system.httpsServer = http2.createSecureServer({ cert, key, allowHTTP1: true })
-            } else {
-                this.#_system.httpServer = http.createServer();
-            }
+            const config = this.#_utils.beforeListen.getConfigs(options);
+            await this.#_utils.beforeListen.scanSSRAssets();
 
-            const server: http2.Http2SecureServer | http.Server = (this.#_config.secure ? this.#_system.httpsServer : this.#_system.httpServer) as http2.Http2SecureServer | http.Server;
-            server.on('request', async (req, res) => {
-                /**A copy of the response to throw an error */
-                let resTemp: HyperCloudResponse = {} as unknown as HyperCloudResponse;
-                try {
-                    res.on('close', () => {
-                        if (resTemp) { resTemp._closed = true }
-                    });
-
-                    this.#_recievedReqNum++;
-                    const request_id = `ns${btoa(`request-num:${this.#_recievedReqNum};date:${new Date().toISOString()}`)}`;
-                    // @ts-ignore
-                    req.id = request_id;
-                    const request = await initializer.createRequest(this, req, { trusted_proxies: this.#_config.trusted_proxies });
-                    const response = initializer.createResponse(this, request, res);
-                    resTemp = response;
-
-                    // Set the custom server headers
-                    res.setHeader('X-Frame-Options', 'DENY');
-                    res.setHeader('X-Server', 'Nasriya HyperCloud');
-                    res.setHeader('X-Request-ID', request_id);
-
-                    const matchedRoutes = this._routesManager.match(request);
-                    if (matchedRoutes.length > 0) {
-                        new RequestRoutesManager(matchedRoutes, request, response);
-                    } else {
-                        response.status(404).pages.notFound();
-                    }
-                } catch (error) {
-                    if (!helpers.is.undefined(resTemp) && resTemp instanceof HyperCloudResponse) {
-                        resTemp.pages.serverError({ error: error as Error });
-                    } else {
-                        console.error(error);
-                        res.statusCode = 500;
-                        res.end();
-                    }
-                }
-            })
-
-            if (port !== undefined) {
-                if (typeof port !== 'number') { throw `The port used in the protocol (${port}) should be a number, instead got ${typeof port}` }
-                if (port <= 0) { throw `The port has been assigned an invalid value (${port}). Ports are numbers greater than zero` }
-                if (callback !== undefined && typeof callback !== 'function') { throw `The protocol.callback should be a callback function, instead got ${typeof callback}` }
-            } else {
-                port = this.#_config.secure ? 443 : 80;
-            }
-
-
-            await Promise.allSettled([this.rendering.pages.scan(), this.rendering.components.scan()]);
-            helpers.printConsole('Checking/Updating cache storage...');
-            await this.rendering.cache.update.everything();
+            server.on('request', this.#_serverEvents.request)
+            server.on('error', this.#_serverEvents.port(config.port as number));
 
             return new Promise((resolve, reject) => {
-                const res = server.listen(port, () => {
-                    console.info(`HyperCloud Server is listening ${this.#_config.secure ? 'securely ' : ''}on port #${port}`);
-                    callback?.();
-                })
-
-                if (this.#_config.secure) { resolve(res as http2.Http2SecureServer) } else { resolve() }
+                try {
+                    server.listen(config, () => {
+                        console.info(`HyperCloud Server is listening ${this.#_config.secure ? 'securely ' : ''}on port #${config.port}`);
+                        config.onListen?.(config.host as string, config.port as number);
+                        resolve();
+                    })
+                } catch (error) {
+                    reject(error);
+                }
             })
         } catch (error) {
             if (typeof error === 'string') { error = `Unable to start listening: ${error}` }
@@ -661,13 +780,22 @@ export class HyperCloudServer {
      * @param callback Called when the server is closed.
      */
     close(callback: (err?: Error) => void) {
-        const runninServer = this.#_system.httpServer ? 'http' : 'https';
-        const finalCallback = typeof callback === 'function' ? callback : (err?: Error) => console.info(`HyperCloud HTTP${runninServer === 'https' ? 's' : ''} Server is now closed.`);
+        const runningServer = this.#_system.httpServer ? 'http' : 'https';
+        const finalCallback = typeof callback === 'function' ? callback : (err?: Error) => {
+            console.error(err?.message || err);
+            console.info(`HyperCloud HTTP${runningServer === 'https' ? 's' : ''} Server is now closed.`);
+        };
 
         if (this.#_system.httpServer) { this.#_system.httpServer.close(finalCallback) }
         if (this.#_system.httpsServer) { this.#_system.httpsServer.close(finalCallback) }
         return this;
     }
+
+    /**
+     * Returns the server instance during the listening state
+     * @returns {http2.Http2SecureServer | http.Server}
+     */
+    get #_server(): http2.Http2SecureServer | http.Server { return (this.#_config.secure ? this.#_system.httpsServer : this.#_system.httpServer) as http2.Http2SecureServer | http.Server }
 }
 
 export default HyperCloudServer;

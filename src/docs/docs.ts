@@ -1024,3 +1024,46 @@ export interface RandomOptions {
     /** Don't use sequential characters, e.g. `abc`, `789`. Default: `true` */
     noSequentialChars?: boolean;
 }
+
+export interface ServerListeningConfigs {
+    /**
+     * The port your server is listening on.
+     * Default: `443` for secure servers and `80` for non-secure servers
+     */
+    port?: number;
+
+    /**
+     * The host your server is listening on.
+     * 
+     * Default: `0.0.0.0`, which means listen on all possible interfaces.
+     */
+    host?: string;
+
+    /**
+     * The maximum length of the queue of pending connections.
+     * Default: the system's default value, usually 511.
+     */
+    backlog?: number;
+    
+    /**
+     * If true, the port will be exclusive, and no other process can use it.
+     */
+    exclusive?: boolean;
+    
+    /**
+     * If true, only IPv6 addresses will be allowed to connect.
+     */
+    ipv6Only?: boolean;
+    
+    /**
+     * The callback function that will be called when the server is listening
+     * on the specified port and host.
+     * @example
+     * server.listen({
+     *     onListen(host, port) => {
+     *         console.log(`Listening on ${host}:${port}`);
+     *     }
+     * });
+     */
+    onListen?: (host: string, port: number) => void
+}

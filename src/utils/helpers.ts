@@ -117,7 +117,7 @@ class Helpers {
 
     public readonly validate = {
         /**
-         * Valdiate a currency (regardless of letter case)
+         * Validate a currency (regardless of letter case)
          * @param {string} currency A currency to validate
          * @returns {boolean}
          */
@@ -664,6 +664,17 @@ class Helpers {
         }
     };
 
+    /**
+     * Checks if the given object has the specified property as its own property.
+     * This method does not check properties inherited through the prototype chain.
+     *
+     * @param obj - The object to check for the property.
+     * @param prop - The name of the property to check for.
+     * @returns A boolean indicating whether the object has the specified property as its own property.
+     */
+    hasOwnProperty(obj: any, prop: string): boolean {
+        return Object.prototype.hasOwnProperty.call(obj, prop);
+    }
 }
 
 export default new Helpers;
