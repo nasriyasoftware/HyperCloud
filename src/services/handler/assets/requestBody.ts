@@ -9,7 +9,7 @@ class RequestBody {
     set(name: string, value: any) {
         if (typeof name !== 'string') { throw new TypeError(`The property name can only be a string, instead got ${typeof name}`) }
         if (!(name === '__proto__' || name === 'constructor' || name === 'prototype')) {
-            this.#_data[name] = value;
+            this.#_data[name] = decodeURIComponent(value);
         }
     }
 
@@ -32,7 +32,7 @@ class RequestBody {
     from(value: any) {
         if (typeof value === 'object' && Object.keys(value).length > 0) {
             for (const prop in value) {
-                this.set(prop, decodeURIComponent(value[prop]));
+                this.set(prop, value[prop]);
             }
         }
 
