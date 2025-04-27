@@ -241,8 +241,9 @@ class Renderer {
         html: {
             /**Check the document's `<html>` tag and add the `lang` and `dir` attributes */
             check: () => {
-                const hasDocType = this.#_rendered.substring(0, '<!DOCTYPE html>'.length).toLowerCase().startsWith('<!DOCTYPE html>'.toLowerCase());
-                if (!hasDocType) { this.#_rendered = `<!DOCTYPE html>\n${this.#_rendered}` }
+                const doctype = '<!DOCTYPE html>';
+                const hasDocType = this.#_rendered.substring(0, doctype.length).toLowerCase().startsWith(doctype.toLowerCase());
+                if (!hasDocType) { this.#_rendered = `${doctype}\n${this.#_rendered}` }
 
                 const htmlTagStartIndex = this.#_rendered.indexOf('<html');
                 const hasHTML = htmlTagStartIndex > -1;
@@ -254,7 +255,7 @@ class Renderer {
                     const htmlTag = fromHtml.substring(htmlTagStartIndex, fromHtml.indexOf('>') + 1);
                     this.#_rendered = this.#_rendered.replace(htmlTag, newHTMLTag);
                 } else {
-                    this.#_rendered = `${this.#_rendered.substring(0, `<!DOCTYPE html>\n`.length)}${newHTMLTag}\n${this.#_rendered.replace(`<!DOCTYPE html>\n`, '')}\n</html>`;
+                    this.#_rendered = `${this.#_rendered.substring(0, `${doctype}\n`.length)}${newHTMLTag}\n${this.#_rendered.replace(`${doctype}\n`, '')}\n</html>`;
                 }
             },
             head: {

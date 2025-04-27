@@ -1,19 +1,33 @@
-<!DOCTYPE html>
-<body>
-  <h1>
-    <%=code%>
-  </h1>
-  <div id="container">
-    <p>> <span><%=commands.code%></span>: "<i><%=content.code%></i>"</p>
-    <p>> <span><%=commands.description%></span>: "<i><%=content.description%></i>"</p>
-    <p>> <span><%=commands.cause%></span>: [<b><%=content.cause%></b>...]</p>
-    <p>> <span><%=commands.allowed%></span>: [<% for (let i = 0; i < content.allowed.length; i++) { %>
-      <a href="<%= content.allowed[i].link %>"><%= content.allowed[i].label %></a><%= i < content.allowed.length - 1 ? ', ' : '' %>
-      <% } %>
-      ...]
-    </p>
-    <p>> <span><%=commands.regards%></span></p>
-  </div>
-
-</body>
-</html>
+<h1>
+  <%=code%>
+</h1>
+<div id="container">
+  <p>> <span>
+      <%=commands.code%>
+    </span>: "<i>
+      <%=content.code%>
+    </i>"</p>
+  <p>> <span>
+      <%=commands.description%>
+    </span>: "<i>
+      <%=content.description%>
+    </i>"</p>
+  <p>> <span>
+      <%=commands.cause%>
+    </span>: [<b>
+      <%=content.cause%>
+    </b>...]</p>
+  <p>> <span>
+      <%=commands.allowed%>
+    </span>: [<% for (let i=0; i < content.allowed.length; i++) { %>
+      <a href="<%= content.allowed[i].link %>">
+        <%= content.allowed[i].label %>
+      </a>
+      <%= i < content.allowed.length - 1 ? ', ' : '' %>
+        <% } %>
+          ...]
+  </p>
+  <p>> <span>
+      <%=commands.regards%>
+    </span></p>
+</div>
