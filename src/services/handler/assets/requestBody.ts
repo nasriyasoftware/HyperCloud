@@ -16,7 +16,6 @@ class RequestBody {
     /**
      * Get the value
      * @param name 
-     * @returns {any}
      */
     get(name: string) {
         return this.#_data[name]
@@ -33,7 +32,7 @@ class RequestBody {
     from(value: any) {
         if (typeof value === 'object' && Object.keys(value).length > 0) {
             for (const prop in value) {
-                this.set(prop, value[prop])
+                this.set(prop, decodeURIComponent(value[prop]));
             }
         }
 
