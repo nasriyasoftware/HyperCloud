@@ -90,15 +90,20 @@ export function bodyParser(body: any, contentType: string): BodyParserResult {
     if (contentType.includes('application/graphql')) {
         request.bodyType = 'graphql';
         return request;
-    }    
+    }
 
+    if (contentType.includes('application/vnd.apple.mpegurl')) {
+        request.bodyType = 'hls';
+        return request;
+    }
+    
     // Handle other types of raw data
     request.bodyType = 'buffer';
     return request;
 }
 
 /**
- * Extract the IP address from the request. If priority of chosing the IP is: 1) `X-Real-IP`, 2) `x-forwarded-for`, and 3) The actual remote address
+ * Extract the IP address from the request. If priority of choosing the IP is: 1) `X-Real-IP`, 2) `x-forwarded-for`, and 3) The actual remote address
  * @param {http2.Http2ServerRequest} req The HTTP2 request
  * @param {string[]} [trusted_proxies] The trusted proxy IPs
  * @returns {string}

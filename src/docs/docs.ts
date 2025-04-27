@@ -26,7 +26,7 @@ export type NextFunction = () => void;
 /**Represents various HTTP request methods. */
 export type HttpMethod = | 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH' | 'HEAD' | 'OPTIONS' | 'TRACE' | 'CONNECT';
 /**Represents the type of the request body. */
-export type RequestBodyType = 'text' | 'javascript' | 'json' | 'formData' | 'buffer' | 'graphql';
+export type RequestBodyType = 'text' | 'javascript' | 'json' | 'formData' | 'buffer' | 'graphql' | 'hls';
 export type HyperCloudServerHandlers = 'notFound' | 'serverError' | 'unauthorized' | 'forbidden' | 'userSessions' | 'logger' | 'onHTTPError';
 export type HttpEquivType = 'content-security-policy' | 'content-type' | 'default-style' | 'x-ua-compatible' | 'refresh';
 export type HTMLMetaName = 'application-name' | 'author' | 'description' | 'generator' | 'keywords' | 'referrer' | 'theme-color' | 'color-scheme' | 'viewport' | 'creator' | 'googlebot' | 'publisher' | 'robots' | (string & {});
