@@ -322,20 +322,25 @@ class Helpers {
     }
 
     /**
-     * This method works the like `require` and `import`, it's used
-     * in dynamic imports.
-     * @param name The name of the module
-     * @returns 
+     * Load a module (either a file or a package)
+     * @param {string} name The name of the module to load
+     * @param {Object} [options] Additional options
+     * @param {boolean} [options.isFile] Whether the name is a file path
+     * @returns {Promise<any>} A promise that resolves with the loaded module
+     * @throws {Error} If the module couldn't be loaded
      */
-    async loadModule(name: string) {
+    async loadModule(name: string, options?: { isFile?: boolean }): Promise<any> {
         return new Promise<any>((resolve, reject) => {
             try {
-                if (this.getNodeEnv() === 'commonjs') {
+                const isFile = options?.isFile ?? false;
+                const nodeEnv = this.getNodeEnv();
+
+                if (nodeEnv === 'commonjs') {
                     const mod = require(name);
                     resolve('default' in mod ? mod.default : mod);
                 } else {
                     // @ts-ignore
-                    import(name).then(mod => resolve('default' in mod ? mod.default : mod));
+                    import(isFile ? `file://${name}` : name).then(mod => resolve('default' in mod ? mod.default : mod));
                 }
             } catch (error) {
                 if (error instanceof Error) { error.message = `Unable to load module (${name}): ${error.message}` }
@@ -345,13 +350,12 @@ class Helpers {
     }
 
     /**
-     * This method works the like `require` and `import`, it's used
-     * in dynamic imports. This is to import files
-     * @param filePath The absolute path of the file
-     * @returns 
+     * Load a module from a file
+     * @param {string} filePath The path to the file
+     * @returns {Promise<any>} The module
      */
-    async loadFileModule(filePath: string) {
-        return this.loadModule(`file://${filePath}`)
+    async loadFileModule(filePath: string): Promise<any> {
+        return this.loadModule(filePath, { isFile: true });
     }
 
     /**
@@ -457,7 +461,7 @@ class Helpers {
          * @returns {value is number}
          */
         number: (value: any): value is number => {
-            return typeof value === 'number';
+            return typeof value === 'number' && !Number.isNaN(value);
         },
         /**
          * Check if a given value is a string.
@@ -568,7 +572,7 @@ class Helpers {
          * @returns {boolean}
          */
         integer: (value: any): boolean => {
-            return typeof value === 'number' && isFinite(value) && Math.floor(value) === value;
+            return this.is.number(value) && Number.isInteger(value);
         }
     };
 

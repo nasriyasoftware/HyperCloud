@@ -12,23 +12,31 @@ class PagesManager {
             this.#_storage[page.name] = page;
         },
         register: async (directory: string) => {
-            const dirents = fs.readdirSync(directory, { encoding: 'utf-8', withFileTypes: true });
+            try {
+                const dirents = await fs.promises.readdir(directory, { encoding: 'utf-8', withFileTypes: true });
 
-            const files = dirents.filter(i => i.isFile() && i.name.toLowerCase().endsWith('.page.js'));
-            const folders = dirents.filter(i => !i.isFile());
+                const folders = dirents.filter(i => i.isDirectory());
+                const files = dirents.filter(i => {
+                    const name = i.name.toLowerCase();
+                    return i.isFile() && (name.endsWith('.page.js') || name.endsWith('.page.ts'));
+                });
 
-            for (const file of files) {
-                const content = await helpers.loadFileModule(path.join(file.parentPath, file.name));
-                if (!(content instanceof Page)) { continue }
-                const pageName = content.name;
-                if (pageName in this.#_storage) { throw new Error(`${pageName} is already defined. Only unique Page names are allowed`) }
-                this.#_helpers.create(content);
-            }
-
-            for (const folder of folders) {
-                if (folder.name !== 'locals') {
-                    await this.#_helpers.register(path.join(directory, folder.name));
+                for (const file of files) {
+                    const content = await helpers.loadFileModule(path.join(file.parentPath, file.name));
+                    if (!(content instanceof Page)) { continue }
+                    const pageName = content.name;
+                    if (pageName in this.#_storage) { throw new Error(`${pageName} is already defined. Only unique Page names are allowed`) }
+                    this.#_helpers.create(content);
                 }
+
+                for (const folder of folders) {
+                    if (folder.name !== 'locals') {
+                        await this.#_helpers.register(path.join(directory, folder.name));
+                    }
+                }
+            } catch (error) {
+                if (error instanceof Error) { error.message = `Unable to register page: ${error.message}` }
+                throw error;
             }
         }
     }
@@ -63,7 +71,10 @@ class PagesManager {
     async scan(): Promise<void> {
         if (this.#_registers.length > 0) {
             helpers.printConsole('Scanning for pages...');
-            await Promise.allSettled(this.#_registers);
+            const scanResult = await Promise.allSettled(this.#_registers);
+
+            const rejected = scanResult.filter(i => i.status === 'rejected');
+            if (rejected.length > 0) { throw rejected.map(i => i.reason) }
             this.#_registers.length = 0;
         }
     }

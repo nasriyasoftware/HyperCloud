@@ -12,23 +12,28 @@ class ComponentsManager {
             this.#_storage[component.name] = component;
         },
         register: async (directory: string) => {
-            const dirents = fs.readdirSync(directory, { encoding: 'utf-8', withFileTypes: true });
+            try {
+                const dirents = await fs.promises.readdir(directory, { encoding: 'utf-8', withFileTypes: true });
 
-            const files = dirents.filter(i => i.isFile() && (i.name.toLowerCase().endsWith('.comp.js') || i.name.toLowerCase().endsWith('.component.js')));
-            const folders = dirents.filter(i => !i.isFile());
+                const files = dirents.filter(i => i.isFile() && (i.name.toLowerCase().endsWith('.comp.js') || i.name.toLowerCase().endsWith('.component.js')));
+                const folders = dirents.filter(i => !i.isFile());
 
-            for (const file of files) {
-                const content = await helpers.loadFileModule(path.join(file.parentPath, file.name));
-                if (!(content instanceof Component)) { continue }
-                const compName = content.name;
-                if (compName in this.#_storage) { throw new Error(`${compName} is already defined. Only unique Component names are allowed`) }
-                this.#_helpers.create(content);
-            }
-
-            for (const folder of folders) {
-                if (folder.name !== 'locals') {
-                    await this.#_helpers.register(path.join(directory, folder.name));
+                for (const file of files) {
+                    const content = await helpers.loadFileModule(path.join(file.parentPath, file.name));
+                    if (!(content instanceof Component)) { continue }
+                    const compName = content.name;
+                    if (compName in this.#_storage) { throw new Error(`${compName} is already defined. Only unique Component names are allowed`) }
+                    this.#_helpers.create(content);
                 }
+
+                for (const folder of folders) {
+                    if (folder.name !== 'locals') {
+                        await this.#_helpers.register(path.join(directory, folder.name));
+                    }
+                }
+            } catch (error) {
+                if (error instanceof Error) { error.message = `Unable to register components from directory (${directory}): ${error.message}` }
+                throw error
             }
         }
     }

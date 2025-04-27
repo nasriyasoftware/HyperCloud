@@ -12,7 +12,8 @@ class StaticRoute {
         method: 'GET',
         handler: null as unknown as HyperCloudRequestHandler,
         dotfiles: 'ignore' as 'allow' | 'ignore' | 'deny',
-        path: [] as string[]
+        path: [] as string[],
+        memoryCache: true
     }
 
     readonly #_utils = Object.freeze({
@@ -77,55 +78,54 @@ class StaticRoute {
                         if (this.#_configs.dotfiles === 'deny') { return response.pages.unauthorized() }
                     }
 
-                    if (isLast) {
-                        const copy = [...reqPath]; // Create a copy of the request path array
-                        copy.pop(); // Removes the last item (resource name) from the copy array    
+                    if (!isLast) { continue }
 
-                        // Resolve the folder path from the root directory and the request path
-                        const folder = path.resolve(path.join(this.#_root, ...copy));
-                        // Check folder path validity                       
-                        const validity = helpers.checkPathAccessibility(folder);
-                        if (validity.valid !== true) { return next() }
-                        // Check if the path is an actual directory
-                        const folderStats = fs.statSync(folder);
-                        if (!folderStats.isDirectory()) { return next() }
+                    const copy = [...reqPath]; // Create a copy of the request path array
+                    copy.pop(); // Removes the last item (resource name) from the copy array    
 
-                        const filename = pathSegment;
-                        // Read the content of the folder
-                        const content = fs.readdirSync(folder, { withFileTypes: true });
+                    // Resolve the folder path from the root directory and the request path
+                    const folder = path.resolve(path.join(this.#_root, ...copy));
+                    // Check folder path validity                       
+                    const validity = helpers.checkPathAccessibility(folder);
+                    if (validity.valid !== true) { return next() }
 
-                        const file = content.find(i => {
-                            if (this.#_configs.caseSensitive) {
-                                if (i.name === filename) { return true }
-                            } else {
-                                if (i.name.toLowerCase() === filename.toLowerCase()) { return true }
-                            }
+                    // Check if the path is an actual directory
+                    const folderStats = fs.statSync(folder);
+                    if (!folderStats.isDirectory()) { return next() }
 
-                            return false
-                        })
+                    const filename = pathSegment;
+                    // Read the content of the folder
+                    const content = fs.readdirSync(folder, { withFileTypes: true });
 
-                        if (!file || !file.isFile()) { return next() }
-
-                        // Check the eTag value if it does exist
-                        const eTagsPath = path.join(folder, 'eTags.json');
-                        const eTagValidity = helpers.checkPathAccessibility(eTagsPath);
-                        if (eTagValidity.valid) {
-                            const eTags = JSON.parse(fs.readFileSync(eTagsPath, { encoding: 'utf-8' }))
-                            if (helpers.is.realObject(eTags)) {
-                                if (file.name in eTags) { response.setHeader('etag', eTags[file.name]) }
-                            }
+                    const file = content.find(i => {
+                        if (this.#_configs.caseSensitive) {
+                            if (i.name === filename) { return true }
+                        } else {
+                            if (i.name.toLowerCase() === filename.toLowerCase()) { return true }
                         }
 
-                        const filePath = path.join(folder, file.name);
-                        return response.sendFile(filePath, {
-                            lastModified: true,
-                            acceptRanges: true,
-                            cacheControl: true,
-                            maxAge: '3 days'
-                        })
-                    } else {
-                        continue;
+                        return false
+                    })
+
+                    if (!file || !file.isFile()) { return next() }
+
+                    // Check the eTag value if it does exist
+                    const eTagsPath = path.join(folder, 'eTags.json');
+                    const eTagValidity = helpers.checkPathAccessibility(eTagsPath);
+                    if (eTagValidity.valid) {
+                        const eTags = JSON.parse(fs.readFileSync(eTagsPath, { encoding: 'utf-8' }))
+                        if (helpers.is.realObject(eTags)) {
+                            if (file.name in eTags) { response.setHeader('etag', eTags[file.name]) }
+                        }
                     }
+
+                    const filePath = path.join(folder, file.name);
+                    return response.sendFile(filePath, {
+                        lastModified: true,
+                        acceptRanges: true,
+                        cacheControl: true,
+                        maxAge: '3 days'
+                    })
                 }
 
                 next();
@@ -136,6 +136,7 @@ class StaticRoute {
         }
     }
 
+    
     get subDomain(): '*' | string { return this.#_configs.subDomain }
     get caseSensitive() { return this.#_configs.caseSensitive }
     get method() { return this.#_configs.method }

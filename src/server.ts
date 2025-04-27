@@ -180,10 +180,23 @@ export class HyperCloudServer {
              * @returns {Promise<void>}
              */
             scanSSRAssets: async (): Promise<void> => {
-                helpers.printConsole('Scanning for pages and components...');
-                await Promise.allSettled([this.rendering.pages.scan(), this.rendering.components.scan()]);
-                helpers.printConsole('Checking/Updating cache storage...');
+                helpers.printConsole('#'.repeat(50));
+                helpers.printConsole('Scanning for pages and components');
+                const scanResult = await Promise.allSettled([this.rendering.pages.scan(), this.rendering.components.scan()]);
+                const rejected = scanResult.filter(i => i.status === 'rejected');
+                if (rejected.length > 0) {
+                    const error = new Error(`Unable to scan for pages and components`);
+                    // @ts-ignore
+                    error.details = `Reasons:\n${rejected.map(i => `- ${i.reason}`).join('\n')}`;
+                    throw error;
+                }
+
+                helpers.printConsole('#'.repeat(50));
+
+                helpers.printConsole('#'.repeat(50));
+                helpers.printConsole('Checking/Updating cache storage');
                 await this.rendering.cache.update.everything();
+                helpers.printConsole('#'.repeat(50));
             }
         },
     })

@@ -196,7 +196,7 @@ class RenderingManager {
     /**
      * Increase your server's performance by enabling caching.
      * Caching stores the files in memory (RAM) which is way faster than
-     * any other tpye of storage.
+     * any other type of storage.
      * 
      * **NOTE:**
      * 

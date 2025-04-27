@@ -57,21 +57,21 @@
     "Rendering manager",
     "http2"
   ],
-  "author": "Nasriya Software, LLC.",
-  "license": "Nasriya License",
+  "license": "Nasriya License License",
+  "author": "Nasriya Software",
   "devDependencies": {
     "@nasriya/postbuild": "^1.1.5",
     "@types/ejs": "^3.1.5",
     "@types/jest": "^29.5.14",
     "@types/ms": "^2.1.0",
-    "@types/node": "^22.14.0",
-    "ts-jest": "^29.3.1",
+    "@types/node": "^22.15.2",
+    "ts-jest": "^29.3.2",
     "typescript": "^5.8.3"
   },
   "dependencies": {
     "ejs": "^3.1.10",
     "ms": "^2.1.3",
-    "tldts": "^6.1.85"
+    "tldts": "^7.0.4"
   },
   "bugs": {
     "url": "https://github.com/nasriyasoftware/HyperCloud/issues"
