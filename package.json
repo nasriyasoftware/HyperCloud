@@ -78,6 +78,8 @@
     "typescript": "^5.9.3"
   },
   "dependencies": {
+    "@nasriya/atomix": "^1.0.23",
+    "@nasriya/cachify": "^0.0.2-beta",
     "ejs": "^3.1.10",
     "ms": "^2.1.3",
     "tldts": "^7.0.16"
