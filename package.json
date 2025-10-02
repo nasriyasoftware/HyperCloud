@@ -2,38 +2,6 @@
   "name": "@nasriya/hypercloud",
   "version": "1.2.9",
   "description": "Nasriya HyperCloud is a lightweight Node.js HTTP2 framework.",
-  "main": "./dist/cjs/hypercloud.js",
-  "module": "./dist/esm/hypercloud.js",
-  "types": "./dist/@types/hypercloud.d.ts",
-  "files": [
-    "dist/**/*"
-  ],
-  "exports": {
-    ".": {
-      "import": "./dist/esm/hypercloud.js",
-      "require": "./dist/cjs/hypercloud.js",
-      "types": "./dist/@types/hypercloud.d.ts"
-    }
-  },
-  "maintainers": [
-    {
-      "name": "Ahmad Nasriya",
-      "email": "ahmad@nasriya.net",
-      "url": "https://www.linkedin.com/in/ahmadnasriya/"
-    }
-  ],
-  "repository": {
-    "type": "github",
-    "url": "https://github.com/nasriyasoftware/HyperCloud"
-  },
-  "scripts": {
-    "build": "npm run build:esm && npm run build:cjs && postbuild",
-    "build:esm": "tsc --project tsconfig.esm.json",
-    "build:cjs": "tsc --project tsconfig.cjs.json",
-    "postbuild-init": "postbuild-init",
-    "test": "jest",
-    "deepTest": "jest --coverage"
-  },
   "keywords": [
     "Server-side rendering",
     "SSR framework",
@@ -57,7 +25,48 @@
     "Rendering manager",
     "http2"
   ],
-  "license": "Nasriya License License",
+  "type": "module",
+  "main": "./dist/cjs/hypercloud.js",
+  "module": "./dist/esm/hypercloud.js",
+  "types": "./dist/@types/hypercloud.d.ts",
+  "files": [
+    "dist/**/*"
+  ],
+  "exports": {
+    ".": {
+      "import": "./dist/esm/hypercloud.js",
+      "require": "./dist/cjs/hypercloud.js",
+      "types": "./dist/@types/hypercloud.d.ts"
+    }
+  },
+  "scripts": {
+    "build": "npm run build:esm && npm run build:cjs && postbuild",
+    "build:esm": "tsc --project tsconfig.esm.json",
+    "build:cjs": "tsc --project tsconfig.cjs.json",
+    "postbuild-init": "postbuild-init",
+    "test": "jest",
+    "deepTest": "jest --coverage"
+  },
+  "maintainers": [
+    {
+      "name": "Ahmad Nasriya",
+      "email": "ahmad@nasriya.net",
+      "url": "https://www.linkedin.com/in/ahmadnasriya/"
+    }
+  ],
+  "repository": {
+    "type": "github",
+    "url": "https://github.com/nasriyasoftware/HyperCloud"
+  },
+  "bugs": {
+    "url": "https://github.com/nasriyasoftware/HyperCloud/issues"
+  },
+  "homepage": "https://package.nasriya.net/HyperCloud",
+  "funding": {
+    "type": "individual",
+    "url": "https://fund.nasriya.net/"
+  },
+  "license": "NPCL-1",
   "author": "Nasriya Software",
   "devDependencies": {
     "@nasriya/postbuild": "^1.1.5",
@@ -72,13 +81,5 @@
     "ejs": "^3.1.10",
     "ms": "^2.1.3",
     "tldts": "^7.0.4"
-  },
-  "bugs": {
-    "url": "https://github.com/nasriyasoftware/HyperCloud/issues"
-  },
-  "homepage": "https://package.nasriya.net/HyperCloud",
-  "funding": {
-    "type": "individual",
-    "url": "https://fund.nasriya.net/"
   }
 }
