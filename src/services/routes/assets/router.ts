@@ -32,7 +32,7 @@ export class Router {
         createStaticRoute: (root: string, options?: StaticRouteOptions) => {
             const caseSensitive = options && 'caseSensitive' in options ? options.caseSensitive : this.#_defaults.caseSensitive;
             const subDomain = options && 'subDomain' in options ? options.subDomain : this.#_defaults.subDomain;
-            const userPath = options && 'path' in options ? options.path : '/';
+            const userPath = options && 'path' in options && typeof options.path === 'string' ? options.path : '/';
             const path = userPath.startsWith('/') ? userPath : `/${userPath}`;
             const dotfiles = options && 'dotfiles' in options ? options.dotfiles : 'ignore';
 

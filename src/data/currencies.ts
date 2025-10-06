@@ -1,4 +1,4 @@
-[
+const currencies = [
     "AED",
     "AFN",
     "ALL",
@@ -159,4 +159,8 @@
     "ZAR",
     "ZMW",
     "ZWD"
-]
+] as const;
+
+export type Currency = typeof currencies[number];
+
+export default currencies;

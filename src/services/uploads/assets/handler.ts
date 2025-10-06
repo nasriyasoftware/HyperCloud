@@ -7,8 +7,7 @@ import RequestBody from "../../handler/assets/requestBody";
 import fs from "fs";
 import helpers from "../../../utils/helpers";
 import path from "path";
-
-const mimes: MimeType[] = JSON.parse(fs.readFileSync(path.join(__dirname, '../../../data/mimes.json'), { encoding: 'utf8' }));
+import mimex from "@nasriya/mimex";
 
 class UploadHandler {
     #_currentFile: UploadedMemoryFile | UploadedStorageFile | undefined;
@@ -111,7 +110,7 @@ class UploadHandler {
                         throw new Error(`The header is invalid`)
                     }
 
-                    if (!mimes.includes(details.mime)) {
+                    if (!mimex.isMime(details.mime)) {
                         throw new Error(`The request mime type is not supported: ${details.mime}`)
                     }
 
