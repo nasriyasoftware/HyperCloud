@@ -53,17 +53,25 @@ class StaticRoute {
                 await this.#_utils.cache.route();
                 await overwatch.watchFolder(this.#_root, {
                     onRemove: async (event) => {
-                        const record = routeCache.files.inspect({ filePath: event.path, scope: CACHE_SCOPE, caseSensitive: this.#_configs.caseSensitive });
-                        if (!record) { return }
+                        try {
+                            const record = routeCache.files.inspect({ filePath: event.path, scope: CACHE_SCOPE, caseSensitive: this.#_configs.caseSensitive });
+                            if (!record) { return }
 
-                        await routeCache.files.remove({
-                            filePath: event.path,
-                            scope: CACHE_SCOPE,
-                            caseSensitive: this.#_configs.caseSensitive
-                        })
+                            await routeCache.files.remove({
+                                filePath: event.path,
+                                scope: CACHE_SCOPE,
+                                caseSensitive: this.#_configs.caseSensitive
+                            })
+                        } catch (error) {
+                            console.error(`Failed to remove ${event.path} from cache:`, error);
+                        }
                     },
                     onAdd: async (event) => {
-                        await this.#_utils.cache.createRecord(event.path);
+                        try {
+                            await this.#_utils.cache.createRecord(event.path);
+                        } catch (error) {
+                            console.error(`Failed to add ${event.path} to cache:`, error);
+                        }
                     }
                 });
             }
