@@ -167,7 +167,7 @@ class StaticRoute {
 
                 if (ifNoneMatch || ifModifiedSince) {
                     // Normalize ETag (strip quotes if present)
-                    const normalizedIfNoneMatch = ifNoneMatch?.replace(/(^"|"$)/g, '');
+                    const normalizedIfNoneMatch = ifNoneMatch?.replace(/^W\//, '').replace(/(^"|"$)/g, '');
 
                     // Validate modification date
                     const clientDate = ifModifiedSince ? new Date(ifModifiedSince) : null;
