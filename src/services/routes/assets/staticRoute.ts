@@ -6,7 +6,6 @@ import type { HyperCloudRequestHandler, MimeType, StaticRouteOptions } from "../
 
 import fs from 'fs';
 import path from 'path';
-import HTTPError from "../../../utils/errors/HTTPError";
 
 const CACHE_SCOPE = 'hypercloud_static_routes' as const;
 
