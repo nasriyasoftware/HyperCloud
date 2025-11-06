@@ -6,6 +6,7 @@ import type { HyperCloudRequestHandler, MimeType, StaticRouteOptions } from "../
 
 import fs from 'fs';
 import path from 'path';
+import HTTPError from "../../../utils/errors/HTTPError";
 
 const CACHE_SCOPE = 'hypercloud_static_routes' as const;
 
@@ -123,6 +124,14 @@ class StaticRoute {
             // Remove the initial path (the virtual path) and keep the root path
             const reqPath = _reqPath.slice(this.#_configs.path.length, _reqPath.length).join(path.sep);
             const filePath = path.join(this.#_root, reqPath);
+
+            // Prevent path traversal attacks
+            if (!atomix.path.isSubPath(filePath, this.#_root)) {
+                const error = new Error(`Path traversal attack detected on path: ${filePath}`);
+                error.name = 'PathTraversalError';
+                throw error;
+            }
+
             const fileName = path.basename(filePath);
             const mimeType = this.#_utils.getFileMime(filePath) as MimeType;
 
@@ -195,6 +204,11 @@ class StaticRoute {
                 response.setHeader('Cachify-Status', readResponse.status)
                 response.send(readResponse.content, reqFile.mimeType);
             } catch (error) {
+                if (error instanceof Error && error.name === 'PathTraversalError') {
+                    response.pages.forbidden();
+                    return;
+                }
+
                 console.error(error);
                 response.pages.serverError({ error: error as Error });
             }
