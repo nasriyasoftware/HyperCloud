@@ -83,7 +83,10 @@ class StaticRoute {
                     return;
                 }
 
-                return routeCache.files.set(filePath, { scope: CACHE_SCOPE, ttl: 0 });
+                return routeCache.files.set(filePath, {
+                    scope: CACHE_SCOPE,
+                    ttl: 1_000 * 60 * 60 // 1 hour
+                });
             },
             path: (dir: string, setPromises: Promise<void>[]) => {
                 const content = fs.readdirSync(dir, { withFileTypes: true });
