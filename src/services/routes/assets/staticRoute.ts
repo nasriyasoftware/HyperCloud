@@ -174,25 +174,40 @@ class StaticRoute {
                 const ifNoneMatch = request.headers['if-none-match'];
                 const ifModifiedSince = request.headers['if-modified-since'];
 
-                if (ifNoneMatch || ifModifiedSince) {
-                    // Normalize ETag (strip quotes if present)
-                    const normalizedIfNoneMatch = ifNoneMatch?.replace(/^W\//, '').replace(/(^"|"$)/g, '');
+                const isNotModified = (() => {
+                    if (!ifModifiedSince && !ifNoneMatch) { return false }
 
-                    // Validate modification date
-                    const clientDate = ifModifiedSince ? new Date(ifModifiedSince) : null;
-                    const isDateValid = clientDate instanceof Date && !isNaN(clientDate.getTime());
+                    if (ifNoneMatch) {
+                        // Handle multiple ETags in header (comma-separated)
+                        const clientEtags = ifNoneMatch.split(',').map(tag => tag.trim());
 
-                    // Check for matches
-                    const isEtagMatch = normalizedIfNoneMatch === eTag;
-                    const isDateMatch = isDateValid && clientDate >= modifiedDate;
+                        // Normalize: remove weak prefix and quotes
+                        const normalized = clientEtags.map(tag =>
+                            tag.replace(/^W\//, '').replace(/(^"|"$)/g, '')
+                        );
 
-                    // Return 304 if resource not modified
-                    if (isEtagMatch || isDateMatch) {
-                        return response.status(304).end();
+                        // Check if any match your stored eTag
+                        if (normalized.includes(eTag)) {
+                            return true;
+                        }
                     }
+
+                    if (ifModifiedSince) {
+                        // Validate modification date
+                        const clientDate = new Date(ifModifiedSince);
+                        const isDateValid = clientDate instanceof Date && !isNaN(clientDate.getTime());
+
+                        return isDateValid && clientDate >= modifiedDate;
+                    }
+
+                    return false;
+                })();
+
+                if (isNotModified) {
+                    return response.status(304).end();
                 }
 
-                response.setHeader('etag', eTag);
+                response.setHeader('etag', `W/"${eTag}"`);
                 response.setHeader('last-modified', modifiedDate.toUTCString());
 
                 const readResponse = await routeCache.files.read({
