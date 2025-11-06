@@ -1,8 +1,8 @@
 import atomix from "@nasriya/atomix";
-import cachify from "@nasriya/cachify";
 import mimex from "@nasriya/mimex";
 import overwatch from "@nasriya/overwatch";
-import { HyperCloudRequestHandler, MimeType, StaticRouteOptions } from "../../../docs/docs";
+import routeCache from "../../cache/routeCache";
+import type { HyperCloudRequestHandler, MimeType, StaticRouteOptions } from "../../../docs/docs";
 
 import fs from 'fs';
 import path from 'path';
@@ -48,6 +48,26 @@ class StaticRoute {
                     if (typeof options.caseSensitive !== 'boolean') { throw new TypeError(`The Route's caseSensitive option is expecting a boolean value, but instead got ${typeof options.caseSensitive}`) }
                     this.#_configs.caseSensitive = options.caseSensitive;
                 }
+            },
+            route: async () => {
+                await this.#_utils.cache.route();
+                await overwatch.watchFolder(this.#_root, {
+                    onRemove: async (event) => {
+                        const record = routeCache.files.inspect({ filePath: event.path, scope: CACHE_SCOPE, caseSensitive: this.#_configs.caseSensitive });
+                        if (!record) { return }
+
+                        await routeCache.files.remove({
+                            filePath: event.path,
+                            scope: CACHE_SCOPE,
+                            caseSensitive: this.#_configs.caseSensitive
+                        })
+                    },
+                    onAdd: async (event) => {
+                        await this.#_utils.cache.createRecord(event.path);
+                    }
+                });
+
+                this.#_configs.handler = this.#_handlers.cacheHandler;
             }
         },
         cache: {
@@ -57,7 +77,7 @@ class StaticRoute {
                     return;
                 }
 
-                return cachify.files.set(filePath, { scope: CACHE_SCOPE, ttl: 0 });
+                return routeCache.files.set(filePath, { scope: CACHE_SCOPE, ttl: 0 });
             },
             path: (dir: string, setPromises: Promise<void>[]) => {
                 const content = fs.readdirSync(dir, { withFileTypes: true });
@@ -101,6 +121,77 @@ class StaticRoute {
         }
     })
 
+    readonly #_handlers = {
+        cacheHandler: (async (request, response, next) => {
+            try {
+                if (request.path.length < this.#_configs.path.length) {
+                    return response.pages.serverError({
+                        error: new Error(`Request path is shorter than route prefix. Possible framework route-matching bug.`)
+                    });
+                }
+
+                // Parse the file from the request
+                const reqFile = this.#_utils.parseFile(request.path);
+
+                // Check the file against the policy
+                if (reqFile.name.startsWith('.')) {
+                    if (this.#_configs.dotfiles === 'ignore') { return next() }
+                    if (this.#_configs.dotfiles === 'deny') { return response.pages.unauthorized() }
+                }
+
+                // Check if the file exists
+                const fileRecord = routeCache.files.inspect({
+                    filePath: reqFile.path,
+                    scope: CACHE_SCOPE,
+                    caseSensitive: this.#_configs.caseSensitive
+                });
+
+                if (!fileRecord) { return next(); }
+
+                // Define headers values
+                const modifiedDate = new Date(fileRecord.file.stats.mtime);
+                const eTag = fileRecord.file.eTag;
+
+                // Check for conditional headers
+                const ifNoneMatch = request.headers['if-none-match'];
+                const ifModifiedSince = request.headers['if-modified-since'];
+
+                if (ifNoneMatch || ifModifiedSince) {
+                    // Normalize ETag (strip quotes if present)
+                    const normalizedIfNoneMatch = ifNoneMatch?.replace(/(^"|"$)/g, '');
+
+                    // Validate modification date
+                    const clientDate = ifModifiedSince ? new Date(ifModifiedSince) : null;
+                    const isDateValid = clientDate instanceof Date && !isNaN(clientDate.getTime());
+
+                    // Check for matches
+                    const isEtagMatch = normalizedIfNoneMatch === eTag;
+                    const isDateMatch = isDateValid && clientDate >= modifiedDate;
+
+                    // Return 304 if resource not modified
+                    if (isEtagMatch || isDateMatch) {
+                        return response.status(304).end();
+                    }
+                }
+
+                response.setHeader('etag', eTag);
+                response.setHeader('last-modified', modifiedDate.toUTCString());
+
+                const readResponse = (await routeCache.files.read({
+                    key: fileRecord.key,
+                    scope: CACHE_SCOPE,
+                    caseSensitive: this.#_configs.caseSensitive
+                }))!;
+
+                response.setHeader('Cachify-Status', readResponse.status)
+                response.send(readResponse.content, reqFile.mimeType);
+            } catch (error) {
+                console.error(error);
+                response.pages.serverError({ error: error as Error });
+            }
+        }) as HyperCloudRequestHandler
+    }
+
     constructor(root: string, options: StaticRouteOptions) {
         atomix.fs.canAccessSync(root, { permissions: 'Read', throwError: true });
 
@@ -109,83 +200,7 @@ class StaticRoute {
         this.#_utils.initialize.path(options);
         this.#_utils.initialize.subDomain(options);
         this.#_utils.initialize.caseSensitive(options);
-
-        this.#_utils.cache.route().then(() => {
-            this.#_configs.handler = async (request, response, next) => {
-                try {
-                    if (request.path.length < this.#_configs.path.length) {
-                        return response.pages.serverError({
-                            error: new Error(`Request path is shorter than route prefix. Possible framework route-matching bug.`)
-                        });
-                    }
-
-                    // Parse the file from the request
-                    const reqFile = this.#_utils.parseFile(request.path);
-
-                    // Check the file against the policy
-                    if (reqFile.name.startsWith('.')) {
-                        if (this.#_configs.dotfiles === 'ignore') { return next() }
-                        if (this.#_configs.dotfiles === 'deny') { return response.pages.unauthorized() }
-                    }
-
-                    // Check if the file exists
-                    const fileRecord = cachify.files.inspect({
-                        filePath: reqFile.path,
-                        scope: CACHE_SCOPE,
-                        caseSensitive: this.#_configs.caseSensitive
-                    });
-
-                    if (!fileRecord) { return next(); }
-
-                    // Define headers values
-                    const modifiedDate = new Date(fileRecord.file.stats.mtime);
-                    const eTag = fileRecord.file.eTag;
-
-                    // Check for conditional headers
-                    const ifNoneMatch = request.headers['if-none-match'];
-                    const ifModifiedSince = request.headers['if-modified-since'];
-
-                    if (ifNoneMatch || ifModifiedSince) {
-                        // Normalize ETag (strip quotes if present)
-                        const normalizedIfNoneMatch = ifNoneMatch?.replace(/(^"|"$)/g, '');
-
-                        // Validate modification date
-                        const clientDate = ifModifiedSince ? new Date(ifModifiedSince) : null;
-                        const isDateValid = clientDate instanceof Date && !isNaN(clientDate.getTime());
-
-                        // Check for matches
-                        const isEtagMatch = normalizedIfNoneMatch === eTag;
-                        const isDateMatch = isDateValid && clientDate >= modifiedDate;
-
-                        // Return 304 if resource not modified
-                        if (isEtagMatch || isDateMatch) {
-                            return response.status(304).end();
-                        }
-                    }
-
-                    response.setHeader('etag', eTag);
-                    response.setHeader('last-modified', modifiedDate.toUTCString());
-
-                    const readResponse = (await cachify.files.read({
-                        key: fileRecord.key,
-                        scope: CACHE_SCOPE,
-                        caseSensitive: this.#_configs.caseSensitive
-                    }))!;
-
-                    response.setHeader('Cachify-Status', readResponse.status)
-                    response.send(readResponse.content, reqFile.mimeType);
-                } catch (error) {
-                    console.error(error);
-                    response.pages.serverError({ error: error as Error });
-                }
-            }
-        })
-
-        overwatch.watch(this.#_root, {
-            onAdd: (event) => {
-                this.#_utils.cache.createRecord(event.path);
-            }
-        })
+        this.#_utils.initialize.route();
     }
 
     get subDomain(): '*' | string { return this.#_configs.subDomain }

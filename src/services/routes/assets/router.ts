@@ -1,11 +1,14 @@
+import atomix from '@nasriya/atomix';
 import HyperCloudServer from '../../../server';
-import { HttpMethod, HyperCloudRequestHandler, StaticRouteOptions } from '../../../docs/docs';
 import Route from './route';
 import StaticRoute from './staticRoute';
 import helpers from '../../../utils/helpers';
+import type { HttpMethod, HyperCloudRequestHandler, StaticRouteOptions } from '../../../docs/docs';
 
 import fs from 'fs';
 import path from 'path';
+
+const hasOwnProp = atomix.dataTypes.record.hasOwnProperty;
 
 export class Router {
     #_server: HyperCloudServer | undefined;
@@ -32,11 +35,16 @@ export class Router {
         createStaticRoute: (root: string, options?: StaticRouteOptions) => {
             const caseSensitive = options && 'caseSensitive' in options ? options.caseSensitive : this.#_defaults.caseSensitive;
             const subDomain = options && 'subDomain' in options ? options.subDomain : this.#_defaults.subDomain;
-            const userPath = options && 'path' in options && typeof options.path === 'string' ? options.path : '/';
-            const path = userPath.startsWith('/') ? userPath : `/${userPath}`;
+            const routePath = (() => {
+                if (options && hasOwnProp(options, 'path') && atomix.valueIs.validString(options.path)) {
+                    return options.path?.startsWith('/') ? options.path : `/${options.path}`;
+                } else {
+                    return '/';
+                }
+            })()
             const dotfiles = options && 'dotfiles' in options ? options.dotfiles : 'ignore';
 
-            const route = new StaticRoute(root, { path, subDomain, caseSensitive, dotfiles });
+            const route = new StaticRoute(root, { path: routePath, subDomain, caseSensitive, dotfiles });
             if (this.#_server instanceof HyperCloudServer) {
                 this.#_server._routesManager.add(route);
             } else {
