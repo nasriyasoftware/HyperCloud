@@ -154,7 +154,7 @@ class StaticRoute {
                 // Check the file against the policy
                 if (reqFile.name.startsWith('.')) {
                     if (this.#_configs.dotfiles === 'ignore') { return next() }
-                    if (this.#_configs.dotfiles === 'deny') { return response.pages.unauthorized() }
+                    if (this.#_configs.dotfiles === 'deny') { return response.pages.forbidden() }
                 }
 
                 // Check if the file exists
