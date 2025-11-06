@@ -1,17 +1,10 @@
 import fs from 'fs';
 import path from 'path';
 import crypto from 'crypto';
-import { DeepReadonly, MimeType, RandomOptions } from '../docs/docs';
-
-const _dirname = __dirname;
+import currencies from '../data/currencies';
+import { Currency, DeepReadonly, MimeType, RandomOptions } from '../docs/docs';
 
 class Helpers {
-    #_currencies: string[] = [];
-
-    constructor() {
-        this.#_currencies = this.loadJSON(path.resolve(_dirname, '../data/currencies.json')) as string[];
-    }
-
     /**
      * Load a `JSON` file
      * @param filePath The absolute path of the `JSON` file
@@ -124,7 +117,7 @@ class Helpers {
         currency: (currency: string): boolean => {
             if (typeof currency === 'string') {
                 currency = currency.toUpperCase();
-                return this.#_currencies.includes(currency);
+                return currencies.includes(currency as Currency);
             } else {
                 return false;
             }

@@ -1,3 +1,4 @@
+import mimex, { mimes, Mime } from '@nasriya/mimex';
 import path from 'path';
 import helpers from '../../../utils/helpers';
 import HyperCloudRequest from './request';
@@ -14,11 +15,6 @@ import stream from 'stream';
 import net from 'net';
 import tls from 'tls';
 import { NotFoundResponseOptions, ForbiddenAndUnauthorizedOptions, ServerErrorOptions, RedirectCode, DownloadFileOptions, SendFileOptions, MimeType, ExtensionData, NextFunction, PageRenderingOptions } from '../../../docs/docs';
-
-const _dirname = __dirname;
-
-const mimes = helpers.loadJSON(path.resolve(_dirname, '../../../data/mimes.json')) as string[];
-const extensions = helpers.loadJSON(path.resolve(_dirname, '../../../data/extensions.json')) as ExtensionData[];
 
 interface ResponseEndOptions {
     data?: string | Uint8Array;
@@ -675,7 +671,8 @@ export class HyperCloudResponse {
             // Preparing the mime-type
             const exts = fileName.split('.').filter(i => i.length > 0);
             const extension = `.${exts[exts.length - 1]}`;
-            const mime = extensions.find(i => i.extension.includes(extension))?.mime as string;
+            const extMimes = mimex.getMimes(extension);
+            const mime = extMimes ? extMimes[0] : 'application/octet-stream';
 
             // Check if the download option is triggered or not
             if (options && 'download' in options) {
@@ -771,7 +768,7 @@ export class HyperCloudResponse {
         let type: MimeType = null as unknown as MimeType;
 
         if (typeof data === 'string') {
-            if (typeof contentType === 'string' && mimes.includes(contentType.toLowerCase())) {
+            if (typeof contentType === 'string' && mimes.includes(contentType.toLowerCase() as Mime)) {
                 type = contentType;
             } else if (helpers.is.html(data)) {
                 type = 'text/html';
@@ -779,14 +776,14 @@ export class HyperCloudResponse {
                 type = 'text/plain';
             }
         } else if (Buffer.isBuffer(data)) {
-            if (typeof contentType === 'string' && mimes.includes(contentType.toLowerCase())) {
+            if (typeof contentType === 'string' && mimes.includes(contentType.toLowerCase() as Mime)) {
                 type = contentType;
             } else {
                 type = 'application/octet-stream';
             }
         } else if (Array.isArray(data) || (typeof data === 'object' && data !== null)) {
             data = JSON.stringify(data);
-            if (typeof contentType === 'string' && mimes.includes(contentType.toLowerCase())) {
+            if (typeof contentType === 'string' && mimes.includes(contentType.toLowerCase() as Mime)) {
                 type = contentType;
             } else {
                 type = 'application/json';

@@ -6,6 +6,10 @@ import HyperCloudResponse from '../services/handler/assets/response';
 import HyperCloudServer from '../server';
 import HTTPError from '../utils/errors/HTTPError';
 import ms from 'ms';
+import { Mime } from '@nasriya/mimex';
+import { Currency } from '../data/currencies';
+
+export { Currency } from '../data/currencies';
 
 /**The website's possible color schemes */
 export type ColorScheme = 'Dark' | 'Light';
@@ -36,42 +40,9 @@ export type PageRenderingCacheAsset = Exclude<RenderingCacheAsset, "json">;
 export type DeepReadonly<T> = {
     readonly [P in keyof T]: DeepReadonly<T[P]>;
 };
-/**A currency code */
-export type Currency =
-    | 'AED' | 'AFN' | 'ALL' | 'AMD' | 'ANG' | 'AOA' | 'ARS' | 'AUD' | 'AWG' | 'AZN'
-    | 'BAM' | 'BBD' | 'BDT' | 'BGN' | 'BHD' | 'BIF' | 'BMD' | 'BND' | 'BOB' | 'BRL'
-    | 'BSD' | 'BTN' | 'BWP' | 'BYN' | 'BZD' | 'CAD' | 'CDF' | 'CHF' | 'CLP' | 'CNY'
-    | 'COP' | 'CRC' | 'CUP' | 'CVE' | 'CZK' | 'DJF' | 'DKK' | 'DOP' | 'DZD' | 'EGP'
-    | 'ERN' | 'ETB' | 'EUR' | 'FJD' | 'FKP' | 'FOK' | 'GBP' | 'GEL' | 'GGP' | 'GHS'
-    | 'GIP' | 'GMD' | 'GNF' | 'GTQ' | 'GYD' | 'HKD' | 'HNL' | 'HRK' | 'HTG' | 'HUF'
-    | 'IDR' | 'ILS' | 'IMP' | 'INR' | 'IQD' | 'IRR' | 'ISK' | 'JEP' | 'JMD' | 'JOD'
-    | 'JPY' | 'KES' | 'KGS' | 'KHR' | 'KID' | 'KMF' | 'KRW' | 'KWD' | 'KYD' | 'KZT'
-    | 'LAK' | 'LBP' | 'LKR' | 'LRD' | 'LSL' | 'LYD' | 'MAD' | 'MDL' | 'MGA' | 'MKD'
-    | 'MMK' | 'MNT' | 'MOP' | 'MRU' | 'MUR' | 'MVR' | 'MWK' | 'MXN' | 'MYR' | 'MZN'
-    | 'NAD' | 'NGN' | 'NIO' | 'NOK' | 'NPR' | 'NZD' | 'OMR' | 'PAB' | 'PEN' | 'PGK'
-    | 'PHP' | 'PKR' | 'PLN' | 'PYG' | 'QAR' | 'RON' | 'RSD' | 'RUB' | 'RWF' | 'SAR'
-    | 'SBD' | 'SCR' | 'SDG' | 'SEK' | 'SGD' | 'SHP' | 'SLL' | 'SOS' | 'SPL' | 'SRD'
-    | 'STN' | 'SYP' | 'SZL' | 'THB' | 'TJS' | 'TMT' | 'TND' | 'TOP' | 'TRY' | 'TTD'
-    | 'TVD' | 'TWD' | 'TZS' | 'UAH' | 'UGX' | 'USD' | 'UYU' | 'UZS' | 'VES' | 'VND'
-    | 'VUV' | 'WST' | 'XAF' | 'XCD' | 'XOF' | 'XPF' | 'YER' | 'ZAR' | 'ZMW' | 'ZWD';
 
 /**These mime types are used when sending/receiving files */
-export type MimeType =
-    | "audio/aac" | "application/x-abiword" | "application/x-freearc" | "image/avif"
-    | "video/x-msvideo" | "application/vnd.amazon.ebook" | "application/octet-stream"
-    | "image/bmp" | "application/x-bzip" | "application/x-bzip2" | "application/x-cdf"
-    | "application/x-csh" | "text/calendar" | "text/css" | "text/plain" | "text/csv" | "application/msword"
-    | "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-    | "application/vnd.ms-fontobject" | "application/epub+zip" | "application/gzip"
-    | "image/gif" | "text/html" | "image/vnd.microsoft.icon" | "text/calendar" | "application/java-archive"
-    | "image/jpeg" | "text/javascript" | "application/json" | "application/ld+json" | "audio/midi"
-    | "audio/x-midi" | "audio/mpeg" | "video/mp4" | "video/mpeg" | "application/vnd.apple.installer+xml"
-    | "application/vnd.oasis.opendocument.presentation" | "application/vnd.oasis.opendocument.spreadsheet"
-    | "application/vnd.oasis.opendocument.text" | "audio/ogg" | "video/ogg" | "application/ogg"
-    | "audio/opus" | "font/otf" | "image/png" | "application/pdf" | "application/x-httpd-php"
-    | "application/vnd.ms-powerpoint" | "application/vnd.openxmlformats-officedocument.presentationml.presentation"
-    | "application/vnd.rar" | "application/rtf" | "application/x-sh" | "image/svg+xml"
-    | "application/x-tar" | "image/tiff";
+export type MimeType = Mime | 'text/plain';
 
 export type OnRenderHandler = (locals: Record<string, any> | any, include: (name: string, locals: Record<string, any>) => Promise<string>, lang: string) => string | Promise<string>;
 
@@ -671,15 +642,13 @@ export interface NotFoundResponseOptions {
 
 export interface StaticRouteOptions {
     /** The route path URL. */
-    path: string;
+    path?: string;
     /** Option for serving dotfiles. Possible values are `allow`, `deny`, `ignore`. Default: `ignore`. */
     dotfiles?: 'allow' | 'ignore' | 'deny';
     /** The host's `subDomain` from HyperCloudRequest.subDomain. Default: `null`. */
     subDomain?: string;
     /** This will match only if the `path` exactly matches the HyperCloudRequest.path */
     caseSensitive?: boolean;
-    /** Whether to cache the file in memory. Default: `true` */
-    memoryCache?: boolean;
 }
 
 export interface CookieOptions {
