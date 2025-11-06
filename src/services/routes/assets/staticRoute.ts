@@ -195,11 +195,13 @@ class StaticRoute {
                 response.setHeader('etag', eTag);
                 response.setHeader('last-modified', modifiedDate.toUTCString());
 
-                const readResponse = (await routeCache.files.read({
+                const readResponse = await routeCache.files.read({
                     key: fileRecord.key,
                     scope: CACHE_SCOPE,
                     caseSensitive: this.#_configs.caseSensitive
-                }))!;
+                });
+
+                if (!readResponse) { return next(); }
 
                 response.setHeader('Cachify-Status', readResponse.status)
                 response.send(readResponse.content, reqFile.mimeType);
