@@ -187,8 +187,10 @@ class StaticRoute {
                         );
 
                         // Check if any match your stored eTag
-                        if (normalized.includes(eTag)) {
-                            return true;
+                        for (const clientETAG of normalized) {
+                            if (clientETAG === '*' || clientETAG === eTag) {
+                                return true
+                            }
                         }
                     }
 
