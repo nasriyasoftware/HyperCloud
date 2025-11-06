@@ -66,8 +66,6 @@ class StaticRoute {
                         await this.#_utils.cache.createRecord(event.path);
                     }
                 });
-
-                this.#_configs.handler = this.#_handlers.cacheHandler;
             }
         },
         cache: {
@@ -200,7 +198,9 @@ class StaticRoute {
         this.#_utils.initialize.path(options);
         this.#_utils.initialize.subDomain(options);
         this.#_utils.initialize.caseSensitive(options);
-        this.#_utils.initialize.route();
+
+        this.#_configs.handler = this.#_handlers.cacheHandler;
+        void this.#_utils.initialize.route().catch(console.error);
     }
 
     get subDomain(): '*' | string { return this.#_configs.subDomain }
