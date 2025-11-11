@@ -6,6 +6,7 @@ import type { HyperCloudRequestHandler, MimeType, StaticRouteOptions } from "../
 
 import fs from 'fs';
 import path from 'path';
+import hypercloud from "../../../hypercloud";
 
 const CACHE_SCOPE = 'hypercloud_static_routes' as const;
 
@@ -205,6 +206,7 @@ class StaticRoute {
                 })();
 
                 if (isNotModified) {
+                    response.setHeader('Cachify-Status', 'NOT_MODIFIED');
                     return response.status(304).end();
                 }
 
@@ -219,7 +221,7 @@ class StaticRoute {
 
                 if (!readResponse) { return next(); }
 
-                response.setHeader('Cachify-Status', readResponse.status)
+                response.setHeader('Cachify-Status', readResponse.status.toUpperCase());
                 response.send(readResponse.content, reqFile.mimeType);
             } catch (error) {
                 if (error instanceof Error && error.name === 'PathTraversalError') {

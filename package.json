@@ -80,7 +80,7 @@
   },
   "dependencies": {
     "@nasriya/atomix": "^1.0.23",
-    "@nasriya/cachify": "^0.0.9-beta",
+    "@nasriya/cachify": "^0.0.11-beta",
     "@nasriya/mimex": "^0.0.2-beta",
     "@nasriya/overwatch": "^1.1.4",
     "ejs": "^3.1.10",
